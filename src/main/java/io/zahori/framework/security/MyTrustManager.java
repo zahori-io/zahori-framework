@@ -32,9 +32,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
-/**
- * The type My trust manager.
- */
 public class MyTrustManager implements X509TrustManager {
 
     @Override
@@ -52,9 +49,6 @@ public class MyTrustManager implements X509TrustManager {
         return null;
     }
 
-    /**
-     * Disable ssl.
-     */
     public static void disableSSL() {
         try {
             TrustManager[] trustAllCerts = new TrustManager[] { new MyTrustManager() };

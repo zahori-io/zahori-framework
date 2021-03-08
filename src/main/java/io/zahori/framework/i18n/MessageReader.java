@@ -32,18 +32,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.zahori.framework.files.properties.SystemPropertiesUtils;
 
-/**
- * The type Message reader.
- */
 public class MessageReader {
 
     private final Properties prop;
 
-    /**
-     * Instantiates a new Message reader.
-     *
-     * @param fileName the file name
-     */
     public MessageReader(String fileName) {
 
         prop = new Properties();
@@ -69,13 +61,6 @@ public class MessageReader {
         }
     }
 
-    /**
-     * Get string.
-     *
-     * @param messageKey the message key
-     * @param arguments  the arguments
-     * @return the string
-     */
     public String get(String messageKey, String... arguments) {
         if (StringUtils.isBlank(messageKey)) {
             return messageKey;

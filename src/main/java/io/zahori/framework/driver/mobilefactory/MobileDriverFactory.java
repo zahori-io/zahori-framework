@@ -37,9 +37,6 @@ import org.slf4j.LoggerFactory;
 import io.appium.java_client.AppiumDriver;
 import io.zahori.framework.utils.ZahoriStringUtils;
 
-/**
- * The type Mobile driver factory.
- */
 public class MobileDriverFactory {
 
     private static final Logger LOG = LoggerFactory.getLogger(MobileDriverFactory.class);
@@ -48,12 +45,6 @@ public class MobileDriverFactory {
     private MobileDriverFactory() {
     }
 
-    /**
-     * Gets driver.
-     *
-     * @param testCapabilities the test capabilities
-     * @return the driver
-     */
     public static AppiumDriver<?> getDriver(Map<String, String> testCapabilities) {
 
         String platform = getPlatform(testCapabilities);

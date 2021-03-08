@@ -43,32 +43,14 @@ import org.slf4j.LoggerFactory;
 
 import io.zahori.framework.exception.MethodException;
 
-/**
- * The type Ftp.
- */
 public class FTP {
 
     private static final Logger LOG = LoggerFactory.getLogger(FTP.class);
 
-    /**
-     * The Server.
-     */
     protected final String server;
-    /**
-     * The User.
-     */
     protected final String user;
-    /**
-     * The Password.
-     */
     protected final String password;
-    /**
-     * The Port.
-     */
     protected final int port;
-    /**
-     * The Connection timeout seconds.
-     */
     protected int connectionTimeoutSeconds;
 
     private static final int DEFAULT_PORT = 21;
@@ -76,23 +58,9 @@ public class FTP {
 
     private enum Mode {
 
-        /**
-         * Upload mode.
-         */
-        UPLOAD,
-        /**
-         * Download mode.
-         */
-        DOWNLOAD
+        UPLOAD, DOWNLOAD
     }
 
-    /**
-     * Instantiates a new Ftp.
-     *
-     * @param server   the server
-     * @param user     the user
-     * @param password the password
-     */
     public FTP(String server, String user, String password) {
         this.server = server;
         this.user = user;
@@ -101,14 +69,6 @@ public class FTP {
         this.connectionTimeoutSeconds = DEFAULT_CONNECTION_TIMEOUT;
     }
 
-    /**
-     * Instantiates a new Ftp.
-     *
-     * @param server   the server
-     * @param user     the user
-     * @param password the password
-     * @param port     the port
-     */
     public FTP(String server, String user, String password, int port) {
         this.server = server;
         this.user = user;
@@ -117,15 +77,6 @@ public class FTP {
         this.connectionTimeoutSeconds = DEFAULT_CONNECTION_TIMEOUT;
     }
 
-    /**
-     * Instantiates a new Ftp.
-     *
-     * @param server                     the server
-     * @param user                       the user
-     * @param password                   the password
-     * @param port                       the port
-     * @param connectionTimeoutInSeconds the connection timeout in seconds
-     */
     public FTP(String server, String user, String password, int port, int connectionTimeoutInSeconds) {
         this.server = server;
         this.user = user;
@@ -134,16 +85,6 @@ public class FTP {
         this.connectionTimeoutSeconds = connectionTimeoutInSeconds * 1000;
     }
 
-    /**
-     * Upload boolean.
-     *
-     * @param localDir   the local dir
-     * @param localFile  the local file
-     * @param remoteDir  the remote dir
-     * @param remoteFile the remote file
-     * @return the boolean
-     * @throws MethodException the method exception
-     */
     public boolean upload(String localDir, String localFile, String remoteDir, String remoteFile)
             throws MethodException {
 
@@ -157,16 +98,6 @@ public class FTP {
         return result;
     }
 
-    /**
-     * Download boolean.
-     *
-     * @param remoteDir  the remote dir
-     * @param remoteFile the remote file
-     * @param localDir   the local dir
-     * @param localFile  the local file
-     * @return the boolean
-     * @throws MethodException the method exception
-     */
     public boolean download(String remoteDir, String remoteFile, String localDir, String localFile)
             throws MethodException {
 
@@ -180,13 +111,6 @@ public class FTP {
         return result;
     }
 
-    /**
-     * Gets last modified file by pattern.
-     *
-     * @param remoteDir             the remote dir
-     * @param remoteFilePatternName the remote file pattern name
-     * @return the last modified file by pattern
-     */
     public Map<String, Date> getLastModifiedFileByPattern(String remoteDir, String remoteFilePatternName) {
         Map<String, Calendar> remoteFiles = new HashMap<>();
         Map<String, Date> result = new HashMap<>();
@@ -230,16 +154,6 @@ public class FTP {
         }
     }
 
-    /**
-     * Download last modified file by pattern boolean.
-     *
-     * @param remoteDir             the remote dir
-     * @param remoteFilePatternName the remote file pattern name
-     * @param localDir              the local dir
-     * @param localFile             the local file
-     * @return the boolean
-     * @throws MethodException the method exception
-     */
     public boolean downloadLastModifiedFileByPattern(String remoteDir, String remoteFilePatternName, String localDir,
             String localFile) throws MethodException {
         Map<String, Date> remoteFile = getLastModifiedFileByPattern(remoteDir, remoteFilePatternName);
@@ -251,11 +165,6 @@ public class FTP {
         }
     }
 
-    /**
-     * Sets connection timeout.
-     *
-     * @param connectionTimeoutInSeconds the connection timeout in seconds
-     */
     public void setConnectionTimeout(int connectionTimeoutInSeconds) {
         connectionTimeoutSeconds = connectionTimeoutInSeconds * 1000;
     }

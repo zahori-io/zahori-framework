@@ -28,9 +28,6 @@ import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The type Timeout thread.
- */
 public class TimeoutThread extends Thread {
 
     private static final Logger LOG = LoggerFactory.getLogger(TimeoutThread.class);
@@ -45,13 +42,6 @@ public class TimeoutThread extends Thread {
 
     private int timeout;
 
-    /**
-     * Instantiates a new Timeout thread.
-     *
-     * @param name       the name
-     * @param d          the d
-     * @param maxTimeout the max timeout
-     */
     public TimeoutThread(String name, WebDriver d, int maxTimeout) {
         super(name);
         this.driver = d;
@@ -87,18 +77,10 @@ public class TimeoutThread extends Thread {
         }
     }
 
-    /**
-     * Sets execution finished.
-     */
     public void setExecutionFinished() {
         this.executionFinished = true;
     }
 
-    /**
-     * Is ejecucion cortada boolean.
-     *
-     * @return the boolean
-     */
     public boolean isEjecucionCortada() {
         return this.executionStopped;
     }

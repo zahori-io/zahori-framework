@@ -43,55 +43,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-/**
- * The type Page.
- */
 public class Page implements Serializable {
 
     private static final long serialVersionUID = 7043344065990287228L;
 
-    /**
-     * The Test context.
-     */
     public TestContext testContext;
     private WebDriver driver;
-    /**
-     * The Name.
-     */
     public String name;
-    /**
-     * The Url.
-     */
     public String url;
 
-    /**
-     * The Page handle id.
-     */
     public String pageHandleId;
 
-    /**
-     * Instantiates a new Page.
-     */
     public Page() {
     }
 
-    /**
-     * Instantiates a new Page.
-     *
-     * @param testContext the test context
-     */
     public Page(TestContext testContext) {
         this.testContext = testContext;
         driver = testContext.driver;
         name = getClass().getSimpleName();
     }
 
-    /**
-     * Instantiates a new Page.
-     *
-     * @param testContext the test context
-     * @param url         the url
-     */
     public Page(TestContext testContext, String url) {
         this(testContext);
 
@@ -103,20 +74,10 @@ public class Page implements Serializable {
         return "Page: " + this.name;
     }
 
-    /**
-     * Gets page title.
-     *
-     * @return the page title
-     */
     public String getPageTitle() {
         return this.testContext.driver.getTitle();
     }
 
-    /**
-     * Switch to frame.
-     *
-     * @param frameName the frame name
-     */
     public void switchToFrame(String frameName) {
         PageElement frame = new PageElement(this, "iFrame temporal webElement", Locator.id(frameName));
         // frame.initWebElement();
@@ -125,11 +86,6 @@ public class Page implements Serializable {
         this.switchToFrameWebElement(crono, frame);
     }
 
-    /**
-     * Switch to frame.
-     *
-     * @param iframeElement the iframe element
-     */
     public void switchToFrame(PageElement iframeElement) {
         // if (iframeElement.webElement == null) {
         // iframeElement.initWebElement();
@@ -152,20 +108,10 @@ public class Page implements Serializable {
         }
     }
 
-    /**
-     * Switch to default content.
-     */
     public void switchToDefaultContent() {
         this.driver.switchTo().defaultContent();
     }
 
-    /**
-     * Exist modal window boolean.
-     *
-     * @param title          the title
-     * @param maxWaitSeconds the max wait seconds
-     * @return the boolean
-     */
     public boolean existModalWindow(String title, int maxWaitSeconds) {
         try {
             Thread.sleep(5L);
@@ -191,23 +137,12 @@ public class Page implements Serializable {
         return false;
     }
 
-    /**
-     * Number of modal windows open int.
-     *
-     * @param waitSeconds the wait seconds
-     * @return the int
-     */
     public int numberOfModalWindowsOpen(int waitSeconds) {
         Pause.pause(waitSeconds);
         Set<String> modalWindows = this.driver.getWindowHandles();
         return modalWindows.size() - 1;
     }
 
-    /**
-     * Exist modal window boolean.
-     *
-     * @return the boolean
-     */
     public boolean existModalWindow() {
         String parentWindowHandler = this.driver.getWindowHandle();
         boolean existChildWindow = false;
@@ -222,11 +157,6 @@ public class Page implements Serializable {
         return existChildWindow;
     }
 
-    /**
-     * Switch to modal window.
-     *
-     * @param title the title
-     */
     public void switchToModalWindow(String title) {
         int maxWaitSeconds = this.testContext.timeoutFindElement.intValue();
         int secondsWaiting = 1;
@@ -246,11 +176,6 @@ public class Page implements Serializable {
         throw new RuntimeException("Modal window " + title + " not found on " + this);
     }
 
-    /**
-     * Switch to modal window.
-     *
-     * @param titles the titles
-     */
     public void switchToModalWindow(String[] titles) {
         int maxWaitSeconds = this.testContext.timeoutFindElement.intValue();
         int secondsWaiting = 1;
@@ -273,9 +198,6 @@ public class Page implements Serializable {
         throw new RuntimeException("Modal window " + string + " not found on " + this);
     }
 
-    /**
-     * Switch to main window.
-     */
     public void switchToMainWindow() {
         if (this.pageHandleId != null) {
             this.driver.switchTo().window(this.pageHandleId);
@@ -286,73 +208,34 @@ public class Page implements Serializable {
         return this.driver.switchTo().alert();
     }
 
-    /**
-     * Accept alert.
-     */
     public void acceptAlert() {
         this.switchToAlert().accept();
     }
 
-    /**
-     * Close alert.
-     */
     public void closeAlert() {
         this.switchToAlert().dismiss();
     }
 
-    /**
-     * Gets alert text.
-     *
-     * @return the alert text
-     */
     public String getAlertText() {
         return this.switchToAlert().getText();
     }
 
-    /**
-     * Write text to alert.
-     *
-     * @param text the text
-     */
     public void writeTextToAlert(String text) {
         this.switchToAlert().sendKeys(text);
     }
 
-    /**
-     * Sets driver.
-     *
-     * @param driver the driver
-     */
     public void setDriver(WebDriver driver) {
         this.driver = driver;
     }
 
-    /**
-     * Gets driver.
-     *
-     * @return the driver
-     */
     public WebDriver getDriver() {
         return driver;
     }
 
-    /**
-     * Gets page elements.
-     *
-     * @param locator the locator
-     * @return the page elements
-     */
     public List<PageElement> getPageElements(Locator locator) {
         return this.getPageElements(null, locator);
     }
 
-    /**
-     * Gets page elements.
-     *
-     * @param frameLocators the frame locators
-     * @param locator       the locator
-     * @return the page elements
-     */
     public List<PageElement> getPageElements(Locator[] frameLocators, Locator locator) {
         List<PageElement> elementsList = new ArrayList<>();
         if ((frameLocators != null) && (frameLocators.length > 0)) {
@@ -389,11 +272,6 @@ public class Page implements Serializable {
         aOutputStream.defaultWriteObject();
     }
 
-    /**
-     * Wait static page load.
-     *
-     * @param waitSeconds the wait seconds
-     */
     public void waitStaticPageLoad(int waitSeconds) {
         if (waitSeconds > 0) {
             try {
@@ -405,14 +283,6 @@ public class Page implements Serializable {
         }
     }
 
-    /**
-     * Tap.
-     *
-     * @param fingers  the fingers
-     * @param x        the x
-     * @param y        the y
-     * @param duration the duration
-     */
     public void tap(int fingers, int x, int y, int duration) {
         if (this.testContext.isMobileDriver()) {
             this.testContext
@@ -430,11 +300,6 @@ public class Page implements Serializable {
     // }
     // }
 
-    /**
-     * Scroll to.
-     *
-     * @param text the text
-     */
     public void scrollTo(String text) {
         // String uiScrollables = AndroidDriver.UiScrollable("new
         // UiSelector().descriptionContains(\"" + text + "\")") +

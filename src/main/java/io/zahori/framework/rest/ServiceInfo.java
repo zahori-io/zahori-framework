@@ -25,9 +25,6 @@ package io.zahori.framework.rest;
 
 import java.util.Map;
 
-/**
- * The type Service info.
- */
 public class ServiceInfo {
 
     private String method;
@@ -39,18 +36,6 @@ public class ServiceInfo {
     private String responseMessage;
     private String responseBody;
 
-    /**
-     * Instantiates a new Service info.
-     *
-     * @param method          the method
-     * @param url             the url
-     * @param parameters      the parameters
-     * @param headers         the headers
-     * @param requestBody     the request body
-     * @param responseCode    the response code
-     * @param responseBody    the response body
-     * @param responseMessage the response message
-     */
     public ServiceInfo(String method, String url, Map<String, String> parameters, Map<String, String> headers, String requestBody, int responseCode,
             String responseBody, String responseMessage) {
         this.method = method;
@@ -63,74 +48,34 @@ public class ServiceInfo {
         this.requestBody = requestBody;
     }
 
-    /**
-     * Gets method.
-     *
-     * @return the method
-     */
     public String getMethod() {
         return method;
     }
 
-    /**
-     * Gets url.
-     *
-     * @return the url
-     */
     public String getUrl() {
         return url;
     }
 
-    /**
-     * Gets parameters.
-     *
-     * @return the parameters
-     */
     public Map<String, String> getParameters() {
         return parameters;
     }
 
-    /**
-     * Gets headers.
-     *
-     * @return the headers
-     */
     public Map<String, String> getHeaders() {
         return headers;
     }
 
-    /**
-     * Gets response code.
-     *
-     * @return the response code
-     */
     public int getResponseCode() {
         return responseCode;
     }
 
-    /**
-     * Gets response body.
-     *
-     * @return the response body
-     */
     public String getResponseBody() {
         return responseBody;
     }
 
-    /**
-     * Gets response message.
-     *
-     * @return the response message
-     */
     public String getResponseMessage() {
         return responseMessage;
     }
 
-    /**
-     * Gets request body.
-     *
-     * @return the request body
-     */
     public String getRequestBody() {
         return requestBody;
     }

@@ -27,9 +27,6 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.ImageIcon;
 
-/**
- * The type Zahori cipher gui.
- */
 public class ZahoriCipher_GUI extends javax.swing.JFrame {
 
     private static final long serialVersionUID = 1222719892838685366L;
@@ -39,18 +36,10 @@ public class ZahoriCipher_GUI extends javax.swing.JFrame {
     private javax.swing.JTextArea resultLabel;
     private javax.swing.JTextField sourceTextField;
 
-    /**
-     * Instantiates a new Zahori cipher gui.
-     */
     public ZahoriCipher_GUI() {
         initComponents();
     }
 
-    /**
-     * Main.
-     *
-     * @param args the args
-     */
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> new ZahoriCipher_GUI().setVisible(true));
     }

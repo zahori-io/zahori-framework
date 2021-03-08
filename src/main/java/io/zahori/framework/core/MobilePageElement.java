@@ -35,30 +35,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * The type Mobile page element.
- */
 public class MobilePageElement extends PageElement {
 
     private AppiumDriver appiumDriver;
 
-    /**
-     * Instantiates a new Mobile page element.
-     *
-     * @param page    the page
-     * @param name    the name
-     * @param locator the locator
-     */
     public MobilePageElement(Page page, String name, Locator locator) {
         super(page, name, locator);
         appiumDriver = (AppiumDriver) page.testContext.driver;
     }
 
-    /**
-     * Write and hide keyboard.
-     *
-     * @param text the text
-     */
     public void writeAndHideKeyboard(String text) {
         WebElement webElement = findElement();
         testContext.logInfo("Write text \"" + text + "\" on " + this);
@@ -66,12 +51,6 @@ public class MobilePageElement extends PageElement {
         hideKeyboard();
     }
 
-    /**
-     * Tap.
-     *
-     * @param fingers  the fingers
-     * @param duration the duration
-     */
     public void tap(int fingers, int duration) {
         MobileElement mobileElement = (MobileElement) findElement();
         TouchActions action = new TouchActions(appiumDriver);
@@ -115,11 +94,6 @@ public class MobilePageElement extends PageElement {
         }
     }
 
-    /**
-     * Select date in native calendar.
-     *
-     * @param date the date
-     */
     public void selectDateInNativeCalendar(String date) {
 
         if (StringUtils.isEmpty(date)) {
@@ -159,19 +133,11 @@ public class MobilePageElement extends PageElement {
         }
     }
 
-    /**
-     * Hide keyboard.
-     */
     public void hideKeyboard() {
         testContext.logInfo("Hide keyboard");
         appiumDriver.hideKeyboard();
     }
 
-    /**
-     * Send keys.
-     *
-     * @param string the string
-     */
     public void sendKeys(String string) {
         if (StringUtils.isBlank(string)) {
             return;

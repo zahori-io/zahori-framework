@@ -42,55 +42,23 @@ import com.jcraft.jsch.Session;
 
 import io.zahori.framework.exception.MethodException;
 
-/**
- * The type Scp.
- */
 public class SCP {
 
     private static final Logger LOG = LoggerFactory.getLogger(SCP.class);
-    /**
-     * The constant ERROR_AL_SUBIR_DESCARGAR_EL_FICHERO_CAUSA.
-     */
     public static final String ERROR_AL_SUBIR_DESCARGAR_EL_FICHERO_CAUSA = "Error al subir/descargar el fichero. Causa: ";
 
-    /**
-     * The Server.
-     */
     protected final String server;
-    /**
-     * The User.
-     */
     protected final String user;
-    /**
-     * The Password.
-     */
     protected final String password;
-    /**
-     * The Port.
-     */
     protected final int port;
 
     private static final int DEFAULT_PORT = 22;
 
     private enum Mode {
 
-        /**
-         * Upload mode.
-         */
-        UPLOAD,
-        /**
-         * Download mode.
-         */
-        DOWNLOAD
+        UPLOAD, DOWNLOAD
     }
 
-    /**
-     * Instantiates a new Scp.
-     *
-     * @param server   the server
-     * @param user     the user
-     * @param password the password
-     */
     public SCP(String server, String user, String password) {
         this.server = server;
         this.user = user;
@@ -98,14 +66,6 @@ public class SCP {
         this.port = DEFAULT_PORT;
     }
 
-    /**
-     * Instantiates a new Scp.
-     *
-     * @param server   the server
-     * @param user     the user
-     * @param password the password
-     * @param port     the port
-     */
     public SCP(String server, String user, String password, int port) {
         this.server = server;
         this.user = user;
@@ -113,15 +73,6 @@ public class SCP {
         this.port = port;
     }
 
-    /**
-     * Upload.
-     *
-     * @param localDir   the local dir
-     * @param localFile  the local file
-     * @param remoteDir  the remote dir
-     * @param remoteFile the remote file
-     * @throws MethodException the method exception
-     */
     public void upload(String localDir, String localFile, String remoteDir, String remoteFile) throws MethodException {
 
         LOG.debug("Uploading local file \"" + localDir + "/" + localFile + "\" to remote server (" + server
@@ -133,15 +84,6 @@ public class SCP {
         LOG.debug("File uploaded! [time: " + (System.currentTimeMillis() - startTime) + " ms]");
     }
 
-    /**
-     * Download.
-     *
-     * @param remoteDir  the remote dir
-     * @param remoteFile the remote file
-     * @param localDir   the local dir
-     * @param localFile  the local file
-     * @throws MethodException the method exception
-     */
     public void download(String remoteDir, String remoteFile, String localDir, String localFile)
             throws MethodException {
 

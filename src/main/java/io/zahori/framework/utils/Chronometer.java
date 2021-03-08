@@ -28,14 +28,8 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
 
-/**
- * The type Chronometer.
- */
 public class Chronometer {
 
-    /**
-     * The constant DATE_FORMAT.
-     */
     public static String DATE_FORMAT = "dd/MM/yyyy HH:mm:ss";
 
     private Instant executionStarted;
@@ -46,27 +40,16 @@ public class Chronometer {
 
     private String dateExecutionFinished;
 
-    /**
-     * Instantiates a new Chronometer.
-     */
     public Chronometer() {
         executionStarted = Instant.now();
         dateExecutionStarted = new SimpleDateFormat(DATE_FORMAT).format(Date.from(executionStarted));
     }
 
-    /**
-     * Sets execution finished.
-     */
     public void setExecutionFinished() {
         executionFinished = Instant.now();
         dateExecutionFinished = new SimpleDateFormat(DATE_FORMAT).format(Date.from(executionFinished));
     }
 
-    /**
-     * Gets execution time.
-     *
-     * @return the execution time
-     */
     public String getExecutionTime() {
         String executionDuration;
         int seconds = (int) Duration.between(executionStarted, executionFinished).getSeconds();
@@ -82,50 +65,25 @@ public class Chronometer {
         return executionDuration;
     }
 
-    /**
-     * Gets elapsed seconds.
-     *
-     * @return the elapsed seconds
-     */
     public int getElapsedSeconds() {
         setExecutionFinished();
         return (int) Duration.between(executionStarted, executionFinished).getSeconds();
     }
 
-    /**
-     * Gets elapsed seconds long.
-     *
-     * @return the elapsed seconds long
-     */
     public long getElapsedSecondsLong() {
         setExecutionFinished();
         return Duration.between(executionStarted, executionFinished).getSeconds();
     }
 
-    /**
-     * Gets elapsed time.
-     *
-     * @return the elapsed time
-     */
     public long getElapsedTime() {
         setExecutionFinished();
         return Duration.between(executionStarted, executionFinished).toMillis();
     }
 
-    /**
-     * Gets date execution started.
-     *
-     * @return the date execution started
-     */
     public String getDateExecutionStarted() {
         return this.dateExecutionStarted;
     }
 
-    /**
-     * Gets date execution finished.
-     *
-     * @return the date execution finished
-     */
     public String getDateExecutionFinished() {
         return this.dateExecutionFinished;
     }

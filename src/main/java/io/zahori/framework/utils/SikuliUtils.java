@@ -30,21 +30,11 @@ import org.sikuli.script.Key;
 import org.sikuli.script.KeyModifier;
 import org.sikuli.script.Screen;
 
-/**
- * The type Sikuli utils.
- */
 public class SikuliUtils {
 
     private Screen screen;
     private int timeoutFindElement;
 
-    /**
-     * Instantiates a new Sikuli utils.
-     *
-     * @param screen             the screen
-     * @param timeoutFindElement the timeout find element
-     * @param readText           the read text
-     */
     public SikuliUtils(Screen screen, int timeoutFindElement, boolean readText) {
         this.screen = screen;
         this.timeoutFindElement = timeoutFindElement;
@@ -53,40 +43,19 @@ public class SikuliUtils {
                                            // find("some text")
     }
 
-    /**
-     * Wait boolean.
-     *
-     * @param pathImage the path image
-     * @return the boolean
-     */
     public boolean wait(String pathImage) {
         return waitGeneric(pathImage, true);
     }
 
-    /**
-     * Wait dissappear boolean.
-     *
-     * @param pathImage the path image
-     * @return the boolean
-     */
     public boolean waitDissappear(String pathImage) {
         return waitGeneric(pathImage, false);
     }
 
-    /**
-     * Clear text.
-     */
     public void clearText() {
         screen.type("a", KeyModifier.CTRL);
         screen.type(Key.BACKSPACE);
     }
 
-    /**
-     * Gets sikuli images path.
-     *
-     * @param resolution the resolution
-     * @return the sikuli images path
-     */
     public String getSikuliImagesPath(String resolution) {
         String basePath = "src/test/resources/sikuli_resources/";
         String path = basePath + resolution;

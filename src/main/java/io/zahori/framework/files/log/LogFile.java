@@ -28,22 +28,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 
-/**
- * The type Log file.
- */
 public class LogFile {
 
-    /**
-     * The constant IOEXCEPTION.
-     */
     public static final String IOEXCEPTION = "IOException: ";
     private String fileName;
 
-    /**
-     * Instantiates a new Log file.
-     *
-     * @param fileName the file name
-     */
     public LogFile(String fileName) {
         try {
             this.fileName = fileName;
@@ -59,11 +48,6 @@ public class LogFile {
         }
     }
 
-    /**
-     * Write.
-     *
-     * @param log the log
-     */
     public void write(String log) {
         if (log == null) {
             return;

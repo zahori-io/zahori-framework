@@ -25,45 +25,15 @@ package io.zahori.framework.utils.video;
 
 import java.io.IOException;
 
-/**
- * The interface Enterprise screen recorder.
- */
 public interface EnterpriseScreenRecorder {
 
-    /**
-     * Start.
-     *
-     * @throws IOException the io exception
-     */
     void start() throws IOException;
 
-    /**
-     * Stop.
-     *
-     * @throws IOException the io exception
-     */
     void stop() throws IOException;
 
-    /**
-     * Save as.
-     *
-     * @param fileName the file name
-     * @throws IOException the io exception
-     */
     void saveAs(String fileName) throws IOException;
 
-    /**
-     * Save video fail.
-     *
-     * @param name the name
-     * @throws IOException the io exception
-     */
     void saveVideoFail(String name) throws IOException;
 
-    /**
-     * Delete video temp boolean.
-     *
-     * @return the boolean
-     */
     boolean deleteVideoTemp();
 }

@@ -29,38 +29,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-/**
- * The type Json extractor.
- */
 public class JSONExtractor {
 
-    /**
-     * The Auth token.
-     */
     protected String authToken;
-    /**
-     * The Session id.
-     */
     protected String sessionId;
-    /**
-     * The Default request properties.
-     */
     protected Map<String, String> defaultRequestProperties;
-    /**
-     * The Default request params.
-     */
     protected Map<String, String> defaultRequestParams;
 
     private JSONExtractor() {
     }
 
-    /**
-     * Gets value from json.
-     *
-     * @param json the json
-     * @param path the path
-     * @return the value from json
-     */
     public static String getValueFromJson(JSONObject json, String path) {
         String[] pathElements = path.split("\\.");
         JSONObject jsonTemp = getSomethingFromJson(json, path);
@@ -72,13 +50,6 @@ public class JSONExtractor {
         }
     }
 
-    /**
-     * Gets value or empty from json.
-     *
-     * @param json the json
-     * @param path the path
-     * @return the value or empty from json
-     */
     public static String getValueOrEmptyFromJson(JSONObject json, String path) {
         String[] pathElements = path.split("\\.");
         JSONObject jsonTemp = getSomethingFromJson(json, path);
@@ -90,39 +61,18 @@ public class JSONExtractor {
         }
     }
 
-    /**
-     * Gets object from json.
-     *
-     * @param json the json
-     * @param path the path
-     * @return the object from json
-     */
     public static JSONObject getObjectFromJson(JSONObject json, String path) {
         String[] pathElements = path.split("\\.");
         JSONObject jsonTemp = getSomethingFromJson(json, path);
         return pathElements.length == 0 || jsonTemp == null ? null : (JSONObject) jsonTemp.get(pathElements[pathElements.length - 1]);
     }
 
-    /**
-     * Gets array from json.
-     *
-     * @param json the json
-     * @param path the path
-     * @return the array from json
-     */
     public static JSONArray getArrayFromJson(JSONObject json, String path) {
         String[] pathElements = path.split("\\.");
         JSONObject jsonTemp = getSomethingFromJson(json, path);
         return pathElements.length == 0 || jsonTemp == null ? null : (JSONArray) jsonTemp.get(pathElements[pathElements.length - 1]);
     }
 
-    /**
-     * Gets boolean from json.
-     *
-     * @param json the json
-     * @param path the path
-     * @return the boolean from json
-     */
     public static boolean getBooleanFromJson(JSONObject json, String path) {
         String[] pathElements = path.split("\\.");
         JSONObject jsonTemp = getSomethingFromJson(json, path);

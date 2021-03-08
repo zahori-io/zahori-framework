@@ -32,30 +32,15 @@ import org.slf4j.LoggerFactory;
 
 import io.zahori.framework.exception.WebdriverException;
 
-/**
- * The type Webdriver utils.
- */
 public class WebdriverUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(WebdriverUtils.class);
-    /**
-     * The constant HTML.
-     */
     public static final String HTML = "//html";
-    /**
-     * The constant HTML_OBJECT_HASN_T_BEEN_FOUND.
-     */
     public static final String HTML_OBJECT_HASN_T_BEEN_FOUND = "HTML object hasn't been found.";
 
     private WebdriverUtils() {
     }
 
-    /**
-     * Gets browser bar height.
-     *
-     * @param driver the driver
-     * @return the browser bar height
-     */
     public static int getBrowserBarHeight(WebDriver driver) {
         try {
             WebElement element = driver.findElement(By.xpath(HTML));
@@ -74,13 +59,6 @@ public class WebdriverUtils {
 
     }
 
-    /**
-     * Gets element center.
-     *
-     * @param driver  the driver
-     * @param element the element
-     * @return the element center
-     */
     public static Point getElementCenter(WebDriver driver, WebElement element) {
         try {
             if (element == null) {
@@ -101,12 +79,6 @@ public class WebdriverUtils {
         }
     }
 
-    /**
-     * Gets y screen.
-     *
-     * @param driver the driver
-     * @return the y screen
-     */
     public static int getYScreen(WebDriver driver) {
         try {
             WebElement element = driver.findElement(By.xpath(HTML));
@@ -122,12 +94,6 @@ public class WebdriverUtils {
 
     }
 
-    /**
-     * Gets x screen.
-     *
-     * @param driver the driver
-     * @return the x screen
-     */
     public static int getXScreen(WebDriver driver) {
         try {
             WebElement element = driver.findElement(By.xpath(HTML));
@@ -142,12 +108,6 @@ public class WebdriverUtils {
 
     }
 
-    /**
-     * Gets screen limit.
-     *
-     * @param driver the driver
-     * @return the screen limit
-     */
     public static Point getScreenLimit(WebDriver driver) {
         try {
             WebElement element = driver.findElement(By.xpath("//body"));

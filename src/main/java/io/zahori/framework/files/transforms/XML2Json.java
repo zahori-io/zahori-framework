@@ -39,9 +39,6 @@ import de.odysseus.staxon.json.JsonXMLConfig;
 import de.odysseus.staxon.json.JsonXMLConfigBuilder;
 import de.odysseus.staxon.json.JsonXMLOutputFactory;
 
-/**
- * The type Xml 2 json.
- */
 public class XML2Json {
 
     private static final Logger LOG = LoggerFactory.getLogger(XML2Json.class);
@@ -49,20 +46,11 @@ public class XML2Json {
     private String xmlPath;
     private String jsonPath;
 
-    /**
-     * Instantiates a new Xml 2 json.
-     *
-     * @param xmlPath  the xml path
-     * @param jsonPath the json path
-     */
     public XML2Json(String xmlPath, String jsonPath) {
         this.xmlPath = xmlPath;
         this.jsonPath = jsonPath;
     }
 
-    /**
-     * Convert xml to json.
-     */
     public void convertXmlToJson() {
         JsonXmlUtils utils = new JsonXmlUtils();
 
@@ -90,11 +78,6 @@ public class XML2Json {
         }
     }
 
-    /**
-     * The entry point of application.
-     *
-     * @param args the input arguments
-     */
     public static void main(String[] args) {
         XML2Json test = new XML2Json("xml/entrada.xml",
                 "F:\\Workspaces\\CEST\\ORDER_CARE_TEST\\ordercare-tester\\src\\main\\resources\\xml\\salida.xml");

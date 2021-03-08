@@ -36,9 +36,6 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
-/**
- * The type Net client.
- */
 public class NetClient {
 
 	private static final String CONTENT_TYPE = "Content-Type";
@@ -56,40 +53,15 @@ public class NetClient {
 	private static final String ENCODING = "UTF-8";
 	private static final String ACCEPT = "Accept";
 
-    /**
-     * Execute get service info.
-     *
-     * @param serviceURL the service url
-     * @param params     the params
-     * @param properties the properties
-     * @return the service info
-     */
-    public static ServiceInfo executeGET(String serviceURL, Map<String, String> params, Map<String, String> properties) {
+	public static ServiceInfo executeGET(String serviceURL, Map<String, String> params, Map<String, String> properties) {
 		return executeGenericWithoutBody(METHOD_GET, serviceURL, params, properties);
 	}
 
-    /**
-     * Execute delete service info.
-     *
-     * @param serviceURL the service url
-     * @param params     the params
-     * @param properties the properties
-     * @return the service info
-     */
-    public static ServiceInfo executeDELETE(String serviceURL, Map<String, String> params, Map<String, String> properties) {
+	public static ServiceInfo executeDELETE(String serviceURL, Map<String, String> params, Map<String, String> properties) {
 		return executeGenericWithoutBody(METHOD_DELETE, serviceURL, params, properties);
 	}
 
-    /**
-     * Execute generic without body service info.
-     *
-     * @param method     the method
-     * @param serviceURL the service url
-     * @param params     the params
-     * @param properties the properties
-     * @return the service info
-     */
-    public static ServiceInfo executeGenericWithoutBody(String method, String serviceURL, Map<String, String> params, Map<String, String> properties) {
+	public static ServiceInfo executeGenericWithoutBody(String method, String serviceURL, Map<String, String> params, Map<String, String> properties) {
 		try {
 			URL url = getFinalUrl(serviceURL, params);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -114,53 +86,19 @@ public class NetClient {
 		}
 	}
 
-    /**
-     * Execute pos tw json service info.
-     *
-     * @param serviceURL        the service url
-     * @param params            the params
-     * @param requestProperties the request properties
-     * @return the service info
-     */
-    public static ServiceInfo executePOSTwJson(String serviceURL, Map<String, String> params, Map<String, String> requestProperties) {
+	public static ServiceInfo executePOSTwJson(String serviceURL, Map<String, String> params, Map<String, String> requestProperties) {
 		return executePOST(serviceURL, params, requestProperties, null, CONTENTTYPE_JSON);
 	}
 
-    /**
-     * Execute pos tw json service info.
-     *
-     * @param serviceURL        the service url
-     * @param params            the params
-     * @param requestProperties the request properties
-     * @param body              the body
-     * @return the service info
-     */
-    public static ServiceInfo executePOSTwJson(String serviceURL, Map<String, String> params, Map<String, String> requestProperties, String body) {
+	public static ServiceInfo executePOSTwJson(String serviceURL, Map<String, String> params, Map<String, String> requestProperties, String body) {
 		return executePOST(serviceURL, params, requestProperties, body, CONTENTTYPE_JSON);
 	}
 
-    /**
-     * Execute pos tw form url service info.
-     *
-     * @param serviceURL        the service url
-     * @param params            the params
-     * @param requestProperties the request properties
-     * @return the service info
-     */
-    public static ServiceInfo executePOSTwFormUrl(String serviceURL, Map<String, String> params, Map<String, String> requestProperties) {
+	public static ServiceInfo executePOSTwFormUrl(String serviceURL, Map<String, String> params, Map<String, String> requestProperties) {
 		return executePOST(serviceURL, params, requestProperties, null, CONTENTTYPE_FORMURLENCODED);
 	}
 
-    /**
-     * Execute pos tw form url service info.
-     *
-     * @param serviceURL        the service url
-     * @param params            the params
-     * @param requestProperties the request properties
-     * @param body              the body
-     * @return the service info
-     */
-    public static ServiceInfo executePOSTwFormUrl(String serviceURL, Map<String, String> params, Map<String, String> requestProperties, String body) {
+	public static ServiceInfo executePOSTwFormUrl(String serviceURL, Map<String, String> params, Map<String, String> requestProperties, String body) {
 		return executePOST(serviceURL, params, requestProperties, body, CONTENTTYPE_FORMURLENCODED);
 	}
 
@@ -169,38 +107,15 @@ public class NetClient {
 		return executePOSTPUT(METHOD_POST, serviceURL, params, requestProperties, body, contentType);
 	}
 
-    /**
-     * Execute put service info.
-     *
-     * @param serviceURL        the service url
-     * @param params            the params
-     * @param requestProperties the request properties
-     * @return the service info
-     */
-    public static ServiceInfo executePUT(String serviceURL, Map<String, String> params, Map<String, String> requestProperties) {
+	public static ServiceInfo executePUT(String serviceURL, Map<String, String> params, Map<String, String> requestProperties) {
 		return executePUT(serviceURL, params, requestProperties, null);
 	}
 
-    /**
-     * Execute put service info.
-     *
-     * @param serviceURL        the service url
-     * @param params            the params
-     * @param requestProperties the request properties
-     * @param body              the body
-     * @return the service info
-     */
-    public static ServiceInfo executePUT(String serviceURL, Map<String, String> params, Map<String, String> requestProperties, String body) {
+	public static ServiceInfo executePUT(String serviceURL, Map<String, String> params, Map<String, String> requestProperties, String body) {
 		return executePOSTPUT(METHOD_PUT, serviceURL, params, requestProperties, body, CONTENTTYPE_JSON);
 	}
 
-    /**
-     * Is ok boolean.
-     *
-     * @param responseCode the response code
-     * @return the boolean
-     */
-    public static boolean isOK(int responseCode) {
+	public static boolean isOK(int responseCode) {
 		return responseCode >= 200 && responseCode <= 299;
 	}
 

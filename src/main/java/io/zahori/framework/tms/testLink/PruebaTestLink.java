@@ -23,19 +23,11 @@ package io.zahori.framework.tms.testLink;
  * #L%
  */
 
-/**
- * The type Prueba test link.
- */
 public class PruebaTestLink {
 
     private PruebaTestLink() {
     }
 
-    /**
-     * The entry point of application.
-     *
-     * @param strings the input arguments
-     */
     public static void main(String... strings) {
 
         String urlTestLink = "http://10.60.3.117/testlink/lib/api/xmlrpc/v1/xmlrpc.php";

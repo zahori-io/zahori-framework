@@ -31,20 +31,11 @@ import java.io.File;
 
 import javax.imageio.ImageIO;
 
-/**
- * The type Screen shot.
- */
 public class ScreenShot {
 
     private ScreenShot() {
     }
 
-    /**
-     * Create.
-     *
-     * @param file the file
-     * @throws Exception the exception
-     */
     public static void create(String file) throws Exception {
 
         try {

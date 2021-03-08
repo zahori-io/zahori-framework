@@ -26,19 +26,11 @@ package io.zahori.framework.i18n;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * The type Messages.
- */
 public class Messages {
 
     private String[] languages;
     private Map<String, MessageReader> messageReaders = new LinkedHashMap<>();
 
-    /**
-     * Instantiates a new Messages.
-     *
-     * @param languages the languages
-     */
     public Messages(String[] languages) {
         this.languages = languages;
         for (String language : languages) {
@@ -46,36 +38,16 @@ public class Messages {
         }
     }
 
-    /**
-     * Gets message.
-     *
-     * @param language    the language
-     * @param messageKey  the message key
-     * @param messageArgs the message args
-     * @return the message
-     */
     public String getMessage(String language, String messageKey, String... messageArgs) {
         return messageReaders.get(language).get(messageKey, messageArgs);
     }
 
-    /**
-     * Gets message in first language.
-     *
-     * @param messageKey  the message key
-     * @param messageArgs the message args
-     * @return the message in first language
-     */
     public String getMessageInFirstLanguage(String messageKey, String... messageArgs) {
         // Get the first messages reader specified in zahori.properties
         MessageReader messagesReader = messageReaders.entrySet().iterator().next().getValue();
         return messagesReader.get(messageKey, messageArgs);
     }
 
-    /**
-     * Get languages string [ ].
-     *
-     * @return the string [ ]
-     */
     public String[] getLanguages() {
         return languages;
     }

@@ -29,19 +29,10 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
-/**
- * The type Data base fields finder.
- */
 public class DataBaseFieldsFinder {
 
-    /**
-     * The constant TBNAME.
-     */
     public static final String TBNAME = "TBNAME";
 
-    /**
-     * Test query.
-     */
     @Test(enabled = true)
     public void testQuery() {
         final String driver = "com.ibm.db2.jcc.DB2Driver";

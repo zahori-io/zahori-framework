@@ -44,9 +44,6 @@ import io.zahori.framework.exception.ZahoriException;
 import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
 
-/**
- * The type Android screen recorder.
- */
 public class AndroidScreenRecorder implements EnterpriseScreenRecorder {
 
     private static final String TMP_FILENAME = "testVideo";
@@ -55,26 +52,13 @@ public class AndroidScreenRecorder implements EnterpriseScreenRecorder {
     private static final int ANDROID_RECORD_LIMIT_MINUTES = 3;
     private static final String DOWNLOAD_FINISH_PATTERN = "1 file pulled";
     private static final String DOWNLOAD_ERROR_PATTERN = "does not exist";
-    /**
-     * The constant SCREENRECORD.
-     */
     public static final String SCREENRECORD = "screenrecord";
     private int maxFiles;
 
     private String filePath;
     private Process recordProcess;
-    /**
-     * The Path separator.
-     */
     String pathSeparator;
 
-    /**
-     * Instantiates a new Android screen recorder.
-     *
-     * @param filePath           the file path
-     * @param maxDurationMinutes the max duration minutes
-     * @throws IOException the io exception
-     */
     public AndroidScreenRecorder(String filePath, Integer maxDurationMinutes) throws IOException {
         File directorio = new File(filePath);
 

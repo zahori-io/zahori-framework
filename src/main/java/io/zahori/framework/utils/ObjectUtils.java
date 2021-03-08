@@ -32,22 +32,11 @@ import org.javers.core.diff.changetype.ValueChange;
 
 import io.zahori.framework.core.TestContext;
 
-/**
- * The type Object utils.
- */
 public class ObjectUtils {
 
     private ObjectUtils() {
     }
 
-    /**
-     * Equals not primitive types string.
-     *
-     * @param testContext the test context
-     * @param var1        the var 1
-     * @param var2        the var 2
-     * @return the string
-     */
     public static String equalsNotPrimitiveTypes(TestContext testContext, Object var1, Object var2) {
         Javers javers = JaversBuilder.javers().build();
         Diff diff = javers.compare(var1, var2);

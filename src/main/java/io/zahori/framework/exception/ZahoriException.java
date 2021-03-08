@@ -23,9 +23,6 @@ package io.zahori.framework.exception;
  * #L%
  */
 
-/**
- * The type Zahori exception.
- */
 public class ZahoriException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
@@ -33,13 +30,6 @@ public class ZahoriException extends RuntimeException {
     private final String messageKey;
     private final String[] messageArgs;
 
-    /**
-     * Instantiates a new Zahori exception.
-     *
-     * @param testCaseName the test case name
-     * @param messageKey   the message key
-     * @param messageArgs  the message args
-     */
     public ZahoriException(String testCaseName, String messageKey, String... messageArgs) {
         super();
         this.message = testCaseName + ": " + messageKey;
@@ -52,20 +42,10 @@ public class ZahoriException extends RuntimeException {
         return message;
     }
 
-    /**
-     * Gets message key.
-     *
-     * @return the message key
-     */
     public String getMessageKey() {
         return messageKey;
     }
 
-    /**
-     * Get message args string [ ].
-     *
-     * @return the string [ ]
-     */
     public String[] getMessageArgs() {
         return messageArgs.clone();
     }

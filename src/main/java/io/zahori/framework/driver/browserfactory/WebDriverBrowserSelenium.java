@@ -47,9 +47,6 @@ import org.testng.log4testng.Logger;
 
 import io.zahori.framework.files.properties.ZahoriProperties;
 
-/**
- * The type Web driver browser selenium.
- */
 public class WebDriverBrowserSelenium {
 
     private static final int TIME_WAIT_ELEMENT_NOT_PRESENT_TWENTY_SG = 20;
@@ -62,34 +59,18 @@ public class WebDriverBrowserSelenium {
 
     private Proxy proxy;
 
-    /**
-     * Instantiates a new Web driver browser selenium.
-     *
-     * @param browsers the browsers
-     */
     public WebDriverBrowserSelenium(Browsers browsers) {
         super();
         this.browsers = browsers;
         proxy = null;
     }
 
-    /**
-     * Instantiates a new Web driver browser selenium.
-     *
-     * @param browsers the browsers
-     * @param proxy    the proxy
-     */
     public WebDriverBrowserSelenium(Browsers browsers, final Proxy proxy) {
         super();
         this.browsers = browsers;
         this.proxy = proxy;
     }
 
-    /**
-     * Gets web driver.
-     *
-     * @return the web driver
-     */
     public WebDriver getWebDriver() {
         WebDriver driver = null;
         String testName = browsers.getTestName();
@@ -121,26 +102,11 @@ public class WebDriverBrowserSelenium {
         return driver;
     }
 
-    /**
-     * Sets properties.
-     *
-     * @param driver the driver
-     */
     public void setProperties(final WebDriver driver) {
         driver.manage().timeouts().implicitlyWait(TIME_WAIT_ELEMENT_NOT_PRESENT_TWENTY_SG, TimeUnit.SECONDS);
         driver.manage().window().maximize();
     }
 
-    /**
-     * Gets driver.
-     *
-     * @param caps the caps
-     * @return the driver
-     * @throws NoSuchMethodException     the no such method exception
-     * @throws IllegalAccessException    the illegal access exception
-     * @throws InvocationTargetException the invocation target exception
-     * @throws InstantiationException    the instantiation exception
-     */
     public WebDriver getDriver(final DesiredCapabilities caps)
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         WebDriver driver;
@@ -149,13 +115,6 @@ public class WebDriverBrowserSelenium {
         return driver;
     }
 
-    /**
-     * Gets web driver remote yes.
-     *
-     * @param navega the navega
-     * @param caps   the caps
-     * @return the web driver remote yes
-     */
     public WebDriver getWebDriverRemoteYES(final Browsers navega, final DesiredCapabilities caps) {
 
         WebDriver driver = null;
@@ -181,18 +140,6 @@ public class WebDriverBrowserSelenium {
         return driver;
     }
 
-    /**
-     * Gets web driver remote no.
-     *
-     * @param navega the navega
-     * @param caps   the caps
-     * @return the web driver remote no
-     * @throws InstantiationException    the instantiation exception
-     * @throws IllegalAccessException    the illegal access exception
-     * @throws InvocationTargetException the invocation target exception
-     * @throws NoSuchMethodException     the no such method exception
-     * @throws ClassNotFoundException    the class not found exception
-     */
     public WebDriver getWebDriverRemoteNO(final Browsers navega, final DesiredCapabilities caps)
             throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
         Platform currentPlatform = caps.getPlatform();
@@ -268,20 +215,10 @@ public class WebDriverBrowserSelenium {
         }
     }
 
-    /**
-     * Gets navega.
-     *
-     * @return the navega
-     */
     public Browsers getNavega() {
         return browsers;
     }
 
-    /**
-     * Sets navega.
-     *
-     * @param navega the navega
-     */
     public void setNavega(final Browsers navega) {
         this.browsers = navega;
     }

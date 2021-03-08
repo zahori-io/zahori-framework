@@ -56,46 +56,21 @@ import io.zahori.framework.utils.video.EnterpriseScreenRecorder;
 import io.zahori.framework.utils.video.VideoRecorder;
 import io.zahori.model.Status;
 import io.zahori.model.Step;
+import io.zahori.model.process.ProcessRegistration;
 import net.lightbody.bmp.core.har.Har;
 
-/**
- * The type Evidences.
- */
 public class Evidences {
 
-    /**
-     * The enum Zahori log level.
-     */
     public enum ZahoriLogLevel {
-        /**
-         * Debug zahori log level.
-         */
-        DEBUG,
-        /**
-         * Info zahori log level.
-         */
-        INFO,
-        /**
-         * Warn zahori log level.
-         */
-        WARN,
-        /**
-         * Error zahori log level.
-         */
-        ERROR
+        DEBUG, INFO, WARN, ERROR
     }
 
     private ZahoriLogLevel logLevel;
-    /**
-     * The constant LOG_DEFAULT_LEVEL.
-     */
     public static final ZahoriLogLevel LOG_DEFAULT_LEVEL = ZahoriLogLevel.INFO;
     private static final String LOG_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private SimpleDateFormat sdf;
 
     private static final Logger LOG = LoggerFactory.getLogger(Evidences.class);
-
-    private static final String PATH_SEPARATOR = "/";
 
     private static final String UNDERSCORE = "_";
 
@@ -131,27 +106,22 @@ public class Evidences {
 
     private boolean remoteBrowser;
 
-    /**
-     * Instantiates a new Evidences.
-     *
-     * @param zahoriProperties the zahori properties
-     * @param messages         the messages
-     * @param testCaseName     the test case name
-     * @param platform         the platform
-     * @param browser          the browser
-     * @param testId           the test id
-     * @param templatePath     the template path
-     * @param remoteBrowser    the remote browser
-     */
     public Evidences(ZahoriProperties zahoriProperties, Messages messages, String testCaseName, String platform, String browser, String testId,
-            String templatePath, boolean remoteBrowser) {
+            String templatePath, boolean remoteBrowser, ProcessRegistration processRegistration) {
         this.remoteBrowser = remoteBrowser;
         this.zahoriProperties = zahoriProperties;
         this.messages = messages;
         evidenceFileNamePattern = testCaseName + UNDERSCORE + (!StringUtils.isBlank(platform) ? platform + UNDERSCORE : "")
                 + (!StringUtils.isBlank(browser) ? browser + UNDERSCORE : "") + testId;
-        path = zahoriProperties.getResultsDir() + testCaseName + PATH_SEPARATOR + (!StringUtils.isBlank(platform) ? platform + PATH_SEPARATOR : "")
-                + (!StringUtils.isBlank(browser) ? browser + PATH_SEPARATOR : "") + testId + PATH_SEPARATOR;
+
+        String processPath = "";
+        if (processRegistration != null) {
+            processPath = processRegistration.getClientId() + File.separator + processRegistration.getTeamId() + File.separator + processRegistration.getName()
+                    + File.separator;
+        }
+        path = zahoriProperties.getResultsDir() + processPath + testCaseName + File.separator
+                + (!StringUtils.isBlank(platform) ? platform + File.separator : "") + (!StringUtils.isBlank(browser) ? browser + File.separator : "") + testId
+                + File.separator;
         prepareDirectory(new File(path));
 
         // Get languages defined in zahori.properties
@@ -207,22 +177,12 @@ public class Evidences {
         sdf = new SimpleDateFormat(LOG_DATE_FORMAT);
     }
 
-    /**
-     * Insert step.
-     *
-     * @param steps the steps
-     */
     public void insertStep(List<Step> steps) {
         consoleSteps(steps);
         insertStepsInLogFile(steps);
         insertStepsInDoc(steps);
     }
 
-    /**
-     * Console.
-     *
-     * @param text the text
-     */
     public void console(String text) {
         if (StringUtils.isBlank(text)) {
             LOG.info("");
@@ -235,12 +195,6 @@ public class Evidences {
         }
     }
 
-    /**
-     * Console.
-     *
-     * @param level the level
-     * @param text  the text
-     */
     public void console(ZahoriLogLevel level, String text) {
         if (level.compareTo(logLevel) >= 0) {
             try {
@@ -260,23 +214,10 @@ public class Evidences {
         }
     }
 
-    /**
-     * Insert text in log file.
-     *
-     * @param text     the text
-     * @param textArgs the text args
-     */
     public void insertTextInLogFile(String text, String... textArgs) {
         insertTextInLogFile(logLevel, text, textArgs);
     }
 
-    /**
-     * Insert text in log file.
-     *
-     * @param level    the level
-     * @param text     the text
-     * @param textArgs the text args
-     */
     public void insertTextInLogFile(ZahoriLogLevel level, String text, String... textArgs) {
         if (level.compareTo(logLevel) >= 0) {
             for (Map.Entry<String, LogFile> log : logFiles.entrySet()) {
@@ -286,24 +227,12 @@ public class Evidences {
         }
     }
 
-    /**
-     * Insert text in docs.
-     *
-     * @param text     the text
-     * @param textArgs the text args
-     */
     public void insertTextInDocs(String text, String... textArgs) {
         for (Map.Entry<String, Word> doc : docs.entrySet()) {
             doc.getValue().insertarTexto(messages.getMessage(doc.getKey(), text, textArgs));
         }
     }
 
-    /**
-     * Insert failed text in docs.
-     *
-     * @param text     the text
-     * @param textArgs the text args
-     */
     public void insertFailedTextInDocs(String text, String... textArgs) {
         for (Map.Entry<String, Word> doc : docs.entrySet()) {
             if (hasBoldText(text)) {
@@ -314,12 +243,6 @@ public class Evidences {
         }
     }
 
-    /**
-     * Insert success text in docs.
-     *
-     * @param text     the text
-     * @param textArgs the text args
-     */
     public void insertSuccessTextInDocs(String text, String... textArgs) {
         for (Map.Entry<String, Word> doc : docs.entrySet()) {
             if (hasBoldText(text)) {
@@ -330,13 +253,6 @@ public class Evidences {
         }
     }
 
-    /**
-     * Insert image in doc.
-     *
-     * @param image    the image
-     * @param text     the text
-     * @param textArgs the text args
-     */
     public void insertImageInDoc(String image, String text, String... textArgs) {
         if (!StringUtils.isBlank(image)) {
             for (Map.Entry<String, Word> doc : docs.entrySet()) {
@@ -347,11 +263,6 @@ public class Evidences {
         }
     }
 
-    /**
-     * Gets evidences path.
-     *
-     * @return the evidences path
-     */
     public String getEvidencesPath() {
         return path;
     }
@@ -430,14 +341,6 @@ public class Evidences {
 
     }
 
-    /**
-     * Create screenshot string.
-     *
-     * @param numPaso    the num paso
-     * @param numSubPaso the num sub paso
-     * @param driver     the driver
-     * @return the string
-     */
     public String createScreenshot(int numPaso, int numSubPaso, WebDriver driver) {
         String screenshot = null;
         if (screenshots != null) {
@@ -446,32 +349,26 @@ public class Evidences {
                 File screenShotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
                 FileUtils.copyFile(screenShotFile, new File(screenshot));
             } catch (Exception e) {
-                console(ZahoriLogLevel.WARN, "Error creating screenshot: " + e.getMessage());
-                insertTextInLogFile(ZahoriLogLevel.WARN, "Error creating screenshot: " + e.getMessage());
+                String error = "Error creating screenshot: " + e.getMessage();
+                console(ZahoriLogLevel.ERROR, error);
+                insertTextInLogFile(ZahoriLogLevel.ERROR, error);
+                insertFailedTextInDocs(error);
             }
         }
         return screenshot;
     }
 
-    /**
-     * Start video.
-     */
     public void startVideo() {
         if (video != null) {
             try {
                 video.start();
             } catch (Exception e) {
-                console(ZahoriLogLevel.WARN, "Error starting video: " + e.getMessage());
-                insertTextInLogFile(ZahoriLogLevel.WARN, "Error starting video: " + e.getMessage());
+                console(ZahoriLogLevel.ERROR, "Error starting video: " + e.getMessage());
+                insertTextInLogFile(ZahoriLogLevel.ERROR, "Error starting video: " + e.getMessage());
             }
         }
     }
 
-    /**
-     * Stop video.
-     *
-     * @param isTestPassed the is test passed
-     */
     public void stopVideo(boolean isTestPassed) {
         if (video != null) {
             try {
@@ -484,83 +381,42 @@ public class Evidences {
                     video.deleteVideoTemp();
                 }
             } catch (Exception e) {
-                console(ZahoriLogLevel.WARN, "Error stopping video: " + e.getMessage());
-                insertTextInLogFile(ZahoriLogLevel.WARN, "Error stopping video: " + e.getMessage());
+                console(ZahoriLogLevel.ERROR, "Error stopping video: " + e.getMessage());
+                insertTextInLogFile(ZahoriLogLevel.ERROR, "Error stopping video: " + e.getMessage());
 
             }
         }
 
     }
 
-    /**
-     * Gets evidence file name pattern.
-     *
-     * @return the evidence file name pattern
-     */
     public String getEvidenceFileNamePattern() {
         return evidenceFileNamePattern;
     }
 
-    /**
-     * Gets path.
-     *
-     * @return the path
-     */
     public String getPath() {
         return path;
     }
 
-    /**
-     * Gets doc file names.
-     *
-     * @return the doc file names
-     */
     public List<String> getDocFileNames() {
         return docFileNames;
     }
 
-    /**
-     * Gets log file names.
-     *
-     * @return the log file names
-     */
     public List<String> getLogFileNames() {
         return logFileNames;
     }
 
-    /**
-     * Gets har log file name.
-     *
-     * @return the har log file name
-     */
     public String getHarLogFileName() {
         return harLogFileName;
     }
 
-    /**
-     * Gets video file name.
-     *
-     * @return the video file name
-     */
     public String getVideoFileName() {
         return videoFileName;
     }
 
-    /**
-     * Gets screenshots.
-     *
-     * @return the screenshots
-     */
     public List<String> getScreenshots() {
         return screenshots;
     }
 
-    /**
-     * Gets bmp 4 har log.
-     *
-     * @return the bmp 4 har log
-     * @throws UnknownHostException the unknown host exception
-     */
     public Proxy getBMP4HarLog() throws UnknownHostException {
         proxy = new BrowserMobProxy();
 
@@ -645,11 +501,6 @@ public class Evidences {
         return seleniumProxy;
     }
 
-    /**
-     * Store har log.
-     *
-     * @throws IOException the io exception
-     */
     public void storeHarLog() throws IOException {
         String urlPattern = zahoriProperties.getHarFilterByUrlPattern();
         String requestMethods = zahoriProperties.getHarFilterByRequestMethod();
@@ -671,11 +522,6 @@ public class Evidences {
         harLog.writeTo(new File(getEvidencesPath() + getEvidenceFileNamePattern() + ".har"));
     }
 
-    /**
-     * Gets browser mob proxy.
-     *
-     * @return the browser mob proxy
-     */
     public BrowserMobProxy getBrowserMobProxy() {
         return proxy;
     }

@@ -23,22 +23,12 @@ package io.zahori.framework.core;
  * #L%
  */
 
-/**
- * The type Host page element.
- */
 public class HostPageElement extends PageElement {
 
     private int row;
 
     private int column;
 
-    /**
-     * Instantiates a new Host page element.
-     *
-     * @param page    the page
-     * @param name    the name
-     * @param locator the locator
-     */
     public HostPageElement(HostPage page, String name, Locator locator) {
         super(page, name, locator);
         this.setDriver(page.getDriver());
@@ -51,31 +41,14 @@ public class HostPageElement extends PageElement {
         }
     }
 
-    /**
-     * Gets position row.
-     *
-     * @return the position row
-     */
     public int getPositionRow() {
         return this.row;
     }
 
-    /**
-     * Gets position column.
-     *
-     * @return the position column
-     */
     public int getPositionColumn() {
         return this.column;
     }
 
-    /**
-     * Write string.
-     *
-     * @param text   the text
-     * @param source the source
-     * @return the string
-     */
     public String write(String text, String source) {
         super.write(text);
         return ("Field " + this.name + " (pos: " + this.row + "/" + this.column + ") set with value: " + source + ": '"

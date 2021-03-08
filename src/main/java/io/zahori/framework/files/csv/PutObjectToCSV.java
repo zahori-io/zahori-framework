@@ -31,9 +31,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The type Put object to csv.
- */
 public class PutObjectToCSV {
 
     private static final String ERROR_WRITE_ROW_IN_CSV = "Error en metodo writeRowInCSV: ";
@@ -44,20 +41,10 @@ public class PutObjectToCSV {
 
     private static final char SEPARADOR = ';';
 
-    /**
-     * Instantiates a new Put object to csv.
-     *
-     * @param rutaFichero the ruta fichero
-     */
     public PutObjectToCSV(File rutaFichero) {
         this.ficheroEscritura = rutaFichero;
     }
 
-    /**
-     * Write row in csv.
-     *
-     * @param campos the campos
-     */
     public void writeRowInCSV(List<String> campos) {
         try {
             FileWriter fichero = new FileWriter(this.ficheroEscritura, true);
@@ -75,20 +62,10 @@ public class PutObjectToCSV {
         }
     }
 
-    /**
-     * Gets ruta.
-     *
-     * @return the ruta
-     */
     public File getRuta() {
         return ficheroEscritura;
     }
 
-    /**
-     * Sets ruta.
-     *
-     * @param ruta the ruta
-     */
     public void setRuta(File ruta) {
         this.ficheroEscritura = ruta;
     }

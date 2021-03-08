@@ -31,26 +31,14 @@ import java.io.OutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The type Json xml utils.
- */
 public class JsonXmlUtils {
 
     private static final Logger LOG = LoggerFactory.getLogger(JsonXmlUtils.class);
 
-    /**
-     * Instantiates a new Json xml utils.
-     */
     public JsonXmlUtils() {
         super();
     }
 
-    /**
-     * Gets output path json.
-     *
-     * @param jsonPath the json path
-     * @return the output path json
-     */
     public OutputStream getOutputPathJson(String jsonPath) {
         OutputStream output = null;
         try {
@@ -61,12 +49,6 @@ public class JsonXmlUtils {
         return output;
     }
 
-    /**
-     * Gets input path xml.
-     *
-     * @param xmlPath the xml path
-     * @return the input path xml
-     */
     public InputStream getInputPathXml(String xmlPath) {
         InputStream input;
         input = JsonXmlUtils.class.getResourceAsStream(xmlPath);

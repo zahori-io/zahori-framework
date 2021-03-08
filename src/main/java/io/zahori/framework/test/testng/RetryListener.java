@@ -30,9 +30,6 @@ import org.testng.IAnnotationTransformer;
 import org.testng.IRetryAnalyzer;
 import org.testng.annotations.ITestAnnotation;
 
-/**
- * The type Retry listener.
- */
 public class RetryListener implements IAnnotationTransformer {
 
     @Override

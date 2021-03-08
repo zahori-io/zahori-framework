@@ -32,9 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import io.zahori.framework.robot.UtilsRobot;
 
-/**
- * The type Thread ie.
- */
 public class ThreadIE extends Thread {
 
     private static final Logger LOG = LoggerFactory.getLogger(ThreadIE.class);
@@ -51,14 +48,6 @@ public class ThreadIE extends Thread {
 
     private boolean waiting;
 
-    /**
-     * Instantiates a new Thread ie.
-     *
-     * @param name     the name
-     * @param list     the list
-     * @param limit    the limit
-     * @param waitNext the wait next
-     */
     public ThreadIE(String name, List<Point> list, Point limit, boolean waitNext) {
         super(name);
         this.robot = new UtilsRobot();
@@ -81,9 +70,6 @@ public class ThreadIE extends Thread {
         this.interrupt();
     }
 
-    /**
-     * Sets execution finish.
-     */
     public void setExecutionFinish() {
         this.execution = false;
     }

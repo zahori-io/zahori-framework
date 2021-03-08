@@ -32,22 +32,11 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
-/**
- * The type Csv file.
- */
 public class CSVFile {
 
     private CSVFile() {
     }
 
-    /**
-     * Gets row.
-     *
-     * @param fileName    the file name
-     * @param columnKey   the column key
-     * @param columnValue the column value
-     * @return the row
-     */
     public static CSVRecord getRow(String fileName, final String columnKey, final String columnValue) {
 
         FileReader fileReader = null;

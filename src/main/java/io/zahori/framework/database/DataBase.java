@@ -40,9 +40,6 @@ import org.slf4j.LoggerFactory;
 
 import io.zahori.framework.utils.Notification;
 
-/**
- * The type Data base.
- */
 public class DataBase {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataBase.class);
@@ -53,14 +50,6 @@ public class DataBase {
     private final String user;
     private final String password;
 
-    /**
-     * Instantiates a new Data base.
-     *
-     * @param driver   the driver
-     * @param url      the url
-     * @param user     the user
-     * @param password the password
-     */
     public DataBase(String driver, String url, String user, String password) {
         this.driver = driver;
         this.url = url;
@@ -80,13 +69,6 @@ public class DataBase {
         return "";
     }
 
-    /**
-     * Execute query map.
-     *
-     * @param query the query
-     * @param args  the args
-     * @return the map
-     */
     @Deprecated
     public Map<String, String> executeQuery(String query, Object... args) {
 
@@ -171,13 +153,6 @@ public class DataBase {
         }
     }
 
-    /**
-     * Execute list.
-     *
-     * @param query the query
-     * @param args  the args
-     * @return the list
-     */
     /*
      * executes a query. Returns a list with all rows returned by the query
      */
@@ -185,13 +160,6 @@ public class DataBase {
         return executeGeneric(true, query, args);
     }
 
-    /**
-     * Try to execute list.
-     *
-     * @param query the query
-     * @param args  the args
-     * @return the list
-     */
     /*
      * executes a query. Returns a list with all rows returned by the query
      */
@@ -289,13 +257,6 @@ public class DataBase {
         }
     }
 
-    /**
-     * Execute and notify list.
-     *
-     * @param txtQuery the txt query
-     * @param args     the args
-     * @return the list
-     */
     public List<Map<String, String>> executeAndNotify(String txtQuery, Object... args) {
         List<Map<String, String>> resultsMap = execute(txtQuery, args);
         String query = txtQuery;

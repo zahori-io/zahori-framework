@@ -27,19 +27,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-/**
- * The type System properties utils.
- */
 public class SystemPropertiesUtils {
 
-    /**
-     * The Properties file.
-     */
     static final String PROPERTIES_FILE = "zahori.properties";
 
-    /**
-     * Load system properties.
-     */
     public static void loadSystemProperties() {
         final Properties properties = new Properties(System.getProperties());
         final InputStream is = SystemPropertiesUtils.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE);

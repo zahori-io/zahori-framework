@@ -46,9 +46,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 
-/**
- * The type Notification.
- */
 public class Notification {
 
     private JFrame frame;
@@ -64,22 +61,10 @@ public class Notification {
 
     private static final String PROP_NOTIFICATION_BACKGROUNDS_PATH = "notification.backgrounds.path";
 
-    /**
-     * Instantiates a new Notification.
-     *
-     * @param text the text
-     */
     public Notification(String text) {
         this(text, DEFAULT_WIDTH, DEFAULT_HEIGHT);
     }
 
-    /**
-     * Instantiates a new Notification.
-     *
-     * @param text         the text
-     * @param pixelsWidth  the pixels width
-     * @param pixelsHeight the pixels height
-     */
     public Notification(String text, int pixelsWidth, int pixelsHeight) {
         try {
             initFrame(pixelsWidth, pixelsHeight);
@@ -92,12 +77,6 @@ public class Notification {
 
     }
 
-    /**
-     * Instantiates a new Notification.
-     *
-     * @param text      the text
-     * @param dataTable the data table
-     */
     public Notification(String text, List<Map<String, String>> dataTable) {
         try {
             initFrame(DEFAULT_WIDTH_TABLE, DEFAULT_HEIGHT_TABLE);
@@ -123,9 +102,6 @@ public class Notification {
 
     }
 
-    /**
-     * Scroll.
-     */
     public void scroll() {
         try {
             Point actualView = this.scroll.getViewport().getViewPosition();
@@ -136,11 +112,6 @@ public class Notification {
         }
     }
 
-    /**
-     * Is scrollable boolean.
-     *
-     * @return the boolean
-     */
     public boolean isScrollable() {
         try {
             JScrollBar scrollBar = this.scroll.getHorizontalScrollBar();
@@ -150,9 +121,6 @@ public class Notification {
         }
     }
 
-    /**
-     * Close notification.
-     */
     public void closeNotification() {
         try {
             frame.setVisible(false);
@@ -214,26 +182,14 @@ public class Notification {
         }
     }
 
-    /**
-     * The type Data model.
-     */
     static class DataModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -1422025101140468579L;
 
-        /**
-         * The Data table.
-         */
         Object[][] dataTable;
-        /**
-         * The Headers.
-         */
         String[] headers;
 
-        /**
-         * The type Table listener.
-         */
-// This class prints data in console every time there are changes on any
+        // This class prints data in console every time there are changes on any
         // table cell.
         class TableListener implements TableModelListener {
             @Override
@@ -247,12 +203,7 @@ public class Notification {
             }
         }
 
-        /**
-         * Instantiates a new Data model.
-         *
-         * @param data the data
-         */
-// Constructor
+        // Constructor
         DataModel(List<Map<String, String>> data) {
             if (data.isEmpty() || (data == null)) {
                 this.dataTable = new Object[0][0];

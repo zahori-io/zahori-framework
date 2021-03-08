@@ -36,26 +36,12 @@ import org.testng.annotations.Test;
 
 import io.zahori.framework.driver.browserfactory.Browsers;
 
-/**
- * The type Base test.
- */
 public abstract class BaseTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(BaseTest.class);
-    /**
-     * The Test context.
-     */
     protected TestContext testContext;
-    /**
-     * The Retries.
-     */
     protected int retries;
 
-    /**
-     * Sets .
-     *
-     * @param testNGContext the test ng context
-     */
     @BeforeMethod(alwaysRun = true)
     public void setup(ITestContext testNGContext) {
         try {
@@ -77,9 +63,6 @@ public abstract class BaseTest {
         }
     }
 
-    /**
-     * Test main.
-     */
     @Test
     public void testMain() {
         ITestResult result = Reporter.getCurrentTestResult();
@@ -101,14 +84,8 @@ public abstract class BaseTest {
         }
     }
 
-    /**
-     * Test.
-     */
     public abstract void test();
 
-    /**
-     * After test.
-     */
     @AfterMethod(alwaysRun = true)
     public void afterTest() {
         try {

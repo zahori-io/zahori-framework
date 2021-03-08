@@ -43,9 +43,6 @@ import br.eti.kinoshita.testlinkjavaapi.model.TestCase;
 import br.eti.kinoshita.testlinkjavaapi.model.TestPlan;
 import br.eti.kinoshita.testlinkjavaapi.util.TestLinkAPIException;
 
-/**
- * The type Test link.
- */
 public class TestLink {
 
     private TestLinkAPI api;
@@ -54,14 +51,6 @@ public class TestLink {
     private String platformName;
     private String buildName;
 
-    /**
-     * Instantiates a new Test link.
-     *
-     * @param url         the url
-     * @param apiKey      the api key
-     * @param projectName the project name
-     * @param planName    the plan name
-     */
     public TestLink(String url, String apiKey, String projectName, String planName) {
         super();
         this.api = new TestLinkAPI(getTestlinkURL(url), apiKey);
@@ -71,15 +60,6 @@ public class TestLink {
         this.buildName = null;
     }
 
-    /**
-     * Instantiates a new Test link.
-     *
-     * @param url          the url
-     * @param apiKey       the api key
-     * @param projectName  the project name
-     * @param planName     the plan name
-     * @param platformName the platform name
-     */
     public TestLink(String url, String apiKey, String projectName, String planName, String platformName) {
         super();
         this.api = new TestLinkAPI(getTestlinkURL(url), apiKey);
@@ -89,16 +69,6 @@ public class TestLink {
         this.buildName = null;
     }
 
-    /**
-     * Instantiates a new Test link.
-     *
-     * @param url          the url
-     * @param apiKey       the api key
-     * @param projectName  the project name
-     * @param planName     the plan name
-     * @param buildName    the build name
-     * @param platformName the platform name
-     */
     public TestLink(String url, String apiKey, String projectName, String planName, String buildName, String platformName) {
         super();
         this.api = new TestLinkAPI(getTestlinkURL(url), apiKey);
@@ -108,25 +78,10 @@ public class TestLink {
         this.platformName = platformName;
     }
 
-    /**
-     * Update test result int.
-     *
-     * @param testCaseExternalId the test case external id
-     * @param status             the status
-     * @return the int
-     */
     public int updateTestResult(String testCaseExternalId, char status) {
         return updateTestResult(testCaseExternalId, status, null);
     }
 
-    /**
-     * Update test result int.
-     *
-     * @param testCaseExternalId the test case external id
-     * @param status             the status
-     * @param executionNotes     the execution notes
-     * @return the int
-     */
     public int updateTestResult(String testCaseExternalId, char status, String executionNotes) {
         TestPlan plan = getTestPlanByProjectNamePlanName(planName, projectName);
         TestCase testCase = getTescaseID(testCaseExternalId);
@@ -142,13 +97,6 @@ public class TestLink {
         return response.getExecutionId().intValue();
     }
 
-    /**
-     * Upload execution attachment.
-     *
-     * @param executionId the execution id
-     * @param filePath    the file path
-     * @param title       the title
-     */
     public void uploadExecutionAttachment(Integer executionId, String filePath, String title) {
         try {
             this.api.uploadExecutionAttachment(executionId, title, "", FilenameUtils.getName(filePath),
@@ -158,13 +106,6 @@ public class TestLink {
         }
     }
 
-    /**
-     * Upload test case attachment.
-     *
-     * @param testCaseExternalId the test case external id
-     * @param filePath           the file path
-     * @param title              the title
-     */
     public void uploadTestCaseAttachment(String testCaseExternalId, String filePath, String title) {
 
         TestCase testCase = getTescaseID(testCaseExternalId);

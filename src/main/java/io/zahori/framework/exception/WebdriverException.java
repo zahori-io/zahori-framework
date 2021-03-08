@@ -23,36 +23,20 @@ package io.zahori.framework.exception;
  * #L%
  */
 
-/**
- * The type Webdriver exception.
- */
 public class WebdriverException extends Exception {
 
     private static final long serialVersionUID = -7424643123448431126L;
     private String message;
 
-    /**
-     * Instantiates a new Webdriver exception.
-     */
     public WebdriverException() {
         super();
     }
 
-    /**
-     * Instantiates a new Webdriver exception.
-     *
-     * @param message the message
-     */
     public WebdriverException(String message) {
         super(message);
         this.message = message;
     }
 
-    /**
-     * Instantiates a new Webdriver exception.
-     *
-     * @param cause the cause
-     */
     public WebdriverException(Throwable cause) {
         super(cause);
     }
@@ -77,11 +61,6 @@ public class WebdriverException extends Exception {
         return message;
     }
 
-    /**
-     * Sets message.
-     *
-     * @param message the message
-     */
     public void setMessage(String message) {
         this.message = message;
     }

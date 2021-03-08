@@ -33,9 +33,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import java.io.*;
 import java.util.*;
 
-/**
- * The type Excel.
- */
 public class Excel {
 
     private static final int MINIMUM_COLUMN_COUNT = 100;
@@ -43,11 +40,6 @@ public class Excel {
     private FileInputStream file;
     private Workbook workbook;
 
-    /**
-     * Instantiates a new Excel.
-     *
-     * @param filePath the file path
-     */
     public Excel(String filePath) {
         try {
 
@@ -74,13 +66,6 @@ public class Excel {
         }
     }
 
-    /**
-     * Gets cell value.
-     *
-     * @param sheetName  the sheet name
-     * @param cellNumber the cell number
-     * @return the cell value
-     */
     public String getCellValue(String sheetName, String cellNumber) {
         Sheet sheet = getSheet(sheetName);
 
@@ -95,13 +80,6 @@ public class Excel {
 
     }
 
-    /**
-     * Sets cell value.
-     *
-     * @param sheetName  the sheet name
-     * @param cellNumber the cell number
-     * @param cellValue  the cell value
-     */
     public void setCellValue(String sheetName, String cellNumber, String cellValue) {
         Sheet sheet = getSheet(sheetName);
 
@@ -137,13 +115,6 @@ public class Excel {
         }
     }
 
-    /**
-     * Gets row values.
-     *
-     * @param sheetName the sheet name
-     * @param rowNumber the row number
-     * @return the row values
-     */
     public List<String> getRowValues(String sheetName, int rowNumber) {
 
         if (rowNumber <= 0) {
@@ -179,11 +150,6 @@ public class Excel {
         return rowValues;
     }
 
-    /**
-     * Print.
-     *
-     * @param sheetName the sheet name
-     */
     public void print(String sheetName) {
 
         Sheet sheet = getSheet(sheetName);
@@ -207,14 +173,6 @@ public class Excel {
         }
     }
 
-    /**
-     * Gets row values with headers.
-     *
-     * @param sheetName      the sheet name
-     * @param rowWithHeaders the row with headers
-     * @param rowWithValues  the row with values
-     * @return the row values with headers
-     */
     public Map<String, String> getRowValuesWithHeaders(String sheetName, int rowWithHeaders, int rowWithValues) {
 
         Map<String, String> row = new HashMap<>();
@@ -238,14 +196,6 @@ public class Excel {
         return row;
     }
 
-    /**
-     * Gets row complex values with headers.
-     *
-     * @param sheetName      the sheet name
-     * @param rowWithHeaders the row with headers
-     * @param rowWithValues  the row with values
-     * @return the row complex values with headers
-     */
     public Map<String, Object> getRowComplexValuesWithHeaders(String sheetName, int rowWithHeaders,
             int rowWithValues) {
 
@@ -342,13 +292,6 @@ public class Excel {
         return sheet;
     }
 
-    /**
-     * Sets color cell.
-     *
-     * @param sheetName  the sheet name
-     * @param cellNumber the cell number
-     * @param color      the color
-     */
     public void setColorCell(String sheetName, String cellNumber, IndexedColors color) {
         Sheet sheet = getSheet(sheetName);
         CellReference cellReference = new CellReference(cellNumber);
@@ -366,14 +309,6 @@ public class Excel {
         }
     }
 
-    /**
-     * Sets color cell old.
-     *
-     * @param sheet   the sheet
-     * @param color   the color
-     * @param fila    the fila
-     * @param columna the columna
-     */
     public void setColorCellOld(String sheet, String color, int fila, int columna) {
         // my_workbook = new HSSFWorkbook();
         HSSFSheet mySheet = (HSSFSheet) workbook.getSheet(sheet);

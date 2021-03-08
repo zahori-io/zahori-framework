@@ -34,9 +34,6 @@ import org.slf4j.LoggerFactory;
 
 import io.zahori.framework.files.csv.PutObjectToCSV;
 
-/**
- * The type Test csv registry.
- */
 public class TestCSVRegistry {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestCSVRegistry.class);
@@ -45,11 +42,6 @@ public class TestCSVRegistry {
 
     private PutObjectToCSV registry;
 
-    /**
-     * Instantiates a new Test csv registry.
-     *
-     * @param filePath the file path
-     */
     public TestCSVRegistry(String... filePath) {
         try {
             this.testResultsFile = FileUtils.getFile(filePath);
@@ -67,19 +59,6 @@ public class TestCSVRegistry {
 
     }
 
-    /**
-     * Write results.
-     *
-     * @param date        the date
-     * @param environment the environment
-     * @param duration    the duration
-     * @param testcase    the testcase
-     * @param result      the result
-     * @param errorCode   the error code
-     * @param browser     the browser
-     * @param bookingCode the booking code
-     * @param sessionID   the session id
-     */
     public void writeResults(String date, String environment, String duration, String testcase, String result,
             String errorCode, String browser, String bookingCode, String sessionID) {
         List<String> results = new ArrayList<>();

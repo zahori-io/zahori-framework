@@ -28,14 +28,8 @@ import java.util.Map;
 
 import org.testng.annotations.Test;
 
-/**
- * The type Data base test.
- */
 public class DataBaseTest {
 
-    /**
-     * Test query.
-     */
     @Test(enabled = true)
     public void testQuery() {
         final String driver = "com.ibm.db2.jcc.DB2Driver";

@@ -31,28 +31,13 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 
-/**
- * The type Zahori cipher.
- */
 public class ZahoriCipher {
 
-    /**
-     * The Key spec.
-     */
     DESKeySpec keySpec;
-    /**
-     * The Key factory.
-     */
     SecretKeyFactory keyFactory;
-    /**
-     * The Key.
-     */
     SecretKey key;
 
-    /**
-     * Instantiates a new Zahori cipher.
-     */
-// only the first 8 Bytes of the constructor argument are used
+    // only the first 8 Bytes of the constructor argument are used
     // as material for generating the keySpec
     public ZahoriCipher() {
         try {
@@ -65,12 +50,6 @@ public class ZahoriCipher {
 
     }
 
-    /**
-     * Encode string.
-     *
-     * @param text the text
-     * @return the string
-     */
     public String encode(String text) {
         try {
             byte[] cleartext = text.getBytes("UTF8");
@@ -87,12 +66,6 @@ public class ZahoriCipher {
 
     }
 
-    /**
-     * Decode string.
-     *
-     * @param text the text
-     * @return the string
-     */
     public String decode(String text) {
         try {
             byte[] encrypedPwdBytes = Base64.getDecoder().decode(text);

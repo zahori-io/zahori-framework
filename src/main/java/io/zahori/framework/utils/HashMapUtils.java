@@ -26,41 +26,21 @@ package io.zahori.framework.utils;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * The type Hash map utils.
- */
 public class HashMapUtils {
 
     private Map<String, Object> map;
 
-    /**
-     * The Char split.
-     */
     static final String CHAR_SPLIT = "\\.";
 
-    /**
-     * Instantiates a new Hash map utils.
-     */
     public HashMapUtils() {
         this.map = new HashMap<>();
     }
 
-    /**
-     * Instantiates a new Hash map utils.
-     *
-     * @param paramMap the param map
-     */
     public HashMapUtils(Map<String, Object> paramMap) {
         this.map = new HashMap<>();
         this.map = paramMap;
     }
 
-    /**
-     * Gets value.
-     *
-     * @param string the string
-     * @return the value
-     */
     public Object getValue(String string) {
         String[] levels = string.split(CHAR_SPLIT);
 
@@ -85,20 +65,10 @@ public class HashMapUtils {
         }
     }
 
-    /**
-     * Gets hash map.
-     *
-     * @return the hash map
-     */
     public Map<String, Object> getHashMap() {
         return this.map;
     }
 
-    /**
-     * Sets hash map.
-     *
-     * @param paramMap the param map
-     */
     public void setHashMap(Map<String, Object> paramMap) {
         this.map = paramMap;
     }

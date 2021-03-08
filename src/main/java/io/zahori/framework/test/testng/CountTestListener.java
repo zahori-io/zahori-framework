@@ -30,9 +30,6 @@ import org.testng.ITestListener;
 import org.testng.ITestNGMethod;
 import org.testng.ITestResult;
 
-/**
- * The type Count test listener.
- */
 public class CountTestListener implements ITestListener {
 
     @Override

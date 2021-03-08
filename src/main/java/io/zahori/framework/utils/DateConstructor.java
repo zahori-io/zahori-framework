@@ -38,38 +38,18 @@ import org.apache.commons.lang.StringUtils;
 
 import io.zahori.framework.exception.ZahoriException;
 
-/**
- * The type Date constructor.
- */
 public class DateConstructor {
 
-    /**
-     * The entry point of application.
-     *
-     * @param args the input arguments
-     */
     public static void main(String[] args) {
         //System.out.println(formatDateFromExcel("1/20/16"));
         //System.out.println(formatDateFromExcel("10/1/16"));
         //System.out.println(nowWithDefaultFormat());
     }
 
-    /**
-     * The constant DD_MM_YYYY.
-     */
     public static final String DD_MM_YYYY = "dd/MM/yyyy";
-    /**
-     * The constant YYYY_MM_DD_SLASH.
-     */
     public static final String YYYY_MM_DD_SLASH = "yyyy/MM/dd";
-    /**
-     * The constant DD_MMM_YYYY.
-     */
     public static final String DD_MMM_YYYY = "dd-MMM-yyyy";
 
-    /**
-     * The constant YYYY_MM_DD_DASH.
-     */
     public static final String YYYY_MM_DD_DASH = "yyyy-MM-dd";
     
     private static final String[] FORMAT_FECHAS = { DD_MM_YYYY, YYYY_MM_DD_SLASH, "dd-MM-yyyy", YYYY_MM_DD_DASH, "MM/dd/yy",
@@ -77,13 +57,6 @@ public class DateConstructor {
     private static final boolean[] FORMAT_Locale = { false, false, false, false, false, true };
     private static final Locale[] LOCALES = { new Locale("en", "UK"), new Locale("es", "ES") };
 
-    /**
-     * Format date date.
-     *
-     * @param fecha  the fecha
-     * @param locale the locale
-     * @return the date
-     */
     public static Date formatDate(String fecha, String locale) {
         Date fechaFormated = null;
         if (!fecha.isEmpty()) {
@@ -101,46 +74,20 @@ public class DateConstructor {
         return fechaFormated;
     }
 
-    /**
-     * Format date 4 db string.
-     *
-     * @param fecha the fecha
-     * @return the string
-     */
     public static String formatDate4DB(Date fecha) {
         SimpleDateFormat sdfFormatoFecha = new SimpleDateFormat("MM/dd/YY");
         return sdfFormatoFecha.format(fecha);
     }
 
-    /**
-     * Format date 4 db string.
-     *
-     * @param fecha        the fecha
-     * @param formatoFecha the formato fecha
-     * @return the string
-     */
     public static String formatDate4DB(Date fecha, String formatoFecha) {
         SimpleDateFormat sdfFormatoFecha = new SimpleDateFormat(formatoFecha);
         return sdfFormatoFecha.format(fecha);
     }
 
-    /**
-     * Format date 4 db string.
-     *
-     * @param fecha the fecha
-     * @return the string
-     */
     public static String formatDate4DB(String fecha) {
         return DateConstructor.getDateWithFormatter(DateConstructor.lengthDateFormat(fecha), DD_MM_YYYY, YYYY_MM_DD_DASH);
     }
 
-    /**
-     * Format date 4 db string.
-     *
-     * @param fecha         the fecha
-     * @param formatoOrigen the formato origen
-     * @return the string
-     */
     public static String formatDate4DB(String fecha, String formatoOrigen) {
         if (fecha.length() == 10) {
             return DateConstructor.formatDate4DB(fecha);
@@ -150,35 +97,14 @@ public class DateConstructor {
                 YYYY_MM_DD_DASH);
     }
 
-    /**
-     * Format date 4 db string.
-     *
-     * @param fecha          the fecha
-     * @param formatoOrigen  the formato origen
-     * @param formatoDestino the formato destino
-     * @return the string
-     */
     public static String formatDate4DB(String fecha, String formatoOrigen, String formatoDestino) {
         return DateConstructor.getDateWithFormatter(fecha, formatoOrigen, formatoDestino);
     }
 
-    /**
-     * Gets current date 4 db.
-     *
-     * @return the current date 4 db
-     */
     public static String getCurrentDate4DB() {
         return DateConstructor.getCurrentDateWithFormat(YYYY_MM_DD_DASH);
     }
 
-    /**
-     * Compare boolean.
-     *
-     * @param fecha1 the fecha 1
-     * @param fecha2 the fecha 2
-     * @param locale the locale
-     * @return the boolean
-     */
     public static boolean compare(String fecha1, String fecha2, String locale) {
         Date fechaFormated1 = DateConstructor.formatDate(fecha1, locale);
         Date fechaFormated2 = DateConstructor.formatDate(fecha2, locale);
@@ -190,128 +116,58 @@ public class DateConstructor {
         return control;
     }
 
-    /**
-     * Gets day now.
-     *
-     * @return the day now
-     */
     public static String getDayNow() {
         LocalDate today = LocalDate.now();
         return String.valueOf(today.getDayOfMonth());
     }
 
-    /**
-     * Gets month now.
-     *
-     * @return the month now
-     */
     public static String getMonthNow() {
         LocalDate today = LocalDate.now();
         return String.valueOf(today.getMonth().getValue());
     }
 
-    /**
-     * Gets year now.
-     *
-     * @return the year now
-     */
     public static String getYearNow() {
         LocalDate today = LocalDate.now();
         return String.valueOf(today.getYear());
     }
 
-    /**
-     * Gets day.
-     *
-     * @param date the date
-     * @return the day
-     */
     public static String getDay(Date date) {
         LocalDate today = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         return String.valueOf(today.getDayOfMonth());
     }
 
-    /**
-     * Gets month.
-     *
-     * @param date the date
-     * @return the month
-     */
     public static String getMonth(Date date) {
         LocalDate today = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         return String.valueOf(today.getMonth().getValue());
     }
 
-    /**
-     * Gets year.
-     *
-     * @param date the date
-     * @return the year
-     */
     public static String getYear(Date date) {
         LocalDate today = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         return String.valueOf(today.getYear());
     }
 
-    /**
-     * Gets hour.
-     *
-     * @return the hour
-     */
     public static String getHour() {
         LocalTime justoAhora = LocalTime.now();
         return String.valueOf(justoAhora.getHour());
     }
 
-    /**
-     * Gets minute.
-     *
-     * @return the minute
-     */
     public static String getMinute() {
         LocalTime justoAhora = LocalTime.now();
         return String.valueOf(justoAhora.getMinute());
     }
 
-    /**
-     * Gets date db ento spa.
-     *
-     * @param input the input
-     * @return the date db ento spa
-     */
     public static String getDateDBEntoSpa(String input) {
         return DateConstructor.getDateWithFormatter(input, DD_MMM_YYYY, "EN", YYYY_MM_DD_DASH, "ES");
     }
 
-    /**
-     * Gets date db ento spa wit out format.
-     *
-     * @param input     the input
-     * @param outFormat the out format
-     * @return the date db ento spa wit out format
-     */
     public static String getDateDBEntoSpaWitOutFormat(String input, String outFormat) {
         return DateConstructor.getDateWithFormatter(input, DD_MMM_YYYY, "EN", outFormat, "ES");
     }
 
-    /**
-     * Gets date db ento spa with in out format.
-     *
-     * @param input     the input
-     * @param inFormat  the in format
-     * @param outFormat the out format
-     * @return the date db ento spa with in out format
-     */
     public static String getDateDBEntoSpaWithInOutFormat(String input, String inFormat, String outFormat) {
         return DateConstructor.getDateWithFormatter(input, inFormat, "EN", outFormat, "ES");
     }
 
-    /**
-     * Format date from excel string.
-     *
-     * @param fecha the fecha
-     * @return the string
-     */
     public static String formatDateFromExcel(String fecha) {
         return DateConstructor.getDateWithFormatter(
                 StringUtils.join(DateConstructor.parseDateLpad(fecha, "/", "0"), '/'), "MM/dd/yy", DD_MM_YYYY);
@@ -328,16 +184,6 @@ public class DateConstructor {
         return resultado;
     }
 
-    /**
-     * Gets date with formatter.
-     *
-     * @param inputDate     the input date
-     * @param patternOrigin the pattern origin
-     * @param localeOrigin  the locale origin
-     * @param patternOut    the pattern out
-     * @param localeOut     the locale out
-     * @return the date with formatter
-     */
     public static String getDateWithFormatter(String inputDate, String patternOrigin, String localeOrigin,
             String patternOut, String localeOut) {
         String resultado;
@@ -351,12 +197,6 @@ public class DateConstructor {
         return resultado;
     }
 
-    /**
-     * Gets current date with format.
-     *
-     * @param patternOut the pattern out
-     * @return the current date with format
-     */
     public static String getCurrentDateWithFormat(String patternOut) {
         return DateTimeFormatter.ofPattern(patternOut).format(LocalDate.now());
     }
@@ -370,12 +210,6 @@ public class DateConstructor {
         return dateLista;
     }
 
-    /**
-     * Sumar restar dias fecha date.
-     *
-     * @param dias the dias
-     * @return the date
-     */
     public static Date sumarRestarDiasFecha(int dias) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(Date.from(LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant()));
@@ -383,12 +217,6 @@ public class DateConstructor {
         return calendar.getTime();
     }
 
-    /**
-     * Length date format string.
-     *
-     * @param date the date
-     * @return the string
-     */
     public static String lengthDateFormat(String date) {
         String[] arrayDate = date.split("/");
         StringBuilder formattedDate = new StringBuilder();
@@ -405,32 +233,13 @@ public class DateConstructor {
         return formattedDate.toString();
     }
 
-    /**
-     * Now with default format string.
-     *
-     * @return the string
-     */
     public static String nowWithDefaultFormat() {
         return nowWithDefaultFormat(DD_MM_YYYY, "0");
     }
-
-    /**
-     * Now with default format add natural string.
-     *
-     * @param numDays the num days
-     * @return the string
-     */
     public static String nowWithDefaultFormatAddNatural(String numDays) {
         return nowWithDefaultFormat(DD_MM_YYYY, numDays);
     }
 
-    /**
-     * Now with default format string.
-     *
-     * @param pattern the pattern
-     * @param numDays the num days
-     * @return the string
-     */
     public static String nowWithDefaultFormat(String pattern, String numDays){
         return LocalDate.now().plusDays(Long.valueOf(numDays)).format(DateTimeFormatter.ofPattern(pattern));
     }

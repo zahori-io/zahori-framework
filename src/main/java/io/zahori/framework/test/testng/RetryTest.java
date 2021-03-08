@@ -27,9 +27,6 @@ import org.testng.IRetryAnalyzer;
 import org.testng.ITestResult;
 import org.testng.log4testng.Logger;
 
-/**
- * The type Retry test.
- */
 public class RetryTest implements IRetryAnalyzer {
 
     private static final Logger LOG = Logger.getLogger(RetryTest.class);
@@ -47,12 +44,6 @@ public class RetryTest implements IRetryAnalyzer {
         return false;
     }
 
-    /**
-     * Gets result status name.
-     *
-     * @param status the status
-     * @return the result status name
-     */
     public String getResultStatusName(int status) {
         String resultName = null;
         if (status == 1) {

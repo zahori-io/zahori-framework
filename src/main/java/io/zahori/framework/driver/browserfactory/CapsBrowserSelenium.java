@@ -45,9 +45,6 @@ import org.testng.log4testng.Logger;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import io.zahori.framework.utils.ZahoriStringUtils;
 
-/**
- * The type Caps browser selenium.
- */
 public class CapsBrowserSelenium extends DesiredCapabilities {
 
 	private static final String SUFFIX_NAME_METHOD = "Caps";
@@ -81,32 +78,15 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
 
 	private Browsers browsers;
 
-	/**
-	 * Instantiates a new Caps browser selenium.
-	 */
 	public CapsBrowserSelenium() {
 		super();
 	}
 
-	/**
-	 * Instantiates a new Caps browser selenium.
-	 *
-	 * @param browsers the browsers
-	 */
 	public CapsBrowserSelenium(Browsers browsers) {
 		super(browsers.getName(), browsers.getVersion(), Platform.valueOf(browsers.getPlatform()));
 		this.browsers = browsers;
 	}
 
-	/**
-	 * Gets caps by navigator.
-	 *
-	 * @return the caps by navigator
-	 * @throws ClassNotFoundException    the class not found exception
-	 * @throws NoSuchMethodException     the no such method exception
-	 * @throws IllegalAccessException    the illegal access exception
-	 * @throws InvocationTargetException the invocation target exception
-	 */
 	public DesiredCapabilities getCapsByNavigator() throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException {
 
 		final Method meth = getClass().getMethod(PREFIX_NAME_METHOD + ZahoriStringUtils.capitalizeWithoutWhitespace(browsers.getName()) + SUFFIX_NAME_METHOD,
@@ -134,12 +114,6 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
 		return caps;
 	}
 
-	/**
-	 * Gets internet explorer caps.
-	 *
-	 * @param navega the navega
-	 * @return the internet explorer caps
-	 */
 	public DesiredCapabilities getInternetExplorerCaps(Browsers navega) {
 		final String pathDriverExplorer = System.getProperty(WEBDRIVER_IE_DRIVER_PATH) + navega.getBits() + System.getProperty(WEBDRIVER_IE_DRIVER_NAME);
 		System.setProperty(WEBDRIVER_IE_DRIVER, pathDriverExplorer);
@@ -165,12 +139,6 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
 		return caps;
 	}
 
-	/**
-	 * Gets firefox caps.
-	 *
-	 * @param navega the navega
-	 * @return the firefox caps
-	 */
 	public DesiredCapabilities getFirefoxCaps(Browsers navega) {
 
 		final DesiredCapabilities caps = DesiredCapabilities.firefox();
@@ -215,12 +183,6 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
 		return caps;
 	}
 
-	/**
-	 * Gets chrome caps.
-	 *
-	 * @param navega the navega
-	 * @return the chrome caps
-	 */
 	public DesiredCapabilities getChromeCaps(Browsers navega) {
 		final DesiredCapabilities caps = DesiredCapabilities.chrome();
 		if (new ZahoriProperties().enableSeleniumLogPerformance()) {
@@ -231,12 +193,6 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
 		return caps;
 	}
 
-	/**
-	 * Gets safari caps.
-	 *
-	 * @param navega the navega
-	 * @return the safari caps
-	 */
 	public DesiredCapabilities getSafariCaps(Browsers navega) {
 		final DesiredCapabilities caps = DesiredCapabilities.safari();
 
@@ -255,12 +211,6 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
 		return caps;
 	}
 
-	/**
-	 * Gets microsoft edge caps.
-	 *
-	 * @param navega the navega
-	 * @return the microsoft edge caps
-	 */
 	public DesiredCapabilities getMicrosoftEdgeCaps(Browsers navega) {
 		final DesiredCapabilities caps = DesiredCapabilities.edge();
 		caps.setJavascriptEnabled(true);
@@ -274,12 +224,6 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
 		return caps;
 	}
 
-	/**
-	 * Gets opera caps.
-	 *
-	 * @param navega the navega
-	 * @return the opera caps
-	 */
 	public DesiredCapabilities getOperaCaps(Browsers navega) {
 		final DesiredCapabilities caps = DesiredCapabilities.opera();
 		caps.setJavascriptEnabled(true);
@@ -293,20 +237,10 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
 		return caps;
 	}
 
-	/**
-	 * Gets navega.
-	 *
-	 * @return the navega
-	 */
 	public Browsers getNavega() {
 		return browsers;
 	}
 
-	/**
-	 * Sets navega.
-	 *
-	 * @param navega the navega
-	 */
 	public void setNavega(Browsers navega) {
 		this.browsers = navega;
 	}

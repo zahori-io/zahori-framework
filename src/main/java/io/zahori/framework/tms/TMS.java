@@ -49,9 +49,6 @@ import io.zahori.model.Step;
 import io.zahori.tms.alm.restclient.ALMRestClient;
 import io.zahori.tms.alm.restclient.ALMRestClient.EntityType;
 
-/**
- * The type Tms.
- */
 public class TMS {
 
     private static final Logger LOG = LoggerFactory.getLogger(TMS.class);
@@ -73,13 +70,6 @@ public class TMS {
     // i18n Messages
     private Messages messages;
 
-    /**
-     * Instantiates a new Tms.
-     *
-     * @param zahoriProperties the zahori properties
-     * @param evidences        the evidences
-     * @param messages         the messages
-     */
     public TMS(ZahoriProperties zahoriProperties, Evidences evidences, Messages messages) {
         tms = zahoriProperties.getTMS();
         this.zahoriProperties = zahoriProperties;
@@ -89,14 +79,6 @@ public class TMS {
         date = null;
     }
 
-    /**
-     * Instantiates a new Tms.
-     *
-     * @param zahoriProperties the zahori properties
-     * @param evidences        the evidences
-     * @param messages         the messages
-     * @param startDate        the start date
-     */
     public TMS(ZahoriProperties zahoriProperties, Evidences evidences, Messages messages, String startDate) {
         tms = zahoriProperties.getTMS();
         this.zahoriProperties = zahoriProperties;
@@ -106,20 +88,6 @@ public class TMS {
         date = startDate;
     }
 
-    /**
-     * Update test result.
-     *
-     * @param testCaseName  the test case name
-     * @param passed        the passed
-     * @param testSteps     the test steps
-     * @param testDuration  the test duration
-     * @param tmsTestSetId  the tms test set id
-     * @param tmsTestCaseId the tms test case id
-     * @param tmsTestExecId the tms test exec id
-     * @param tmsTestPlanId the tms test plan id
-     * @param browserName   the browser name
-     * @param platformName  the platform name
-     */
     public void updateTestResult(String testCaseName, boolean passed, List<List<Step>> testSteps, int testDuration, String tmsTestSetId, String tmsTestCaseId,
             String tmsTestExecId, String tmsTestPlanId, String browserName, String platformName) {
 
@@ -184,27 +152,27 @@ public class TMS {
             // Doc
             if (zahoriProperties.isDocGenerationEnabled() && zahoriProperties.uploadEvidenceDocWhenPassed()) {
                 for (String docFileName : evidences.getDocFileNames()) {
-                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getPath() + docFileName, testCaseName);
-                    uploadAttachmentALM(runALM, evidences.getPath() + docFileName);
+                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + docFileName, testCaseName);
+                    uploadAttachmentALM(runALM, evidences.getEvidencesPath() + docFileName);
                 }
             }
             // Video
             if (zahoriProperties.isVideoGenerationEnabledWhenPassed() && zahoriProperties.uploadEvidenceVideoWhenPassed()) {
-                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getPath() + evidences.getVideoFileName(), testCaseName);
-                uploadAttachmentALM(runALM, evidences.getPath() + evidences.getVideoFileName());
+                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + evidences.getVideoFileName(), testCaseName);
+                uploadAttachmentALM(runALM, evidences.getEvidencesPath() + evidences.getVideoFileName());
             }
             // Log file (is the last attachment to be uploaded in order to
             // register logs with TMS)
             if (zahoriProperties.isLogFileGenerationEnabled() && zahoriProperties.uploadEvidenceLogFileWhenPassed()) {
                 for (String logFileName : evidences.getLogFileNames()) {
-                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getPath() + logFileName, testCaseName);
-                    uploadAttachmentALM(runALM, evidences.getPath() + logFileName);
+                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + logFileName, testCaseName);
+                    uploadAttachmentALM(runALM, evidences.getEvidencesPath() + logFileName);
                 }
             }
             // HarLog
             if (zahoriProperties.isHarLogFileEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenPassed()) {
-                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getPath() + evidences.getHarLogFileName(), testCaseName);
-                uploadAttachmentALM(runALM, evidences.getPath() + evidences.getHarLogFileName());
+                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + evidences.getHarLogFileName(), testCaseName);
+                uploadAttachmentALM(runALM, evidences.getEvidencesPath() + evidences.getHarLogFileName());
             }
         }
 
@@ -213,27 +181,27 @@ public class TMS {
             // Doc
             if (zahoriProperties.isDocGenerationEnabled() && zahoriProperties.uploadEvidenceDocWhenFailed()) {
                 for (String docFileName : evidences.getDocFileNames()) {
-                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getPath() + docFileName, testCaseName);
-                    uploadAttachmentALM(runALM, evidences.getPath() + docFileName);
+                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + docFileName, testCaseName);
+                    uploadAttachmentALM(runALM, evidences.getEvidencesPath() + docFileName);
                 }
             }
             // Video
             if (zahoriProperties.isVideoGenerationEnabledWhenFailed() && zahoriProperties.uploadEvidenceVideoWhenFailed()) {
-                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getPath() + evidences.getVideoFileName(), testCaseName);
-                uploadAttachmentALM(runALM, evidences.getPath() + evidences.getVideoFileName());
+                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + evidences.getVideoFileName(), testCaseName);
+                uploadAttachmentALM(runALM, evidences.getEvidencesPath() + evidences.getVideoFileName());
             }
             // Log file (is the last attachment to be uploaded in order to
             // register logs with TMS)
             if (zahoriProperties.isLogFileGenerationEnabled() && zahoriProperties.uploadEvidenceLogFileWhenFailed()) {
                 for (String logFileName : evidences.getLogFileNames()) {
-                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getPath() + logFileName, testCaseName);
-                    uploadAttachmentALM(runALM, evidences.getPath() + logFileName);
+                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + logFileName, testCaseName);
+                    uploadAttachmentALM(runALM, evidences.getEvidencesPath() + logFileName);
                 }
             }
             // HarLog
             if (zahoriProperties.isHarLogFileEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenFailed()) {
-                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getPath() + evidences.getHarLogFileName(), testCaseName);
-                uploadAttachmentALM(runALM, evidences.getPath() + evidences.getHarLogFileName());
+                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + evidences.getHarLogFileName(), testCaseName);
+                uploadAttachmentALM(runALM, evidences.getEvidencesPath() + evidences.getHarLogFileName());
             }
         }
 
@@ -252,11 +220,6 @@ public class TMS {
 
     }
 
-    /**
-     * Sets execution notes.
-     *
-     * @param notes the notes
-     */
     public void setExecutionNotes(String notes) {
         executionNotes = StringUtils.isEmpty(executionNotes) ? notes : executionNotes + "\n" + notes;
     }
@@ -423,12 +386,6 @@ public class TMS {
         return testExecutionId;
     }
 
-    /**
-     * Gets te summary.
-     *
-     * @param base the base
-     * @return the te summary
-     */
     public static String getTESummary(String base) {
         String result = base;
         List<String> propertiesToSearch = new ArrayList<>();
@@ -464,20 +421,20 @@ public class TMS {
 
         if (uploadDoc) {
             for (String docFileName : evidences.getDocFileNames())
-                evidencesFiles.add(evidences.getPath() + docFileName);
+                evidencesFiles.add(evidences.getEvidencesPath() + docFileName);
         }
 
         if (uploadVideo) {
-            evidencesFiles.add(evidences.getPath() + evidences.getVideoFileName());
+            evidencesFiles.add(evidences.getEvidencesPath() + evidences.getVideoFileName());
         }
 
         if (uploadLog) {
             for (String logFileName : evidences.getLogFileNames())
-                evidencesFiles.add(evidences.getPath() + logFileName);
+                evidencesFiles.add(evidences.getEvidencesPath() + logFileName);
         }
 
         if (uploadHarLog) {
-            evidencesFiles.add(evidences.getPath() + evidences.getHarLogFileName());
+            evidencesFiles.add(evidences.getEvidencesPath() + evidences.getHarLogFileName());
         }
 
         return evidencesFiles;

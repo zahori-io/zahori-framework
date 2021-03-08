@@ -31,9 +31,6 @@ import java.io.IOException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-/**
- * The type Unzipper.
- */
 public class Unzipper {
 
     private static final int BUFFER_SIZE = 4096;
@@ -41,13 +38,6 @@ public class Unzipper {
     private Unzipper() {
     }
 
-    /**
-     * Unzip.
-     *
-     * @param zipFilePath   the zip file path
-     * @param destDirectory the dest directory
-     * @throws IOException the io exception
-     */
     public static void unzip(String zipFilePath, String destDirectory) throws IOException {
         File destDir = new File(destDirectory);
         if (!destDir.exists()) {

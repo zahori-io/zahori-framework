@@ -26,9 +26,6 @@ package io.zahori.framework.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The type Pause.
- */
 public class Pause {
 
     private Pause() {
@@ -36,24 +33,12 @@ public class Pause {
 
     private static final Logger LOG = LoggerFactory.getLogger(Pause.class);
 
-    /**
-     * The constant SHORTSLEEPTIME.
-     */
     public static final int SHORTSLEEPTIME = 100;
 
-    /**
-     * The constant LONGSLEEPTIME.
-     */
     public static final int LONGSLEEPTIME = 500;
 
-    /**
-     * The constant TOOLONGSLEEPTIME.
-     */
     public static final int TOOLONGSLEEPTIME = 5000;
 
-    /**
-     * Pause.
-     */
     public static void pause() {
         try {
             Thread.sleep(LONGSLEEPTIME);
@@ -62,9 +47,6 @@ public class Pause {
         }
     }
 
-    /**
-     * Short pause.
-     */
     public static void shortPause() {
         try {
             Thread.sleep(SHORTSLEEPTIME);
@@ -73,9 +55,6 @@ public class Pause {
         }
     }
 
-    /**
-     * Long pause.
-     */
     public static void longPause() {
         try {
             Thread.sleep(TOOLONGSLEEPTIME);
@@ -84,11 +63,6 @@ public class Pause {
         }
     }
 
-    /**
-     * Pause.
-     *
-     * @param seconds the seconds
-     */
     public static void pause(int seconds) {
         try {
             Thread.sleep(seconds * 1000);

@@ -28,20 +28,12 @@ import java.util.List;
 
 import io.zahori.framework.security.ZahoriCipher;
 
-/**
- * The type Prueba xray.
- */
 public class PruebaXray {
 
 	private PruebaXray() {
 	}
 
-    /**
-     * The entry point of application.
-     *
-     * @param strings the input arguments
-     */
-    public static void main(String... strings) {
+	public static void main(String... strings) {
 
 		String urlTestLink = "https://jira.globalia.com/jira";
 		String user = "aeapanel";

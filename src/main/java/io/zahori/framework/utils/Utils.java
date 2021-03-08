@@ -38,9 +38,6 @@ import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The type Utils.
- */
 public class Utils {
 
     private static final String MONTH_NAME_FORMAT = "MMMM";
@@ -79,38 +76,15 @@ public class Utils {
 
     private static final char CHAR_SLASH = '/';
 
-    /**
-     * The constant CHAR_DASH.
-     */
     public static final char CHAR_DASH = '-';
 
-    /**
-     * The constant INDEX_DAYS.
-     */
     public static final int INDEX_DAYS = 0;
 
-    /**
-     * The constant INDEX_MONTHS.
-     */
     public static final int INDEX_MONTHS = 1;
 
-    /**
-     * The constant INDEX_YEARS.
-     */
     public static final int INDEX_YEARS = 2;
-    /**
-     * The constant DD_MM_YYYY.
-     */
     public static final String DD_MM_YYYY = "dd/MM/yyyy";
 
-    /**
-     * Add actual date text string.
-     *
-     * @param days   the days
-     * @param months the months
-     * @param years  the years
-     * @return the string
-     */
     public String addActualDateText(int days, int months, int years) {
         String result;
 
@@ -125,14 +99,6 @@ public class Utils {
         return result;
     }
 
-    /**
-     * Add actual date date.
-     *
-     * @param days   the days
-     * @param months the months
-     * @param years  the years
-     * @return the date
-     */
     public Date addActualDate(int days, int months, int years) {
         Calendar actualDate = Calendar.getInstance();
 
@@ -143,12 +109,6 @@ public class Utils {
         return actualDate.getTime();
     }
 
-    /**
-     * Split add factors int [ ].
-     *
-     * @param text the text
-     * @return the int [ ]
-     */
     public int[] splitAddFactors(String text) {
         int[] arrayResult = new int[3];
 
@@ -161,15 +121,6 @@ public class Utils {
         return arrayResult;
     }
 
-    /**
-     * Add date string.
-     *
-     * @param paramDate the param date
-     * @param days      the days
-     * @param months    the months
-     * @param years     the years
-     * @return the string
-     */
     public String addDate(String paramDate, int days, int months, int years) {
         String result;
 
@@ -186,13 +137,6 @@ public class Utils {
         return result;
     }
 
-    /**
-     * Calculate age int.
-     *
-     * @param birthDate the birth date
-     * @param baseDate  the base date
-     * @return the int
-     */
     public int calculateAge(String birthDate, String baseDate) {
 
         try {
@@ -223,23 +167,10 @@ public class Utils {
         }
     }
 
-    /**
-     * Translate value boolean.
-     *
-     * @param value the value
-     * @return the boolean
-     */
     public boolean translateValue(String value) {
         return SI.equalsIgnoreCase(value);
     }
 
-    /**
-     * Gets month text.
-     *
-     * @param month    the month
-     * @param language the language
-     * @return the month text
-     */
     public String getMonthText(int month, String language) {
         String monthText;
         if (language.equals(ENGLISH)) {
@@ -294,12 +225,6 @@ public class Utils {
         return monthText;
     }
 
-    /**
-     * Gets month number.
-     *
-     * @param month the month
-     * @return the month number
-     */
     public int getMonthNumber(String month) {
         try {
             Date date = new SimpleDateFormat(MONTH_NAME_FORMAT).parse(month.substring(0, MONTH_NAME_FORMAT.length()));
@@ -312,46 +237,22 @@ public class Utils {
 
     }
 
-    /**
-     * Gets day.
-     *
-     * @param paramDate the param date
-     * @return the day
-     */
     public String getDay(String paramDate) {
         return paramDate.substring(0, paramDate.indexOf(CHAR_SLASH));
     }
 
-    /**
-     * Gets month.
-     *
-     * @param paramDate the param date
-     * @return the month
-     */
     public String getMonth(String paramDate) {
         String date = paramDate;
         date = date.substring(date.indexOf(CHAR_SLASH) + 1, date.length());
         return date.substring(0, date.indexOf(CHAR_SLASH));
     }
 
-    /**
-     * Gets year.
-     *
-     * @param paramDate the param date
-     * @return the year
-     */
     public String getYear(String paramDate) {
         String date = paramDate;
         date = date.substring(date.indexOf(CHAR_SLASH) + 1, date.length());
         return date.substring(date.indexOf(CHAR_SLASH) + 1, date.length());
     }
 
-    /**
-     * Format date string.
-     *
-     * @param paramDate the param date
-     * @return the string
-     */
     public String formatDate(String paramDate) {
         String date = paramDate;
         if ((date.indexOf(CHAR_SLASH) == -1) && (date.indexOf(CHAR_DASH) != -1)) {
@@ -361,13 +262,6 @@ public class Utils {
         return date;
     }
 
-    /**
-     * Gets smaller month.
-     *
-     * @param month1 the month 1
-     * @param month2 the month 2
-     * @return the smaller month
-     */
     public String getSmallerMonth(String month1, String month2) {
         try {
             String monthText1 = month1.substring(0, month1.indexOf(" "));
@@ -397,23 +291,12 @@ public class Utils {
 
     }
 
-    /**
-     * Gets date id.
-     *
-     * @return the date id
-     */
     public String getDateId() {
         DateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
         Date day = Calendar.getInstance().getTime();
         return sdf.format(day);
     }
 
-    /**
-     * Gets list string.
-     *
-     * @param list the list
-     * @return the list string
-     */
     public static String getListString(List<Map<String, String>> list) {
         int i = 0;
         StringBuilder text = new StringBuilder();
@@ -441,14 +324,6 @@ public class Utils {
         return text.toString();
     }
 
-    /**
-     * Compare sort lists of maps string.
-     *
-     * @param list1  the list 1
-     * @param list2  the list 2
-     * @param locale the locale
-     * @return the string
-     */
     public static String compareSortListsOfMaps(List<Map<String, String>> list1, List<Map<String, String>> list2,
             String locale) {
         boolean equals = list1.size() == list2.size();
@@ -502,14 +377,6 @@ public class Utils {
         return comparison.toString();
     }
 
-    /**
-     * Compare names boolean.
-     *
-     * @param key    the key
-     * @param value1 the value 1
-     * @param value2 the value 2
-     * @return the boolean
-     */
     public static boolean compareNames(String key, String value1, String value2) {
         boolean comparables = false;
         int minPartsOnName = 4;
@@ -534,12 +401,6 @@ public class Utils {
         return comparables;
     }
 
-    /**
-     * Lower case string.
-     *
-     * @param data the data
-     * @return the string
-     */
     public static String lowerCase(String data) {
         if (data == null) {
             return "";

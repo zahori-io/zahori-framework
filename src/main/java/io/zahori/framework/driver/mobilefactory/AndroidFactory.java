@@ -32,30 +32,15 @@ import com.google.common.collect.ImmutableMap;
 
 import io.appium.java_client.android.AndroidDriver;
 
-/**
- * The type Android factory.
- */
 public class AndroidFactory {
 
     private AndroidFactory() {
     }
 
-    /**
-     * Gets capabilities.
-     *
-     * @return the capabilities
-     */
     public static DesiredCapabilities getCapabilities() {
         return new DesiredCapabilities();
     }
 
-    /**
-     * Gets driver.
-     *
-     * @param url          the url
-     * @param capabilities the capabilities
-     * @return the driver
-     */
     public static AndroidDriver<?> getDriver(URL url, DesiredCapabilities capabilities) {
     	DesiredCapabilities caps = capabilities;
     	caps.setPlatform(Platform.ANY);

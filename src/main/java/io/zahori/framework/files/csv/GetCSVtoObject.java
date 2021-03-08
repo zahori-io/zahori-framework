@@ -40,9 +40,6 @@ import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * The type Get cs vto object.
- */
 public class GetCSVtoObject {
 
     private static final String ERROR_GET_INFO_FROM_CSV = "Error en metodo getInfoFromCSV: ";
@@ -55,23 +52,10 @@ public class GetCSVtoObject {
 
     private static final char SEPARADOR = ';';
 
-    /**
-     * Instantiates a new Get cs vto object.
-     *
-     * @param rutaFichero the ruta fichero
-     */
     public GetCSVtoObject(String rutaFichero) {
         this.ruta = rutaFichero;
     }
 
-    /**
-     * Gets row from csv.
-     *
-     * @param nombreClave the nombre clave
-     * @param claveFila   the clave fila
-     * @return the row from csv
-     * @throws IOException the io exception
-     */
     public CSVRecord getRowFromCSV(final String nombreClave, final String claveFila) throws IOException {
         Reader in = null;
         CSVParser parser = null;
@@ -102,14 +86,6 @@ public class GetCSVtoObject {
         }
     }
 
-    /**
-     * Gets rows from csv.
-     *
-     * @param nombreClave the nombre clave
-     * @param claveFila   the clave fila
-     * @return the rows from csv
-     * @throws IOException the io exception
-     */
     public List<CSVRecord> getRowsFromCSV(final String nombreClave, final String claveFila) throws IOException {
         Reader in = null;
         CSVParser parser = null;
@@ -143,20 +119,10 @@ public class GetCSVtoObject {
         return listaFilas;
     }
 
-    /**
-     * Gets ruta.
-     *
-     * @return the ruta
-     */
     public String getRuta() {
         return ruta;
     }
 
-    /**
-     * Sets ruta.
-     *
-     * @param ruta the ruta
-     */
     public void setRuta(String ruta) {
         this.ruta = ruta;
     }

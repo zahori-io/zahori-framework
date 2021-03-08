@@ -51,9 +51,6 @@ import io.zahori.framework.rest.NetClient;
 import io.zahori.framework.rest.ServiceInfo;
 import io.zahori.framework.security.ZahoriCipher;
 
-/**
- * The type Xray rest client.
- */
 public class XrayRestClient {
 
 	private static final Logger LOG = LoggerFactory.getLogger(XrayRestClient.class);
@@ -77,14 +74,7 @@ public class XrayRestClient {
 	private Map<String, String> params = new HashMap<>();
 	private Map<String, String> headers = new HashMap<>();
 
-    /**
-     * Instantiates a new Xray rest client.
-     *
-     * @param jiraURL      the jira url
-     * @param jiraUser     the jira user
-     * @param jiraPassword the jira password
-     */
-    public XrayRestClient(String jiraURL, String jiraUser, String jiraPassword) {
+	public XrayRestClient(String jiraURL, String jiraUser, String jiraPassword) {
 		this.jiraURL = jiraURL;
 		this.jiraUser = jiraUser;
 		this.jiraPassword = new ZahoriCipher().decode(jiraPassword);
@@ -92,18 +82,7 @@ public class XrayRestClient {
 		headers = null;
 	}
 
-    /**
-     * Update test result int.
-     *
-     * @param testExecutionId the test execution id
-     * @param testCaseId      the test case id
-     * @param status          the status
-     * @param executionNotes  the execution notes
-     * @param startDate       the start date
-     * @param evidences       the evidences
-     * @return the int
-     */
-    public int updateTestResult(String testExecutionId, String testCaseId, String status, String executionNotes, String startDate, List<String> evidences) {
+	public int updateTestResult(String testExecutionId, String testCaseId, String status, String executionNotes, String startDate, List<String> evidences) {
 		initRestObjects();
 		String body = buildBody4TestCreation(testExecutionId, testCaseId, status, startDate, executionNotes, jiraUser, evidences);
 		ServiceInfo info = NetClient.executePOSTwJson(jiraURL + XRAY_API_EXECURL_SUFIX, params, headers, body);
@@ -117,13 +96,7 @@ public class XrayRestClient {
 		return info.getResponseCode() >= 200 && info.getResponseCode() <= 299 ? 0 : -1;
 	}
 
-    /**
-     * Exists te on jira boolean.
-     *
-     * @param testExecutionId the test execution id
-     * @return the boolean
-     */
-    public boolean existsTEOnJira(String testExecutionId) {
+	public boolean existsTEOnJira(String testExecutionId) {
 		initRestObjects();
 		String URL = jiraURL + XRAY_API_TESTEXEC_TEST.replace(TAG_TESTEXEC_ID, testExecutionId);
 		ServiceInfo info = NetClient.executeGET(URL, params, headers);
@@ -131,19 +104,7 @@ public class XrayRestClient {
 		return info.getResponseCode() == 200;
 	}
 
-    /**
-     * Create test execution string.
-     *
-     * @param projectKey      the project key
-     * @param summary         the summary
-     * @param description     the description
-     * @param priorityId      the priority id
-     * @param labelsArray     the labels array
-     * @param componentsArray the components array
-     * @param assigneeName    the assignee name
-     * @return the string
-     */
-    public String createTestExecution(String projectKey, String summary, String description, String priorityId, String[] labelsArray, String[] componentsArray,
+	public String createTestExecution(String projectKey, String summary, String description, String priorityId, String[] labelsArray, String[] componentsArray,
 			String assigneeName) {
 		initRestObjects();
 		String body = buidlBody4TestExecutionCreation(projectKey, summary, description, priorityId, labelsArray, componentsArray, assigneeName);
@@ -161,82 +122,37 @@ public class XrayRestClient {
 		return null;
 	}
 
-    /**
-     * Is tc associated 2 te boolean.
-     *
-     * @param testExecutionId the test execution id
-     * @param testCaseId      the test case id
-     * @return the boolean
-     */
-    public boolean isTCAssociated2TE(String testExecutionId, String testCaseId) {
+	public boolean isTCAssociated2TE(String testExecutionId, String testCaseId) {
 		String URL = XRAY_API_TESTEXEC_TEST.replace(TAG_TESTEXEC_ID, testExecutionId);
 		return isItemAssociated2Container(testExecutionId, testCaseId, URL);
 	}
 
-    /**
-     * Is te associated 2 tp boolean.
-     *
-     * @param testPlanId      the test plan id
-     * @param testExecutionId the test execution id
-     * @return the boolean
-     */
-    public boolean isTEAssociated2TP(String testPlanId, String testExecutionId) {
+	public boolean isTEAssociated2TP(String testPlanId, String testExecutionId) {
 		String URL = XRAY_API_TESTPLAN_TESTEXEC.replace(TAG_TESTPLAN_ID, testPlanId);
 		return isItemAssociated2Container(testPlanId, testExecutionId, URL);
 	}
 
-    /**
-     * Is tc associated 2 tp boolean.
-     *
-     * @param testPlanId the test plan id
-     * @param testCaseId the test case id
-     * @return the boolean
-     */
-    public boolean isTCAssociated2TP(String testPlanId, String testCaseId) {
+	public boolean isTCAssociated2TP(String testPlanId, String testCaseId) {
 		String URL = XRAY_API_TESTPLAN_TEST.replace(TAG_TESTPLAN_ID, testPlanId);
 		return isItemAssociated2Container(testPlanId, testCaseId, URL);
 	}
 
-    /**
-     * Associate tc 2 te.
-     *
-     * @param testExecutionId the test execution id
-     * @param testCaseId      the test case id
-     */
-    public void associateTC2TE(String testExecutionId, String testCaseId) {
+	public void associateTC2TE(String testExecutionId, String testCaseId) {
 		String URL = XRAY_API_TESTEXEC_TEST.replace(TAG_TESTEXEC_ID, testExecutionId);
 		associateItem2Container(testCaseId, testExecutionId, URL);
 	}
 
-    /**
-     * Associate te 2 tp.
-     *
-     * @param testExecutionId the test execution id
-     * @param testPlanId      the test plan id
-     */
-    public void associateTE2TP(String testExecutionId, String testPlanId) {
+	public void associateTE2TP(String testExecutionId, String testPlanId) {
 		String URL = XRAY_API_TESTPLAN_TESTEXEC.replace(TAG_TESTPLAN_ID, testPlanId);
 		associateItem2Container(testExecutionId, testPlanId, URL);
 	}
 
-    /**
-     * Associate tc 2 tp.
-     *
-     * @param testCaseId the test case id
-     * @param testPlanId the test plan id
-     */
-    public void associateTC2TP(String testCaseId, String testPlanId) {
+	public void associateTC2TP(String testCaseId, String testPlanId) {
 		String URL = XRAY_API_TESTPLAN_TEST.replace(TAG_TESTPLAN_ID, testPlanId);
 		associateItem2Container(testCaseId, testPlanId, URL);
 	}
 
-    /**
-     * Look 4 te string.
-     *
-     * @param summary the summary
-     * @return the string
-     */
-    public String look4TE(String summary) {
+	public String look4TE(String summary) {
 		initRestObjects();
 		String jql = "project=DRL and issueType=\"Test Execution\" and summary ~ \"\\\"" + summary + "\\\"\"";
 		params.put("jql", jql);

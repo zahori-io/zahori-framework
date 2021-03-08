@@ -23,36 +23,20 @@ package io.zahori.framework.exception;
  * #L%
  */
 
-/**
- * The type Method exception.
- */
 public class MethodException extends Exception {
 
     private static final long serialVersionUID = 7632306832221561772L;
     private String message;
 
-    /**
-     * Instantiates a new Method exception.
-     */
     public MethodException() {
         super();
     }
 
-    /**
-     * Instantiates a new Method exception.
-     *
-     * @param message the message
-     */
     public MethodException(String message) {
         super(message);
         this.message = message;
     }
 
-    /**
-     * Instantiates a new Method exception.
-     *
-     * @param cause the cause
-     */
     public MethodException(Throwable cause) {
         super(cause);
     }
@@ -77,11 +61,6 @@ public class MethodException extends Exception {
         return message;
     }
 
-    /**
-     * Sets message.
-     *
-     * @param message the message
-     */
     public void setMessage(String message) {
         this.message = message;
     }

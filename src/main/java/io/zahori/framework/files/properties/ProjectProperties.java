@@ -31,17 +31,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import io.zahori.framework.i18n.MessageReader;
 
-/**
- * The type Project properties.
- */
 public class ProjectProperties {
 
     private final Properties prop;
     private MessageReader messageReader;
 
-    /**
-     * Instantiates a new Project properties.
-     */
     public ProjectProperties() {
 
         prop = new Properties();
@@ -68,23 +62,10 @@ public class ProjectProperties {
         }
     }
 
-    /**
-     * Gets property.
-     *
-     * @param propertyName the property name
-     * @return the property
-     */
     public String getProperty(String propertyName) {
         return StringUtils.trim(prop.getProperty(propertyName));
     }
 
-    /**
-     * Gets property.
-     *
-     * @param propertyName the property name
-     * @param propertyArgs the property args
-     * @return the property
-     */
     public String getProperty(String propertyName, String... propertyArgs) {
         return messageReader.get(propertyName, propertyArgs);
     }

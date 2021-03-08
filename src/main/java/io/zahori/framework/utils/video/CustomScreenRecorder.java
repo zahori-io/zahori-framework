@@ -34,9 +34,6 @@ import org.monte.media.Format;
 import org.monte.media.Registry;
 import org.monte.screenrecorder.ScreenRecorder;
 
-/**
- * The type Custom screen recorder.
- */
 public class CustomScreenRecorder extends ScreenRecorder {
 
     private static final String TEMP_FILENAME_WITHOUT_EXTENSION = "currentRecording";
@@ -45,19 +42,6 @@ public class CustomScreenRecorder extends ScreenRecorder {
 
     private boolean areFilesDistributed = false;
 
-    /**
-     * Instantiates a new Custom screen recorder.
-     *
-     * @param cfg          the cfg
-     * @param captureArea  the capture area
-     * @param fileFormat   the file format
-     * @param screenFormat the screen format
-     * @param mouseFormat  the mouse format
-     * @param audioFormat  the audio format
-     * @param movieFolder  the movie folder
-     * @throws IOException  the io exception
-     * @throws AWTException the awt exception
-     */
     public CustomScreenRecorder(GraphicsConfiguration cfg, Rectangle captureArea, Format fileFormat,
             Format screenFormat, Format mouseFormat, Format audioFormat, File movieFolder)
             throws IOException, AWTException {
@@ -84,22 +68,11 @@ public class CustomScreenRecorder extends ScreenRecorder {
         return fileToWriteMovie;
     }
 
-    /**
-     * Gets temp file name.
-     *
-     * @return the temp file name
-     */
     public String getTempFileName() {
         return System.getProperty("java.io.tmpdir") + File.separator + TEMP_FILENAME_WITHOUT_EXTENSION + "."
                 + this.currentTempExtension;
     }
 
-    /**
-     * Save as.
-     *
-     * @param filename the filename
-     * @throws IOException the io exception
-     */
     public void saveAs(String filename) throws IOException {
         this.stop();
 
@@ -123,20 +96,10 @@ public class CustomScreenRecorder extends ScreenRecorder {
         return file;
     }
 
-    /**
-     * Files should be distributed.
-     *
-     * @param areFilesDistributed the are files distributed
-     */
     public void filesShouldBeDistributed(boolean areFilesDistributed) {
         this.areFilesDistributed = areFilesDistributed;
     }
 
-    /**
-     * Delete video temp boolean.
-     *
-     * @return the boolean
-     */
     public boolean deleteVideoTemp() {
         boolean resultado = false;
         List<File> listaFicheros = getCreatedMovieFiles();

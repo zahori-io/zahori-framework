@@ -25,21 +25,10 @@ package io.zahori.framework.files.excel;
 
 import java.util.Map;
 
-/**
- * The type Excel test.
- */
 public class ExcelTest {
 
-    /**
-     * The constant LINE_SEPARATOR.
-     */
     public static final String LINE_SEPARATOR = "--------------";
 
-    /**
-     * The entry point of application.
-     *
-     * @param args the input arguments
-     */
     public static void main(String... args) {
 
         final String file = "D:\\test.xls";

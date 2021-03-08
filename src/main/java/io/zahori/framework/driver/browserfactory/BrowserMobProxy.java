@@ -41,140 +41,78 @@ import net.lightbody.bmp.core.har.HarPage;
 import net.lightbody.bmp.proxy.CaptureType;
 import net.lightbody.bmp.proxy.auth.AuthType;
 
-/**
- * The type Browser mob proxy.
- */
 public class BrowserMobProxy {
 
     private BrowserMobProxyServer server;
 
-    /**
-     * Instantiates a new Browser mob proxy.
-     */
     public BrowserMobProxy() {
         server = new BrowserMobProxyServer();
     }
 
-    /**
-     * Enable request binary content.
-     */
     public void enableRequestBinaryContent() {
         server.enableHarCaptureTypes(CaptureType.REQUEST_BINARY_CONTENT);
     }
 
-    /**
-     * Disable request binary content.
-     */
     public void disableRequestBinaryContent() {
         server.disableHarCaptureTypes(CaptureType.REQUEST_BINARY_CONTENT);
     }
 
-    /**
-     * Enable request cookies.
-     */
     public void enableRequestCookies() {
         server.enableHarCaptureTypes(CaptureType.REQUEST_COOKIES);
     }
 
-    /**
-     * Disable request cookies.
-     */
     public void disableRequestCookies() {
         server.disableHarCaptureTypes(CaptureType.REQUEST_COOKIES);
     }
 
-    /**
-     * Enable request headers.
-     */
     public void enableRequestHeaders() {
         server.enableHarCaptureTypes(CaptureType.REQUEST_HEADERS);
     }
 
-    /**
-     * Disable request headers.
-     */
     public void disableRequestHeaders() {
         server.disableHarCaptureTypes(CaptureType.REQUEST_HEADERS);
     }
 
-    /**
-     * Enable request content.
-     */
     public void enableRequestContent() {
         server.enableHarCaptureTypes(CaptureType.REQUEST_CONTENT);
     }
 
-    /**
-     * Disable request content.
-     */
     public void disableRequestContent() {
         server.disableHarCaptureTypes(CaptureType.REQUEST_CONTENT);
     }
 
-    /**
-     * Enable response binary content.
-     */
     public void enableResponseBinaryContent() {
         server.enableHarCaptureTypes(CaptureType.RESPONSE_BINARY_CONTENT);
     }
 
-    /**
-     * Disable response binary content.
-     */
     public void disableResponseBinaryContent() {
         server.disableHarCaptureTypes(CaptureType.RESPONSE_BINARY_CONTENT);
     }
 
-    /**
-     * Enable response cookies.
-     */
     public void enableResponseCookies() {
         server.enableHarCaptureTypes(CaptureType.RESPONSE_COOKIES);
     }
 
-    /**
-     * Disable response cookies.
-     */
     public void disableResponseCookies() {
         server.disableHarCaptureTypes(CaptureType.RESPONSE_COOKIES);
     }
 
-    /**
-     * Enable response headers.
-     */
     public void enableResponseHeaders() {
         server.enableHarCaptureTypes(CaptureType.RESPONSE_HEADERS);
     }
 
-    /**
-     * Disable response headers.
-     */
     public void disableResponseHeaders() {
         server.disableHarCaptureTypes(CaptureType.RESPONSE_HEADERS);
     }
 
-    /**
-     * Enable response content.
-     */
     public void enableResponseContent() {
         server.enableHarCaptureTypes(CaptureType.RESPONSE_CONTENT);
     }
 
-    /**
-     * Disable response content.
-     */
     public void disableResponseContent() {
         server.disableHarCaptureTypes(CaptureType.RESPONSE_CONTENT);
     }
 
-    /**
-     * Configure proxy.
-     *
-     * @param ipAddress the ip address
-     * @param port      the port
-     * @param userProxy the user proxy
-     * @param passProxy the pass proxy
-     */
     public void configureProxy(String ipAddress, int port, String userProxy, String passProxy) {
         String password = new ZahoriCipher().decode(passProxy);
         InetSocketAddress proxy = new InetSocketAddress(ipAddress, port);
@@ -185,21 +123,10 @@ public class BrowserMobProxy {
         }
     }
 
-    /**
-     * Gets configured proxy.
-     *
-     * @return the configured proxy
-     */
     public Proxy getConfiguredProxy() {
         return getConfiguredProxy(null);
     }
-
-    /**
-     * Gets configured proxy.
-     *
-     * @param port the port
-     * @return the configured proxy
-     */
+    
     public Proxy getConfiguredProxy(Integer port) {
     	server.setTrustAllServers(true);
     	if (port != null) {
@@ -211,21 +138,11 @@ public class BrowserMobProxy {
         server.newHar();
         return ClientUtil.createSeleniumProxy(server);
     }
-
-    /**
-     * Gets proxy port.
-     *
-     * @return the proxy port
-     */
+    
     public int getProxyPort() {
     	return server.getPort();
     }
-
-    /**
-     * Gets random port.
-     *
-     * @return the random port
-     */
+    
     public int getRandomPort() {
     	BrowserMobProxyServer madServer = new BrowserMobProxyServer();
     	madServer.start();
@@ -234,51 +151,24 @@ public class BrowserMobProxy {
     	return port;
     }
 
-    /**
-     * Add headers.
-     *
-     * @param headers the headers
-     */
     public void addHeaders(Map<String, String> headers) {
         server.addHeaders(headers);
     }
 
-    /**
-     * Add header.
-     *
-     * @param headerName  the header name
-     * @param headerValue the header value
-     */
     public void addHeader(String headerName, String headerValue) {
         server.addHeader(headerName, headerValue);
     }
-
-    /**
-     * Add black lists.
-     *
-     * @param blackLists the black lists
-     */
+    
     public void addBlackLists(Map<String,String> blackLists) {
     	for (String currentKey: blackLists.keySet()) {
     		server.blacklistRequests(blackLists.get(currentKey), 200);
     	}
     }
 
-    /**
-     * Gets unfiltered har log.
-     *
-     * @return the unfiltered har log
-     */
     public Har getUnfilteredHarLog() {
         return getHarObject(server.getHar(), null);
     }
 
-    /**
-     * Gets filtered har log by request url.
-     *
-     * @param urlPattern the url pattern
-     * @return the filtered har log by request url
-     */
     public Har getFilteredHarLogByRequestUrl(String urlPattern) {
         Har harObject = server.getHar();
         List<HarEntry> entries = harObject.getLog().getEntries();
@@ -293,12 +183,6 @@ public class BrowserMobProxy {
         return getHarObject(harObject, newHarLog);
     }
 
-    /**
-     * Gets filtered har log by request method.
-     *
-     * @param allowedMethods the allowed methods
-     * @return the filtered har log by request method
-     */
     public Har getFilteredHarLogByRequestMethod(List<String> allowedMethods) {
         Har harObject = server.getHar();
         List<HarEntry> entries = harObject.getLog().getEntries();
@@ -315,13 +199,6 @@ public class BrowserMobProxy {
         return getHarObject(harObject, newHarLog);
     }
 
-    /**
-     * Gets filtered har log by url pattern and request method.
-     *
-     * @param urlPattern     the url pattern
-     * @param allowedMethods the allowed methods
-     * @return the filtered har log by url pattern and request method
-     */
     public Har getFilteredHarLogByUrlPatternAndRequestMethod(String urlPattern, List<String> allowedMethods) {
         Har harObject = server.getHar();
         List<HarEntry> entries = harObject.getLog().getEntries();

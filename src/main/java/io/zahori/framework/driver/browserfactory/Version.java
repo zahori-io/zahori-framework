@@ -25,27 +25,14 @@ package io.zahori.framework.driver.browserfactory;
 
 import java.util.Objects;
 
-/**
- * The type Version.
- */
 public class Version implements Comparable<Version> {
 
     private String version;
 
-    /**
-     * Get string.
-     *
-     * @return the string
-     */
     public final String get() {
         return this.version;
     }
 
-    /**
-     * Instantiates a new Version.
-     *
-     * @param version the version
-     */
     public Version(String version) {
         if (version == null) {
             throw new IllegalArgumentException("Version can not be null");

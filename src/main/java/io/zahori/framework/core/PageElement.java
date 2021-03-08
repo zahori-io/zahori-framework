@@ -48,66 +48,23 @@ import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
 import io.zahori.framework.utils.WebdriverUtils;
 
-/**
- * The type Page element.
- */
 public class PageElement {
 
-	/**
-	 * The constant ERROR.
-	 */
 	public static final String ERROR = " Error: ";
-	/**
-	 * The constant ON.
-	 */
 	public static final String ON = "\" on ";
-	/**
-	 * The constant ELEMENT_IS_NOT_EDITABLE.
-	 */
 	public static final String ELEMENT_IS_NOT_EDITABLE = "Element is not editable: ";
-	/**
-	 * The constant VALUE.
-	 */
 	public static final String VALUE = "value";
-	/**
-	 * The constant GET_TEXT.
-	 */
 	public static final String GET_TEXT = "Get text \"";
-	/**
-	 * The constant FROM.
-	 */
 	public static final String FROM = "\" from ";
-	/**
-	 * The Name.
-	 */
 	public String name;
-	/**
-	 * The Locator.
-	 */
 	public Locator locator;
-	/**
-	 * The Page.
-	 */
 	public Page page;
-	/**
-	 * The Test context.
-	 */
 	public TestContext testContext;
 	private WebDriver driver;
 	private final Locator[] frameLocators;
 
-	/**
-	 * The Web element.
-	 */
 	public WebElement webElement;
 
-	/**
-	 * Instantiates a new Page element.
-	 *
-	 * @param page    the page
-	 * @param name    the name
-	 * @param locator the locator
-	 */
 	public PageElement(Page page, String name, Locator locator) {
 		this.name = name;
 		this.locator = locator;
@@ -117,14 +74,6 @@ public class PageElement {
 		this.frameLocators = null;
 	}
 
-	/**
-	 * Instantiates a new Page element.
-	 *
-	 * @param page          the page
-	 * @param frameLocators the frame locators
-	 * @param name          the name
-	 * @param locator       the locator
-	 */
 	public PageElement(Page page, Locator[] frameLocators, String name, Locator locator) {
 		this.name = name;
 		this.locator = locator;
@@ -140,25 +89,14 @@ public class PageElement {
 				+ testContext.testCaseName + "]";
 	}
 
-	/**
-	 * Sets driver.
-	 *
-	 * @param driver the driver
-	 */
 	public void setDriver(WebDriver driver) {
 		this.driver = driver;
 	}
 
-	/**
-	 * Click.
-	 */
 	public void click() {
 		click(false, false);
 	}
 
-	/**
-	 * Click non visible.
-	 */
 	public void clickNonVisible() {
 		initWebElement();
 		try {
@@ -169,18 +107,10 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Click with scroll.
-	 */
 	public void clickWithScroll() {
 		click(true, false);
 	}
 
-	/**
-	 * Isclickable boolean.
-	 *
-	 * @return the boolean
-	 */
 	public boolean isclickable() {
 		Chronometer chrono = new Chronometer();
 		webElement = findElement();
@@ -195,11 +125,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Wait and click boolean.
-	 *
-	 * @return the boolean
-	 */
 	public boolean waitAndClick() {
 		Chronometer chrono = new Chronometer();
 		webElement = findElement();
@@ -214,9 +139,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Scroll.
-	 */
 	public void scroll() {
 		webElement = findElementPresent();
 		try {
@@ -227,9 +149,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Scroll middle.
-	 */
 	public void scrollMiddle() {
 		webElement = findElementPresent();
 		try {
@@ -264,9 +183,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Click javascript.
-	 */
 	public void clickJavascript() {
 		initWebElement();
 		try {
@@ -279,9 +195,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Double click.
-	 */
 	public void doubleClick() {
 		webElement = findElement();
 		try {
@@ -293,9 +206,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Physical click.
-	 */
 	public void physicalClick() {
 		webElement = findElement();
 		final int coordenate_X = Objects.requireNonNull(WebdriverUtils.getElementCenter(driver, webElement)).getX();
@@ -306,20 +216,12 @@ public class PageElement {
 		robot.click();
 	}
 
-	/**
-	 * Click at web element position.
-	 */
 	public void clickAtWebElementPosition() {
 		webElement = findElement();
 		final Actions action = new Actions(driver);
 		action.moveToElement(webElement).click(webElement).perform();
 	}
 
-	/**
-	 * Write not validate value.
-	 *
-	 * @param text the text
-	 */
 	public void writeNotValidateValue(String text) {
 		Chronometer chrono = new Chronometer();
 		webElement = findElement();
@@ -339,11 +241,6 @@ public class PageElement {
 
 	}
 
-	/**
-	 * Write.
-	 *
-	 * @param text the text
-	 */
 	public void write(String text) {
 		try {
 			writeNoLog(text, false);
@@ -355,11 +252,6 @@ public class PageElement {
 
 	}
 
-	/**
-	 * Write hidden element.
-	 *
-	 * @param text the text
-	 */
 	public void writeHiddenElement(String text) {
 		initWebElement();
 		try {
@@ -370,11 +262,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Write char by char.
-	 *
-	 * @param text the text
-	 */
 	public void writeCharByChar(String text) {
 		initWebElement();
 		try {
@@ -391,11 +278,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Write or select by tag.
-	 *
-	 * @param text the text
-	 */
 	public void writeOrSelectByTag(String text) {
 		webElement = findElement();
 		if ("select".equals(webElement.getTagName())) {
@@ -405,19 +287,11 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Write password.
-	 *
-	 * @param password the password
-	 */
 	public void writePassword(String password) {
 		writeNoLog(password, false);
 		testContext.logInfo("Write text \"********\" on " + this);
 	}
 
-	/**
-	 * Clear input.
-	 */
 	public void clearInput() {
 		final WebElement webElement = findElement();
 		try {
@@ -427,9 +301,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Mouse over.
-	 */
 	public void mouseOver() {
 		webElement = findElement();
 		try {
@@ -443,9 +314,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Mouse over non visible.
-	 */
 	public void mouseOverNonVisible() {
 		webElement = findElementPresent();
 		try {
@@ -459,56 +327,26 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Select option value.
-	 *
-	 * @param value the value
-	 */
 	public void selectOptionValue(String value) {
 		selectOptionValue(value, true);
 	}
 
-	/**
-	 * Select option text.
-	 *
-	 * @param text the text
-	 */
 	public void selectOptionText(String text) {
 		selectOptionText(text, true);
 	}
 
-	/**
-	 * Select option index.
-	 *
-	 * @param index the index
-	 */
 	public void selectOptionIndex(int index) {
 		selectOptionIndex(index, true);
 	}
 
-	/**
-	 * Select option value non visible.
-	 *
-	 * @param value the value
-	 */
 	public void selectOptionValueNonVisible(String value) {
 		selectOptionValue(value, false);
 	}
 
-	/**
-	 * Select option text non visible.
-	 *
-	 * @param text the text
-	 */
 	public void selectOptionTextNonVisible(String text) {
 		selectOptionText(text, false);
 	}
 
-	/**
-	 * Select option index non visible.
-	 *
-	 * @param index the index
-	 */
 	public void selectOptionIndexNonVisible(int index) {
 		selectOptionIndex(index, false);
 	}
@@ -547,56 +385,26 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Gets select options text.
-	 *
-	 * @return the select options text
-	 */
 	public List<String> getSelectOptionsText() {
 		return getSelectOptionsText(true);
 	}
 
-	/**
-	 * Gets select options text non visible.
-	 *
-	 * @return the select options text non visible
-	 */
 	public List<String> getSelectOptionsTextNonVisible() {
 		return getSelectOptionsText(false);
 	}
 
-	/**
-	 * Gets select options value.
-	 *
-	 * @return the select options value
-	 */
 	public List<String> getSelectOptionsValue() {
 		return getSelectOptionsValue(true);
 	}
 
-	/**
-	 * Gets select options value non visible.
-	 *
-	 * @return the select options value non visible
-	 */
 	public List<String> getSelectOptionsValueNonVisible() {
 		return getSelectOptionsValue(false);
 	}
 
-	/**
-	 * Gets selected option value.
-	 *
-	 * @return the selected option value
-	 */
 	public String getSelectedOptionValue() {
 		return getSelectedOptionValue(true);
 	}
 
-	/**
-	 * Gets selected option value non visible.
-	 *
-	 * @return the selected option value non visible
-	 */
 	public String getSelectedOptionValueNonVisible() {
 		return getSelectedOptionValue(false);
 	}
@@ -637,11 +445,6 @@ public class PageElement {
 		return option.getAttribute(VALUE);
 	}
 
-	/**
-	 * Check.
-	 *
-	 * @param checked the checked
-	 */
 	public void check(boolean checked) {
 		webElement = findElement();
 		if (checked && !webElement.isSelected()) {
@@ -653,21 +456,11 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Is selected boolean.
-	 *
-	 * @return the boolean
-	 */
 	public boolean isSelected() {
 		webElement = findElement();
 		return webElement.isSelected();
 	}
 
-	/**
-	 * Gets text.
-	 *
-	 * @return the text
-	 */
 	public String getText() {
 		webElement = findElement();
 		try {
@@ -682,12 +475,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Gets text.
-	 *
-	 * @param mustBeVisible the must be visible
-	 * @return the text
-	 */
 	public String getText(boolean mustBeVisible) {
 		if (mustBeVisible) {
 			return getText();
@@ -703,11 +490,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Gets text by tag.
-	 *
-	 * @return the text by tag
-	 */
 	public String getTextByTag() {
 		webElement = findElement();
 		try {
@@ -732,22 +514,10 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Gets attribute value.
-	 *
-	 * @param attribute the attribute
-	 * @return the attribute value
-	 */
 	public String getAttributeValue(String attribute) {
 		return getAttributeValue(attribute, true);
 	}
 
-	/**
-	 * Gets attribute value without print.
-	 *
-	 * @param attribute the attribute
-	 * @return the attribute value without print
-	 */
 	public String getAttributeValueWithoutPrint(String attribute) {
 		return getAttributeValue(attribute, false);
 	}
@@ -769,12 +539,6 @@ public class PageElement {
 		return value;
 	}
 
-	/**
-	 * Is attribute present boolean.
-	 *
-	 * @param attribute the attribute
-	 * @return the boolean
-	 */
 	public boolean isAttributePresent(String attribute) {
 		webElement = findElementPresent();
 		try {
@@ -784,11 +548,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Gets input value.
-	 *
-	 * @return the input value
-	 */
 	public String getInputValue() {
 		webElement = findElement();
 		try {
@@ -800,21 +559,11 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Send keys.
-	 *
-	 * @param keys the keys
-	 */
 	public void sendKeys(Keys keys) {
 		webElement = findElement();
 		webElement.sendKeys(keys);
 	}
 
-	/**
-	 * Validate text.
-	 *
-	 * @param expectedText the expected text
-	 */
 	public void validateText(String expectedText) {
 		final String realText = getText();
 		if (realText.equals(expectedText)) {
@@ -824,11 +573,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Validate input text.
-	 *
-	 * @param expectedText the expected text
-	 */
 	public void validateInputText(String expectedText) {
 		final String realText = getInputValue();
 		if (realText.equals(expectedText)) {
@@ -838,9 +582,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Validate is present.
-	 */
 	public void validateIsPresent() {
 		try {
 			findElementPresent();
@@ -850,11 +591,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Is present boolean.
-	 *
-	 * @return the boolean
-	 */
 	public boolean isPresent() {
 		try {
 			switchWithLocators();
@@ -878,9 +614,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Validate is visible.
-	 */
 	public void validateIsVisible() {
 		validateIsPresent();
 
@@ -892,11 +625,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Is visible boolean.
-	 *
-	 * @return the boolean
-	 */
 	public boolean isVisible() {
 		try {
 			findElementVisible();
@@ -906,11 +634,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Is visible without wait boolean.
-	 *
-	 * @return the boolean
-	 */
 	public boolean isVisibleWithoutWait() {
 		try {
 			switchWithLocators();
@@ -922,9 +645,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Validate is not present.
-	 */
 	public void validateIsNotPresent() {
 		try {
 			findElementPresent();
@@ -935,9 +655,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Init web element.
-	 */
 	public void initWebElement() {
 		try {
 			switchWithLocators();
@@ -952,11 +669,6 @@ public class PageElement {
 
 	}
 
-	/**
-	 * Find element web element.
-	 *
-	 * @return the web element
-	 */
 	protected WebElement findElement() {
 		try {
 			if ((webElement != null) && webElement.isDisplayed()) {
@@ -975,11 +687,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Wait element visible boolean.
-	 *
-	 * @return the boolean
-	 */
 	public boolean waitElementVisible() {
 		final Chronometer crono = new Chronometer();
 		return waitElementVisible_initiated(crono);
@@ -1044,11 +751,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Is enabled boolean.
-	 *
-	 * @return the boolean
-	 */
 	public boolean isEnabled() {
 		try {
 			final WebElement webElement = findElement();
@@ -1059,11 +761,6 @@ public class PageElement {
 
 	}
 
-	/**
-	 * Move to.
-	 *
-	 * @param destination the destination
-	 */
 	public void moveTo(PageElement destination) {
 		webElement = findElement();
 		try {
@@ -1080,11 +777,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Gets element type.
-	 *
-	 * @return the element type
-	 */
 	public String getElementType() {
 		webElement = findElement();
 		try {
@@ -1094,11 +786,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Gets element position.
-	 *
-	 * @return the element position
-	 */
 	public Point getElementPosition() {
 		webElement = findElementPresent();
 		try {
@@ -1108,12 +795,6 @@ public class PageElement {
 		}
 	}
 
-	/**
-	 * Slide.
-	 *
-	 * @param xOffset the x offset
-	 * @param yOffset the y offset
-	 */
 	public void slide(int xOffset, int yOffset) {
 		webElement = findElement();
 		try {

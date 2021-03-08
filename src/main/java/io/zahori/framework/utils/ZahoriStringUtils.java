@@ -23,9 +23,6 @@ package io.zahori.framework.utils;
  * #L%
  */
 
-/**
- * The type Zahori string utils.
- */
 public final class ZahoriStringUtils {
 
 
@@ -33,22 +30,10 @@ public final class ZahoriStringUtils {
         super();
     }
 
-    /**
-     * Is empty boolean.
-     *
-     * @param cs the cs
-     * @return the boolean
-     */
     public static boolean isEmpty(CharSequence cs) {
         return (null == cs) || (0 == cs.length());
     }
 
-    /**
-     * Delete whitespace string.
-     *
-     * @param str the str
-     * @return the string
-     */
     public static String deleteWhitespace(String str) {
         if (isEmpty(str)) {
             return str;
@@ -79,24 +64,11 @@ public final class ZahoriStringUtils {
         return false;
     }
 
-    /**
-     * Capitalize string.
-     *
-     * @param str the str
-     * @return the string
-     */
     public static String capitalize(String str) {
         return capitalize(str, null);
     }
 
 
-    /**
-     * Capitalize string.
-     *
-     * @param str        the str
-     * @param delimiters the delimiters
-     * @return the string
-     */
     public static String capitalize(String str, char... delimiters) {
         int delimLen = (null == delimiters) ? -1 : delimiters.length;
         if (isEmpty(str) || (0 == delimLen)) {
@@ -116,12 +88,6 @@ public final class ZahoriStringUtils {
         return new String(buffer);
     }
 
-    /**
-     * Capitalize without whitespace string.
-     *
-     * @param str the str
-     * @return the string
-     */
     public static String capitalizeWithoutWhitespace(String str) {
         return deleteWhitespace(capitalize(str));
     }

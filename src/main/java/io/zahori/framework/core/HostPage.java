@@ -27,9 +27,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
-/**
- * The type Host page.
- */
 public class HostPage extends Page {
 
     private static final long serialVersionUID = 5112565167634493112L;
@@ -39,9 +36,6 @@ public class HostPage extends Page {
     private HostPageElement disconnectButton;
     private HostPageElement keypadButton;
     private String emulatorURL;
-    /**
-     * The Log actions.
-     */
     protected String logActions;
 
     private HostPageElement f1Button;
@@ -57,11 +51,6 @@ public class HostPage extends Page {
     private HostPageElement f11Button;
     private HostPageElement f12Button;
 
-    /**
-     * Instantiates a new Host page.
-     *
-     * @param context the context
-     */
     protected HostPage(TestContext context) {
         super(context);
         this.testContext = context;
@@ -70,11 +59,6 @@ public class HostPage extends Page {
         initHostBrowser();
     }
 
-    /**
-     * Connect host.
-     *
-     * @param url the url
-     */
     public void connectHost(String url) {
         this.getDriver().get(this.emulatorURL);
 
@@ -89,9 +73,6 @@ public class HostPage extends Page {
         this.logActions = this.logActions + "Connected to HOST url " + url + ".\n";
     }
 
-    /**
-     * Disconnect.
-     */
     public void disconnect() {
         if (this.disconnectButton.isVisible()) {
             this.disconnectButton.click();
@@ -102,102 +83,58 @@ public class HostPage extends Page {
         this.setDriver(null);
     }
 
-    /**
-     * Reset actions log.
-     */
     public void resetActionsLog() {
         this.logActions = "";
     }
 
-    /**
-     * Gets actions log.
-     *
-     * @return the actions log
-     */
     public String getActionsLog() {
         return this.logActions;
     }
 
-    /**
-     * F 1 button.
-     */
     protected void f1Button() {
         fxButton(this.f1Button, "F1");
     }
 
-    /**
-     * F 2 button.
-     */
     protected void f2Button() {
         fxButton(this.f2Button, "F2");
     }
 
-    /**
-     * F 3 button.
-     */
     protected void f3Button() {
         fxButton(this.f3Button, "F3");
     }
 
-    /**
-     * F 4 button.
-     */
     protected void f4Button() {
         fxButton(this.f4Button, "F4");
     }
 
-    /**
-     * F 5 button.
-     */
     protected void f5Button() {
         fxButton(this.f5Button, "F5");
     }
 
-    /**
-     * F 6 button.
-     */
     protected void f6Button() {
         fxButton(this.f6Button, "F6");
     }
 
-    /**
-     * F 7 button.
-     */
     protected void f7Button() {
         fxButton(this.f7Button, "F7");
     }
 
-    /**
-     * F 8 button.
-     */
     protected void f8Button() {
         fxButton(this.f8Button, "F8");
     }
 
-    /**
-     * F 9 button.
-     */
     protected void f9Button() {
         fxButton(this.f9Button, "F9");
     }
 
-    /**
-     * F 10 button.
-     */
     protected void f10Button() {
         fxButton(this.f10Button, "F10");
     }
 
-    /**
-     * F 11 button.
-     */
     protected void f11Button() {
         fxButton(this.f11Button, "F11");
     }
 
-    /**
-     * F 12 button.
-     */
     protected void f12Button() {
         fxButton(this.f12Button, "F12");
     }

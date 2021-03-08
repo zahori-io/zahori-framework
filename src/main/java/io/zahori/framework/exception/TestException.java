@@ -23,36 +23,20 @@ package io.zahori.framework.exception;
  * #L%
  */
 
-/**
- * The type Test exception.
- */
 public class TestException extends Exception {
 
     private static final long serialVersionUID = -7423023525671290494L;
     private String message;
 
-    /**
-     * Instantiates a new Test exception.
-     */
     public TestException() {
         super();
     }
 
-    /**
-     * Instantiates a new Test exception.
-     *
-     * @param message the message
-     */
     public TestException(String message) {
         super(message);
         this.message = message;
     }
 
-    /**
-     * Instantiates a new Test exception.
-     *
-     * @param cause the cause
-     */
     public TestException(Throwable cause) {
         super(cause);
     }
@@ -77,11 +61,6 @@ public class TestException extends Exception {
         return message;
     }
 
-    /**
-     * Sets message.
-     *
-     * @param message the message
-     */
     public void setMessage(String message) {
         this.message = message;
     }

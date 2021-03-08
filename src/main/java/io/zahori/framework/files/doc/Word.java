@@ -43,22 +43,13 @@ import org.docx4j.wml.R;
 import org.docx4j.wml.RPr;
 import org.docx4j.wml.Text;
 
-/**
- * The type Word.
- */
 public class Word {
 
+    private static final String RED = "FF0000";
     private WordprocessingMLPackage wordMLPackage;
     private String directorio;
     private String nombre;
 
-    /**
-     * Instantiates a new Word.
-     *
-     * @param directorio the directorio
-     * @param nombre     the nombre
-     * @param titulo     the titulo
-     */
     public Word(String directorio, String nombre, String titulo) {
 
         this.directorio = directorio;
@@ -80,14 +71,6 @@ public class Word {
         }
     }
 
-    /**
-     * Instantiates a new Word.
-     *
-     * @param directorio   the directorio
-     * @param nombre       the nombre
-     * @param titulo       the titulo
-     * @param templatePath the template path
-     */
     public Word(String directorio, String nombre, String titulo, String templatePath) {
 
         this.directorio = directorio;
@@ -109,89 +92,41 @@ public class Word {
         }
     }
 
-    /**
-     * Insertar texto.
-     *
-     * @param texto the texto
-     */
     public void insertarTexto(String texto) {
         insertText(texto, null, false);
         saveDoc();
     }
 
-    /**
-     * Insertar texto negrita.
-     *
-     * @param texto the texto
-     */
     public void insertarTextoNegrita(String texto) {
         insertText(texto, null, true);
         saveDoc();
     }
 
-    /**
-     * Insertar texto color.
-     *
-     * @param texto the texto
-     * @param color the color
-     */
     public void insertarTextoColor(String texto, String color) {
         insertText(texto, color, false);
         saveDoc();
     }
 
-    /**
-     * Insertar texto color negrita.
-     *
-     * @param texto the texto
-     * @param color the color
-     */
     public void insertarTextoColorNegrita(String texto, String color) {
         insertText(texto, color, true);
         saveDoc();
     }
 
-    /**
-     * Insertar imagen.
-     *
-     * @param imagen the imagen
-     * @param titulo the titulo
-     */
     public void insertarImagen(File imagen, String titulo) {
         insertText(titulo, null, false);
         insertarImagen(imagen);
     }
 
-    /**
-     * Insertar imagen color.
-     *
-     * @param imagen the imagen
-     * @param titulo the titulo
-     * @param color  the color
-     */
     public void insertarImagenColor(File imagen, String titulo, String color) {
         insertText(titulo, color, false);
         insertarImagen(imagen);
     }
 
-    /**
-     * Insertar imagen negrita.
-     *
-     * @param imagen the imagen
-     * @param titulo the titulo
-     */
     public void insertarImagenNegrita(File imagen, String titulo) {
         insertText(titulo, null, true);
         insertarImagen(imagen);
     }
 
-    /**
-     * Insertar imagen color negrita.
-     *
-     * @param imagen the imagen
-     * @param titulo the titulo
-     * @param color  the color
-     */
     public void insertarImagenColorNegrita(File imagen, String titulo, String color) {
         insertText(titulo, color, true);
         insertarImagen(imagen);
@@ -203,7 +138,7 @@ public class Word {
             addImageToPackage(wordMLPackage, bytes);
 
         } catch (Exception e) {
-            throw new RuntimeException("Error writing image in evidence document: " + e.getMessage());
+            insertarTextoColor("Error writing image in evidence document: " + e.getMessage(), RED);
         }
 
         saveDoc();
@@ -260,20 +195,10 @@ public class Word {
         }
     }
 
-    /**
-     * Gets directorio.
-     *
-     * @return the directorio
-     */
     public String getDirectorio() {
         return directorio;
     }
 
-    /**
-     * Gets nombre.
-     *
-     * @return the nombre
-     */
     public String getNombre() {
         return nombre;
     }

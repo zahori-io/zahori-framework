@@ -25,20 +25,11 @@ package io.zahori.framework.utils;
 
 import org.apache.commons.lang3.StringUtils;
 
-/**
- * The type Boolean utils.
- */
 public class BooleanUtils {
 
     private BooleanUtils() {
     }
 
-    /**
-     * Gets boolean.
-     *
-     * @param value the value
-     * @return the boolean
-     */
     public static boolean getBoolean(String value) {
 
         if (value != null) {

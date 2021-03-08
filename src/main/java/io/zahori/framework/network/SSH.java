@@ -36,43 +36,18 @@ import com.jcraft.jsch.Session;
 
 import io.zahori.framework.exception.MethodException;
 
-/**
- * The type Ssh.
- */
 public class SSH {
 
     private static final Logger LOG = LoggerFactory.getLogger(SSH.class);
-    /**
-     * The constant ERROR_AL_EJECUTAR_EL_COMANDO_CAUSA.
-     */
     public static final String ERROR_AL_EJECUTAR_EL_COMANDO_CAUSA = "Error al ejecutar el comando. Causa: ";
 
-    /**
-     * The Server.
-     */
     protected final String server;
-    /**
-     * The User.
-     */
     protected final String user;
-    /**
-     * The Password.
-     */
     protected final String password;
-    /**
-     * The Port.
-     */
     protected final int port;
 
     private static final int DEFAULT_PORT = 22;
 
-    /**
-     * Instantiates a new Ssh.
-     *
-     * @param server   the server
-     * @param user     the user
-     * @param password the password
-     */
     public SSH(String server, String user, String password) {
         this.server = server;
         this.user = user;
@@ -80,14 +55,6 @@ public class SSH {
         this.port = DEFAULT_PORT;
     }
 
-    /**
-     * Instantiates a new Ssh.
-     *
-     * @param server   the server
-     * @param user     the user
-     * @param password the password
-     * @param port     the port
-     */
     public SSH(String server, String user, String password, int port) {
         this.server = server;
         this.user = user;
@@ -95,13 +62,6 @@ public class SSH {
         this.port = port;
     }
 
-    /**
-     * Execute command string.
-     *
-     * @param command the command
-     * @return the string
-     * @throws MethodException the method exception
-     */
     public String executeCommand(String command) throws MethodException {
 
         LOG.debug("Executing command \"" + command + "\" on server \"" + server + "\"");

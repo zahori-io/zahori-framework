@@ -52,21 +52,12 @@ import io.zahori.framework.driver.mobilefactory.MobileDriverFactory;
 import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
 
-/**
- * The type Browser.
- */
 public class Browser {
 
     private static final Logger LOG = LoggerFactory.getLogger(TestContext.class);
-    /**
-     * The constant LOADING_PAGE.
-     */
     public static final String LOADING_PAGE = "Loading page: ";
 
     private WebDriver driver;
-    /**
-     * The Test context.
-     */
     public TestContext testContext;
     private WebDriverBrowserSelenium wbs;
     private AppiumDriverLocalService service;
@@ -78,11 +69,6 @@ public class Browser {
     private static final String TXT_URL = "URL";
     private static final String PLATFORM_WINDOWS = "windows";
 
-    /**
-     * Instantiates a new Browser.
-     *
-     * @param testContext the test context
-     */
     public Browser(TestContext testContext) {
         this.testContext = testContext;
         createLocalServices();
@@ -93,27 +79,15 @@ public class Browser {
         allDrivers.put(mainDriverHandle, driver);
     }
 
-    /**
-     * Instantiates a new Browser.
-     *
-     * @param testContext the test context
-     * @param driver      the driver
-     */
     public Browser(TestContext testContext, WebDriver driver) {
         this.testContext = testContext;
         this.driver = driver;
     }
 
-    /**
-     * Close.
-     */
     public void close() {
         close(true);
     }
 
-    /**
-     * Close without process kill.
-     */
     public void closeWithoutProcessKill() {
         close(false);
     }
@@ -152,11 +126,6 @@ public class Browser {
         }
     }
 
-    /**
-     * Load page.
-     *
-     * @param url the url
-     */
     public void loadPage(String url) {
         createDriver();
         driver.get(url);
@@ -164,34 +133,18 @@ public class Browser {
         setBrowserZoomTo100();
     }
 
-    /**
-     * Reload page.
-     */
     public void reloadPage() {
         if (driver != null) {
             loadPage(driver.getCurrentUrl());
         }
     }
 
-    /**
-     * Gets browser url.
-     *
-     * @return the browser url
-     */
     public String getBrowserUrl() {
         String url = driver.getCurrentUrl();
         testContext.logInfo("Current page: " + url);
         return url;
     }
 
-    /**
-     * Load page with proxy.
-     *
-     * @param url      the url
-     * @param urlProxy the url proxy
-     * @param user     the user
-     * @param password the password
-     */
     public void loadPageWithProxy(String url, String urlProxy, String user, String password) {
         createDriver();
         driver.manage().timeouts().pageLoadTimeout(100L, TimeUnit.MILLISECONDS);
@@ -217,12 +170,6 @@ public class Browser {
         setBrowserZoomTo100();
     }
 
-    /**
-     * Load page with certificate.
-     *
-     * @param url            the url
-     * @param numCertificate the num certificate
-     */
     public void loadPageWithCertificate(String url, int numCertificate) {
         driver.get(url);
         testContext.logInfo(LOADING_PAGE + url);
@@ -269,11 +216,6 @@ public class Browser {
         }
     }
 
-    /**
-     * Create new window web driver.
-     *
-     * @return the web driver
-     */
     public WebDriver createNewWindow() {
         WebDriver newDriver = wbs.getWebDriver();
         activeDriverHandle = newDriver.getWindowHandle();
@@ -284,11 +226,6 @@ public class Browser {
         return newDriver;
     }
 
-    /**
-     * Close window web driver.
-     *
-     * @return the web driver
-     */
     public WebDriver closeWindow() {
         testContext.driver = allDrivers.get(mainDriverHandle);
         this.driver = testContext.driver;
@@ -301,28 +238,15 @@ public class Browser {
         return allDrivers.get(mainDriverHandle);
     }
 
-    /**
-     * Gets active window handle id.
-     *
-     * @return the active window handle id
-     */
     public String getActiveWindowHandleID() {
         return activeDriverHandle;
     }
 
-    /**
-     * Sets active window.
-     *
-     * @param handleID the handle id
-     */
     public void setActiveWindow(String handleID) {
         testContext.driver = allDrivers.get(handleID);
         this.driver = testContext.driver;
     }
 
-    /**
-     * Activate ie compatibility mode.
-     */
     public void activateIECompatibilityMode() {
         try {
 
@@ -352,34 +276,14 @@ public class Browser {
         }
     }
 
-    /**
-     * Switch browser window by title string.
-     *
-     * @param windowTitle the window title
-     * @param newWindow   the new window
-     * @return the string
-     */
     public String switchBrowserWindowByTitle(String windowTitle, boolean newWindow) {
         return switchBrowserWindowByParm(TXT_TITLE, windowTitle, newWindow);
     }
 
-    /**
-     * Switch browser window by url string.
-     *
-     * @param windowURL the window url
-     * @param newWindow the new window
-     * @return the string
-     */
     public String switchBrowserWindowByURL(String windowURL, boolean newWindow) {
         return switchBrowserWindowByParm(TXT_URL, windowURL, newWindow);
     }
 
-    /**
-     * Switch browser window by handle string.
-     *
-     * @param windowHandle the window handle
-     * @return the string
-     */
     public String switchBrowserWindowByHandle(String windowHandle) {
         // Store the current window handle.
         String windowHandleBefore = driver.getWindowHandle();
@@ -391,11 +295,6 @@ public class Browser {
         return windowHandleBefore;
     }
 
-    /**
-     * Sets loading page timeout in seconds.
-     *
-     * @param timeoutInSeconds the timeout in seconds
-     */
     public void setLoadingPageTimeoutInSeconds(int timeoutInSeconds) {
         driver.manage().timeouts().pageLoadTimeout(timeoutInSeconds, TimeUnit.SECONDS);
     }

@@ -29,33 +29,15 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 
 import io.appium.java_client.ios.IOSDriver;
 
-/**
- * The type Ios factory.
- */
 public class IosFactory {
 
-    /**
-     * Instantiates a new Ios factory.
-     */
     public IosFactory() {
     }
 
-    /**
-     * Gets capabilities.
-     *
-     * @return the capabilities
-     */
     public static DesiredCapabilities getCapabilities() {
         return new DesiredCapabilities();
     }
 
-    /**
-     * Gets driver.
-     *
-     * @param url          the url
-     * @param capabilities the capabilities
-     * @return the driver
-     */
     public static IOSDriver getDriver(URL url, DesiredCapabilities capabilities) {
         return new IOSDriver(url, capabilities);
     }

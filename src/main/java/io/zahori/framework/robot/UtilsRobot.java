@@ -42,9 +42,6 @@ import org.slf4j.LoggerFactory;
 
 import io.zahori.framework.exception.MethodException;
 
-/**
- * The type Utils robot.
- */
 public class UtilsRobot {
 
     private static final Logger LOG = LoggerFactory.getLogger(UtilsRobot.class);
@@ -53,9 +50,6 @@ public class UtilsRobot {
 
     private static final int MAX_SCROLL = 100;
 
-    /**
-     * Instantiates a new Utils robot.
-     */
     public UtilsRobot() {
         try {
             this.robot = new Robot();
@@ -64,12 +58,6 @@ public class UtilsRobot {
         }
     }
 
-    /**
-     * Move mouse pointer.
-     *
-     * @param x the x
-     * @param y the y
-     */
     public void moveMousePointer(int x, int y) {
         try {
             if (this.robot == null) {
@@ -82,13 +70,6 @@ public class UtilsRobot {
         }
     }
 
-    /**
-     * Shake mouse pointer.
-     *
-     * @param x        the x
-     * @param yOrigin  the y origin
-     * @param yDestiny the y destiny
-     */
     public void shakeMousePointer(int x, int yOrigin, int yDestiny) {
         this.robot.mouseMove(x, yOrigin);
         for (int i = yOrigin; i <= yDestiny; i++) {
@@ -102,14 +83,6 @@ public class UtilsRobot {
         }
     }
 
-    /**
-     * Move pointer automatically.
-     *
-     * @param x1 the x 1
-     * @param y1 the y 1
-     * @param x2 the x 2
-     * @param y2 the y 2
-     */
     public void movePointerAutomatically(int x1, int y1, int x2, int y2) {
         this.robot.mouseMove(x1, y1);
         int i;
@@ -139,15 +112,6 @@ public class UtilsRobot {
         }
     }
 
-    /**
-     * Move pointer automatically vertical.
-     *
-     * @param x1 the x 1
-     * @param y1 the y 1
-     * @param x2 the x 2
-     * @param y2 the y 2
-     * @throws InterruptedException the interrupted exception
-     */
     public void movePointerAutomaticallyVertical(int x1, int y1, int x2, int y2) throws InterruptedException {
         this.robot.mouseMove(x1, y1);
         int i;
@@ -162,12 +126,6 @@ public class UtilsRobot {
 
     }
 
-    /**
-     * Scroll to element boolean.
-     *
-     * @param element the element
-     * @return the boolean
-     */
     public boolean scrollToElement(WebElement element) {
         int i = 0;
         while ((i < MAX_SCROLL) && (!element.isDisplayed())) {
@@ -186,13 +144,6 @@ public class UtilsRobot {
         return element.isDisplayed();
     }
 
-    /**
-     * Scroll element displace boolean.
-     *
-     * @param element the element
-     * @param times   the times
-     * @return the boolean
-     */
     public boolean scrollElementDisplace(WebElement element, int times) {
         if (scrollToElement(element)) {
             this.robot.mouseWheel(times);
@@ -202,47 +153,22 @@ public class UtilsRobot {
         }
     }
 
-    /**
-     * Scroll.
-     *
-     * @param times the times
-     * @param x     the x
-     * @param y     the y
-     */
     public void scroll(int times, int x, int y) {
         this.robot.mouseMove(x, y + 1);
         this.robot.mouseWheel(times);
     }
 
-    /**
-     * Scroll.
-     *
-     * @param times the times
-     */
     public void scroll(int times) {
         Point posActual = MouseInfo.getPointerInfo().getLocation();
         this.robot.mouseMove((int) posActual.getX(), (int) posActual.getY());
         this.robot.mouseWheel(times);
     }
 
-    /**
-     * Gets mouse location.
-     *
-     * @return the mouse location
-     */
     public Point getMouseLocation() {
         Point p = MouseInfo.getPointerInfo().getLocation();
         return p;
     }
 
-    /**
-     * Move mouse pointer ab.
-     *
-     * @param x1 the x 1
-     * @param y1 the y 1
-     * @param x2 the x 2
-     * @param y2 the y 2
-     */
     public void moveMousePointerAB(int x1, int y1, int x2, int y2) {
 
         // First it moves in horizontal axis (X).
@@ -272,29 +198,16 @@ public class UtilsRobot {
         }
     }
 
-    /**
-     * Click.
-     */
     public void click() {
         this.robot.mousePress(InputEvent.BUTTON1_MASK);
         this.robot.mouseRelease(InputEvent.BUTTON1_MASK);
     }
 
-    /**
-     * Press key.
-     *
-     * @param key the key
-     */
     public void pressKey(int key) {
         this.robot.keyPress(key);
         this.robot.keyRelease(key);
     }
 
-    /**
-     * Take screenshot.
-     *
-     * @param fileName the file name
-     */
     public void takeScreenshot(String fileName) {
         try {
             Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();

@@ -47,22 +47,12 @@ import org.monte.media.FormatKeys.MediaType;
 import org.monte.media.math.Rational;
 import org.testng.log4testng.Logger;
 
-/**
- * The type Video recorder.
- */
 public class VideoRecorder implements EnterpriseScreenRecorder {
 
     private static final Logger LOG = Logger.getLogger(VideoRecorder.class);
 
     private CustomScreenRecorder screenRecorder;
 
-    /**
-     * Instantiates a new Video recorder.
-     *
-     * @param nameFolderVideos the name folder videos
-     * @throws IOException  the io exception
-     * @throws AWTException the awt exception
-     */
     public VideoRecorder(File nameFolderVideos) throws IOException, AWTException {
         final File directorio = nameFolderVideos;
 
