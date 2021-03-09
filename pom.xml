@@ -49,9 +49,9 @@
 	</properties>
 
 	<scm>
-		<connection>scm:git:git://github.com/zahori-io/${project.artifactId}.git</connection>
-		<developerConnection>scm:git:git@github.com:zahori-io/${project.artifactId}.git</developerConnection>
-		<url>https://github.com/zahori-io/${project.artifactId}.git</url>
+		<connection>scm:git:git://github.com/zahori-io/zahori-framework.git</connection>
+		<developerConnection>scm:git:git@github.com:zahori-io/zahori-framework.git</developerConnection>
+		<url>https://github.com/zahori-io/zahori-framework.git</url>
 		<tag>v0.1.0</tag>
 	</scm>
 
