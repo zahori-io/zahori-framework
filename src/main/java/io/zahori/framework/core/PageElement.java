@@ -711,7 +711,7 @@ public class PageElement {
 		try {
 			switchWithLocators();
 			final WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.longValue());
-			return (WebElement) wait.until(webDriver -> ExpectedConditions.presenceOfElementLocated(locator.getBy()));
+			return (WebElement) wait.until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
 		} catch (final Exception e) {
 			throw new RuntimeException("Element is not present in DOM: " + this);
 		}
@@ -721,7 +721,7 @@ public class PageElement {
 		try {
 			switchWithLocators();
 			final WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.longValue());
-			return (WebElement) wait.until(webDriver -> ExpectedConditions.visibilityOfElementLocated(locator.getBy()));
+			return (WebElement) wait.until(ExpectedConditions.visibilityOfElementLocated(locator.getBy()));
 		} catch (final Exception e) {
 			throw new RuntimeException("Element is not visible: " + this);
 		}
