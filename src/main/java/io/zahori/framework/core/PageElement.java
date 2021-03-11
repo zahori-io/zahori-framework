@@ -118,7 +118,7 @@ public class PageElement {
 			scroll();
 
 			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.intValue() - chrono.getElapsedSeconds());
-			wait.until(webDriver ->  ExpectedConditions.elementToBeClickable(webElement));
+			wait.until(ExpectedConditions.elementToBeClickable(webElement));
 			return true;
 		} catch (final Exception e) {
 			return false;
@@ -130,7 +130,7 @@ public class PageElement {
 		webElement = findElement();
 		try {
 			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.intValue() - chrono.getElapsedSeconds());
-			wait.until(webDriver ->  ExpectedConditions.elementToBeClickable(webElement));
+			wait.until(ExpectedConditions.elementToBeClickable(webElement));
 			webElement.click();
 			testContext.logInfo("Click on " + this);
 			return true;
@@ -170,7 +170,7 @@ public class PageElement {
 			}
 
 			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.intValue() - chrono.getElapsedSeconds());
-			wait.until(webDriver ->  ExpectedConditions.elementToBeClickable(webElement));
+			wait.until(ExpectedConditions.elementToBeClickable(webElement));
 
 			webElement.click();
 			testContext.logInfo("Click on " + this);
@@ -227,7 +227,7 @@ public class PageElement {
 		webElement = findElement();
 		try {
 			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.intValue() - chrono.getElapsedSeconds());
-			wait.until(webDriver -> ExpectedConditions.elementToBeClickable(webElement));
+			wait.until(ExpectedConditions.elementToBeClickable(webElement));
 			while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement.intValue())) {
 				Pause.pause();
 				initWebElement();
@@ -596,7 +596,7 @@ public class PageElement {
 			switchWithLocators();
 			driver.manage().timeouts().implicitlyWait(0L, TimeUnit.SECONDS);
 			final WebDriverWait wait = new WebDriverWait(driver, 0L);
-			wait.until(webDriver -> ExpectedConditions.presenceOfElementLocated(locator.getBy()));
+			wait.until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
 			return driver.findElement(locator.getBy()) != null;
 		} catch (final Exception e) {
 			return false;
@@ -733,7 +733,7 @@ public class PageElement {
 		try {
 			while (!StringUtils.equals(webElement.getAttribute(VALUE), text) && (chrono.getElapsedSeconds() < testContext.timeoutFindElement.intValue())) {
 				WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.intValue() - chrono.getElapsedSeconds());
-				wait.until(webDriver -> ExpectedConditions.elementToBeClickable(webElement));
+				wait.until(ExpectedConditions.elementToBeClickable(webElement));
 				while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement.intValue())) {
 					Pause.pause();
 					initWebElement();

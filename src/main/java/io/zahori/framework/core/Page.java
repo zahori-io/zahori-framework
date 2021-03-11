@@ -246,8 +246,7 @@ public class Page implements Serializable {
 
         WebElement element = null;
         try {
-            element = (WebElement) new WebDriverWait(driver, testContext.timeoutFindElement).until(
-                    webDriver ->  ExpectedConditions.presenceOfElementLocated(locator.getBy()));
+            element = (WebElement) new WebDriverWait(driver, testContext.timeoutFindElement).until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
 
         } catch (NoSuchElementException | TimeoutException e) {
             return elementsList;
