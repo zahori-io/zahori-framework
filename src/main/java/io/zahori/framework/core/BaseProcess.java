@@ -23,6 +23,14 @@ package io.zahori.framework.core;
  * #L%
  */
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.zahori.framework.driver.browserfactory.Browsers;
+import io.zahori.framework.exception.ZahoriException;
+import io.zahori.model.process.CaseExecution;
+import io.zahori.model.process.ProcessRegistration;
+import io.zahori.model.process.Step;
+import io.zahori.model.process.Test;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -37,20 +45,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
+import java.util.List;
+import java.util.Properties;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.zahori.framework.driver.browserfactory.Browsers;
-import io.zahori.framework.exception.ZahoriException;
-import io.zahori.model.process.CaseExecution;
-import io.zahori.model.process.ProcessRegistration;
-import io.zahori.model.process.Step;
-import io.zahori.model.process.Test;
 
 public abstract class BaseProcess {
 
@@ -61,7 +61,7 @@ public abstract class BaseProcess {
     public static final String ZAHORI_SERVER_HEALTHCHECK_URL = "/healthcheck";
     public static final String ZAHORI_SERVER_PROCESS_REGISTRATION_URL = "/process";
     public static final int SECONDS_WAIT_FOR_SERVER = 5;
-    public static final int MAX_RETRIES_WAIT_FOR_SERVER = 7;
+    public static final int MAX_RETRIES_WAIT_FOR_SERVER = 8;
 
     protected int retries;
 
@@ -215,7 +215,8 @@ public abstract class BaseProcess {
         caseExecution.setHar(getPathIfFileExists(testContext, evidencePath + testContext.evidences.getHarLogFileName()));
 
         // Convert attachments absolut paths to relative paths
-        for (Step step : test.getSteps()) {
+        List<Step> steps = test.getSteps();
+        for (Step step : steps) {
             updateAttachmentUrl(step, evidencePath);
 
             // Substeps
@@ -223,7 +224,7 @@ public abstract class BaseProcess {
                 updateAttachmentUrl(substep, evidencePath);
             }
         }
-        caseExecution.setSteps(getStepsString(test));
+        caseExecution.setSteps(getStepsString(steps));
 
         uploadEvidences(testContext, caseExecution, test, serverUrl + "/evidence/?path=" + encodeUrl(evidencePath));
         return caseExecution;
@@ -247,9 +248,10 @@ public abstract class BaseProcess {
     }
 
     private String getEvidencePath(TestContext testContext, ProcessRegistration processRegistration) {
-        return processRegistration.getClientId() + File.separator + processRegistration.getTeamId() + File.separator + processRegistration.getName()
-                + File.separator + testContext.testCaseName + File.separator + testContext.platform + File.separator
-                + StringUtils.upperCase(testContext.browserName) + File.separator + testContext.testId + File.separator;
+        final String pathSeparator = "/";
+        return processRegistration.getClientId() + pathSeparator + processRegistration.getTeamId() + pathSeparator + processRegistration.getName()
+                + pathSeparator + testContext.testCaseName + pathSeparator + testContext.platform + pathSeparator
+                + StringUtils.upperCase(testContext.browserName) + pathSeparator + testContext.testId + pathSeparator;
     }
 
     private void updateAttachmentUrl(Step step, String artifactRelativePath) {
@@ -284,7 +286,7 @@ public abstract class BaseProcess {
             return;
         }
 
-        Path evidenceFile = Paths.get(resultsDir + filePath);
+        Path evidenceFile = Paths.get(normalizePath(resultsDir + filePath));
         if (Files.exists(evidenceFile)) {
             uploadEvidence(url, evidenceFile.toString());
         }
@@ -317,10 +319,10 @@ public abstract class BaseProcess {
         }
     }
 
-    private String getStepsString(Test test) {
+    private String getStepsString(List<Step> steps) {
         ObjectMapper mapper = new ObjectMapper();
         try {
-            return mapper.writeValueAsString(test.getSteps());
+            return mapper.writeValueAsString(steps);
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Error parsing content of file " + TestContext.JSON_REPORT + ": " + e.getMessage());
         }
@@ -371,4 +373,22 @@ public abstract class BaseProcess {
         }
     }
 
+    private String normalizePath(String rawPath) {
+        Path path = Paths.get(rawPath);
+        Path normalizedPath = path.normalize();
+        return FilenameUtils.separatorsToSystem(normalizedPath.toString());
+    }
+    
+    public static Properties getProperties() {
+        Properties properties = new Properties();
+        String os = System.getProperty("os.name");
+        LOG.info("OS: {}", os);
+        if (StringUtils.containsIgnoreCase(os, "linux")){
+            properties.put("eureka.instance.preferIpAddress", "true");
+        }else{
+            properties.put("eureka.instance.preferIpAddress", "false");
+            properties.put("zahori.server.host", "localhost");
+        }  
+        return properties;
+    }
 }
