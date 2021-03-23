@@ -3,7 +3,7 @@
 	
 	<groupId>io.zahori</groupId>
 	<artifactId>zahori-framework</artifactId>
-	<version>0.1.7-SNAPSHOT</version>
+	<version>0.1.7</version>
 	<packaging>jar</packaging>
 	<name>zahori-framework</name>
 
@@ -52,7 +52,7 @@
 		<connection>scm:git:git://github.com/zahori-io/zahori-framework.git</connection>
 		<developerConnection>scm:git:git@github.com:zahori-io/zahori-framework.git</developerConnection>
 		<url>https://github.com/zahori-io/zahori-framework.git</url>
-		<tag>v0.1.0</tag>
+		<tag>v0.1.7</tag>
 	</scm>
 
 	<distributionManagement>
@@ -833,7 +833,7 @@
 								<id>enforce</id>
 								<configuration>
 									<rules>
-										<DependencyConvergence/>
+										<DependencyConvergence />
 										<requireMavenVersion>
 											<version>3.6.3</version>
 										</requireMavenVersion>
