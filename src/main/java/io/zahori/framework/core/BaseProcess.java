@@ -387,7 +387,6 @@ public abstract class BaseProcess {
             properties.put("eureka.instance.preferIpAddress", "true");
         }else{
             properties.put("eureka.instance.preferIpAddress", "false");
-            properties.put("zahori.server.host", "localhost");
         }  
         return properties;
     }
