@@ -46,6 +46,10 @@
 		<poi.version>4.1.2</poi.version>
 		<jackson.version>2.12.2</jackson.version>
 		<spring.version>5.3.1</spring.version>
+
+		<sonar.projectKey>zahori-io_zahori-framework</sonar.projectKey>
+		<sonar.organization>zahoriio</sonar.organization>
+		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 	</properties>
 
 	<scm>
@@ -789,8 +793,8 @@
 			<id>fatJAR</id>
 			<build>
 				<plugins>
-<!--
-					&lt;!&ndash; Plugin para generación 'FAT' jar: mvn package &ndash;&gt;
+
+					<!-- Plugin para generación 'FAT' jar: mvn package -->
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-assembly-plugin</artifactId>
@@ -808,7 +812,8 @@
 								<descriptorRef>jar-with-dependencies</descriptorRef>
 							</descriptorRefs>
 						</configuration>
-					</plugin>-->
+					</plugin>
+					<!--
 					<plugin>
 						<groupId>com.jolira</groupId>
 						<artifactId>onejar-maven-plugin</artifactId>
@@ -820,7 +825,7 @@
 								</goals>
 							</execution>
 						</executions>
-				</plugin>
+				</plugin>-->
 				</plugins>
 
 
