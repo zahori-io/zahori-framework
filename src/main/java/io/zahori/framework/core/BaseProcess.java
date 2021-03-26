@@ -112,8 +112,6 @@ public abstract class BaseProcess {
 
             return testContext;
         } catch (Exception e) {
-            e.printStackTrace();
-            LOG.error("==== Setup error {}: {}", id, e.getMessage());
             throw new ZahoriException(caseExecution.getCas().getName(), "Error on process setup: " + e.getMessage());
         }
     }
@@ -160,16 +158,16 @@ public abstract class BaseProcess {
             }
 
         } catch (Exception e) {
-            LOG.error("==== Teardown error {}: {}", id, e.getMessage());
             throw new ZahoriException(caseExecution.getCas().getName(), "Error on process teardown: " + e.getMessage());
         }
     }
 
     protected void pause(int seconds) {
         try {
-            Thread.sleep(seconds * 1000);
+            Thread.sleep((long) (seconds * 1000));
         } catch (InterruptedException e) {
             LOG.error("Error while pausing: {}", e.getMessage());
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -331,7 +329,7 @@ public abstract class BaseProcess {
     private void uploadEvidence(String url, String filePath) {
         String charset = "UTF-8";
         String boundary = Long.toHexString(System.currentTimeMillis()); // Just generate some unique random value.
-        String CRLF = "\r\n"; // Line separator required by multipart/form-data.
+        String crlf = "\r\n"; // Line separator required by multipart/form-data.
         File file = new File(filePath);
 
         URLConnection connection = null;
@@ -345,20 +343,20 @@ public abstract class BaseProcess {
 
         try (OutputStream output = connection.getOutputStream(); PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, charset), true);) {
             // Send binary file.
-            writer.append("--" + boundary).append(CRLF);
-            writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"" + file + "\"").append(CRLF);
-            writer.append("Content-Type: " + URLConnection.guessContentTypeFromName(file.getName())).append(CRLF);
-            writer.append("Content-Transfer-Encoding: binary").append(CRLF);
-            writer.append(CRLF).flush();
+            writer.append("--" + boundary).append(crlf);
+            writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"" + file + "\"").append(crlf);
+            writer.append("Content-Type: " + URLConnection.guessContentTypeFromName(file.getName())).append(crlf);
+            writer.append("Content-Transfer-Encoding: binary").append(crlf);
+            writer.append(crlf).flush();
             Files.copy(file.toPath(), output);
             output.flush(); // Important before continuing with writer!
-            writer.append(CRLF).flush(); // CRLF is important! It indicates end of boundary.
+            writer.append(crlf).flush(); // crlf is important! It indicates end of boundary.
 
             // End of multipart/form-data.
-            writer.append("--" + boundary + "--").append(CRLF).flush();
+            writer.append("--" + boundary + "--").append(crlf).flush();
 
             int responseCode = ((HttpURLConnection) connection).getResponseCode();
-            LOG.info("Upload evidence file '{}' -> {}", file.getName(), responseCode); // Should be 200
+            LOG.info("Upload evidence file '{}' -> {}", file.getName(), Integer.valueOf(responseCode)); // Should be 200
         } catch (Exception e) {
             LOG.error("Error uploading evidence file '{}': {}", filePath, e.getMessage());
         }
