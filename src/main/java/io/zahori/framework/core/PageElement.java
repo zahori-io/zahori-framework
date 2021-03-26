@@ -117,7 +117,7 @@ public class PageElement {
 		try {
 			scroll();
 
-			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.intValue() - chrono.getElapsedSeconds());
+			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement - chrono.getElapsedSeconds());
 			wait.until(ExpectedConditions.elementToBeClickable(webElement));
 			return true;
 		} catch (final Exception e) {
@@ -129,7 +129,7 @@ public class PageElement {
 		Chronometer chrono = new Chronometer();
 		webElement = findElement();
 		try {
-			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.intValue() - chrono.getElapsedSeconds());
+			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement - chrono.getElapsedSeconds());
 			wait.until(ExpectedConditions.elementToBeClickable(webElement));
 			webElement.click();
 			testContext.logInfo("Click on " + this);
@@ -169,7 +169,7 @@ public class PageElement {
 				scroll();
 			}
 
-			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.intValue() - chrono.getElapsedSeconds());
+			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement - chrono.getElapsedSeconds());
 			wait.until(ExpectedConditions.elementToBeClickable(webElement));
 
 			webElement.click();
@@ -226,9 +226,9 @@ public class PageElement {
 		Chronometer chrono = new Chronometer();
 		webElement = findElement();
 		try {
-			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.intValue() - chrono.getElapsedSeconds());
+			WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement - chrono.getElapsedSeconds());
 			wait.until(ExpectedConditions.elementToBeClickable(webElement));
-			while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement.intValue())) {
+			while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement)) {
 				Pause.pause();
 				initWebElement();
 			}
@@ -696,7 +696,7 @@ public class PageElement {
 		switchWithLocators();
 		boolean found = false;
 		try {
-			while (!found && (crono.getElapsedSeconds() < testContext.timeoutFindElement.intValue())) {
+			while (!found && (crono.getElapsedSeconds() < testContext.timeoutFindElement)) {
 				final WebElement element = driver.findElement(locator.getBy());
 				found = (element != null) && element.isDisplayed();
 			}
@@ -731,10 +731,10 @@ public class PageElement {
 		Chronometer chrono = new Chronometer();
 		final WebElement webElement = findElement();
 		try {
-			while (!StringUtils.equals(webElement.getAttribute(VALUE), text) && (chrono.getElapsedSeconds() < testContext.timeoutFindElement.intValue())) {
-				WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.intValue() - chrono.getElapsedSeconds());
+			while (!StringUtils.equals(webElement.getAttribute(VALUE), text) && (chrono.getElapsedSeconds() < testContext.timeoutFindElement)) {
+				WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement - chrono.getElapsedSeconds());
 				wait.until(ExpectedConditions.elementToBeClickable(webElement));
-				while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement.intValue())) {
+				while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement)) {
 					Pause.pause();
 					initWebElement();
 				}
