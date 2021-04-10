@@ -405,7 +405,7 @@
 			<dependency>
 				<groupId>com.google.guava</groupId>
 				<artifactId>guava</artifactId>
-				<version>30.1-jre</version>
+				<version>30.1.1-jre</version>
 			</dependency>
 			<dependency>
 				<groupId>commons-codec</groupId>
@@ -861,7 +861,7 @@
 								<id>enforce</id>
 								<configuration>
 									<rules>
-										<DependencyConvergence />
+										<DependencyConvergence/>
 										<requireMavenVersion>
 											<version>3.6.3</version>
 										</requireMavenVersion>
