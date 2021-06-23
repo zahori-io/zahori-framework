@@ -7,7 +7,7 @@
 	<packaging>jar</packaging>
 	<name>zahori-framework</name>
 
-	<description>Library containing Zahori Test Framework for Zahori.io</description>
+	<description>Library containing Zahori Framework for Zahori.io</description>
 	<url>https://zahori.io</url>
 
 	<organization>
