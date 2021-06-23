@@ -1,5 +1,27 @@
 package io.zahori.framework.core;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Properties;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /*-
  * #%L
  * zahori-framework
@@ -25,32 +47,13 @@ package io.zahori.framework.core;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.exception.ZahoriException;
 import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import io.zahori.model.process.Step;
 import io.zahori.model.process.Test;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Properties;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class BaseProcess {
 
@@ -103,7 +106,7 @@ public abstract class BaseProcess {
             testContext.version = caseExecution.getBrowser().getDefaultVersion();
             testContext.remote = remote;
             testContext.remoteUrl = remoteUrl;
-            testContext.constructor();
+            testContext.constructor(caseExecution.getConfiguration());
             testContext.startChronometer();
             // testContext.moveMouseToUpperLeftCorner();
             testContext.startVideo();
@@ -376,16 +379,16 @@ public abstract class BaseProcess {
         Path normalizedPath = path.normalize();
         return FilenameUtils.separatorsToSystem(normalizedPath.toString());
     }
-    
+
     public static Properties getProperties() {
         Properties properties = new Properties();
         String os = System.getProperty("os.name");
         LOG.info("OS: {}", os);
-        if (StringUtils.containsIgnoreCase(os, "linux")){
+        if (StringUtils.containsIgnoreCase(os, "linux")) {
             properties.put("eureka.instance.preferIpAddress", "true");
-        }else{
+        } else {
             properties.put("eureka.instance.preferIpAddress", "false");
-        }  
+        }
         return properties;
     }
 }

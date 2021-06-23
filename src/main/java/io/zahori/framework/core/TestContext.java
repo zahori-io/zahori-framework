@@ -63,6 +63,7 @@ import io.zahori.framework.utils.Notification;
 import io.zahori.framework.utils.WebdriverUtils;
 import io.zahori.model.Status;
 import io.zahori.model.Step;
+import io.zahori.model.process.Configuration;
 import io.zahori.model.process.ProcessRegistration;
 
 public class TestContext {
@@ -200,6 +201,69 @@ public class TestContext {
         hostDriver = null;
         retriesDisabled = false;
         updateTestResultDisabled = false;
+
+        logInfo("Test context initialized!");
+    }
+
+    public void constructor(Configuration configuration) {
+        // Load configuration.properties into system properties
+        // For IE is mandatory to load property: webdriver.ie.driver.path
+        SystemPropertiesUtils.loadSystemProperties();
+
+        // Load properties files: zahorí and project specific
+        zahoriProperties = new ZahoriProperties(configuration);
+        projectProperties = new ProjectProperties();
+
+        // Read url from configuration
+        url = configuration.getEnvironmentUrl();
+
+        // Initialize messages readers with languages defined in
+        // zahori.properties
+        messages = new Messages(zahoriProperties.getLanguages());
+
+        // Prepare evidences from configuration.properties // TODO refactor
+        evidences = new Evidences(zahoriProperties, messages, testCaseName, platform, browserName, testId, getProjectProperty("evidences.template.file.path"),
+                StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote), processRegistration);
+
+        // Timeout
+        timeoutFindElement = (int) configuration.getTimeout();
+
+        // Create TMS object to update test results and upload evidences to
+        // TestLink, ALM...;
+        tms = new TMS(zahoriProperties, evidences, messages, testId);
+
+        evidences.insertTextInDocs("zahori.testInfo.execution.date", testId);
+        evidences.insertTextInDocs("zahori.testInfo.execution.platform", platform);
+        evidences.insertTextInDocs("zahori.testInfo.execution.browser.name", browserName);
+        evidences.insertTextInDocs("zahori.testInfo.execution.browser.version", version);
+        evidences.insertTextInDocs("zahori.testInfo.execution.bits", bits);
+        evidences.insertTextInDocs("zahori.testInfo.execution.evidences.path", evidences.getPath());
+
+        logInfo("zahori.testInfo.title");
+        logInfo("- Case: " + testCaseName);
+        logInfo("zahori.testInfo.execution.date", testId);
+        logInfo("zahori.testInfo.execution.platform", platform);
+        logInfo("zahori.testInfo.execution.browser.name", browserName);
+        logInfo("zahori.testInfo.execution.browser.version", version);
+        logInfo("zahori.testInfo.execution.bits", bits);
+        String txtEvidencesPathProperty = "zahori.testInfo.execution.evidences.path";
+        String evidencesPath = getMessage(txtEvidencesPathProperty);
+        if (!evidencesPath.isEmpty() && !evidencesPath.equals(txtEvidencesPathProperty)) {
+            logInfo(txtEvidencesPathProperty, evidences.getPath());
+        }
+        if ((url != null) && !url.isEmpty()) {
+            logInfo("- Url: " + url);
+        }
+
+        // Driver and browser // TODO hacer factoría única para desktop, mobile,
+        // host...
+        if (StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
+            browser = null;
+        } else {
+            browser = new Browser(this);
+        }
+
+        hostDriver = null;
 
         logInfo("Test context initialized!");
     }
