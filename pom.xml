@@ -235,7 +235,7 @@
 			<dependency>
 				<groupId>io.appium</groupId>
 				<artifactId>java-client</artifactId>
-				<version>7.5.0</version>
+				<version>7.5.1</version>
 			</dependency>
 
 			<!-- To process excel files with extension .xls -->
@@ -861,7 +861,7 @@
 								<id>enforce</id>
 								<configuration>
 									<rules>
-										<DependencyConvergence />
+										<DependencyConvergence/>
 										<requireMavenVersion>
 											<version>3.6.3</version>
 										</requireMavenVersion>
