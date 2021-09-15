@@ -26,6 +26,8 @@ package io.zahori.framework.core;
 import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -106,6 +108,9 @@ public class TestContext {
 
     // Evidences
     public Evidences evidences;
+
+    // Attachments
+    private List<String> attachments = new ArrayList<>();
 
     // TMS (Test Management Systems)
     private TMS tms;
@@ -737,4 +742,21 @@ public class TestContext {
             return "";
         }
     }
+
+    public List<String> getAttachments() {
+        return attachments;
+    }
+
+    public void setAttachments(List<String> attachments) {
+        this.attachments = attachments;
+    }
+
+    public void addAttachment(String filepath) {
+        if (Files.exists(Paths.get(filepath))) {
+            attachments.add(filepath);
+        } else {
+            logError("Error adding attachment. File does not exist: {0}", filepath);
+        }
+    }
+
 }

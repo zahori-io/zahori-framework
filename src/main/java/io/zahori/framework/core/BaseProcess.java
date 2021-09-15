@@ -215,20 +215,31 @@ public abstract class BaseProcess {
         // Set har file path
         caseExecution.setHar(getPathIfFileExists(testContext, evidencePath + testContext.evidences.getHarLogFileName()));
 
-        // Convert attachments absolut paths to relative paths
+        // Convert step attachments absolut paths to relative paths
         List<Step> steps = test.getSteps();
         for (Step step : steps) {
-            updateAttachmentUrl(step, evidencePath);
+            updateStepAttachmentUrl(step, evidencePath);
 
             // Substeps
             for (Step substep : step.getSubSteps()) {
-                updateAttachmentUrl(substep, evidencePath);
+                updateStepAttachmentUrl(substep, evidencePath);
             }
         }
         caseExecution.setSteps(getStepsString(steps));
 
-        uploadEvidences(testContext, caseExecution, test, serverUrl + "/evidence/?path=" + encodeUrl(evidencePath));
+        String uploadUrl = serverUrl + "/evidence/?path=" + encodeUrl(evidencePath);
+        uploadEvidences(testContext, caseExecution, test, uploadUrl);
+        uploadAttachments(testContext.getAttachments(), uploadUrl);
+        setCaseExecutionAttachments(caseExecution, testContext.getAttachments(), evidencePath);
+
         return caseExecution;
+    }
+
+    private void setCaseExecutionAttachments(CaseExecution caseExecution, List<String> attachments, String evidencePath) {
+        for (String attachment : attachments) {
+            Path path = Paths.get(attachment);
+            caseExecution.addAttachment(evidencePath + path.getFileName());
+        }
     }
 
     private String getPathIfFileExists(TestContext testContext, String filePath) {
@@ -255,7 +266,7 @@ public abstract class BaseProcess {
                 + StringUtils.upperCase(testContext.browserName) + pathSeparator + testContext.testId + pathSeparator;
     }
 
-    private void updateAttachmentUrl(Step step, String artifactRelativePath) {
+    private void updateStepAttachmentUrl(Step step, String artifactRelativePath) {
         if (!step.getAttachments().isEmpty()) {
             String attachmentUrl = step.getAttachments().get(0);
             Path path = Paths.get(attachmentUrl);
@@ -290,6 +301,12 @@ public abstract class BaseProcess {
         Path evidenceFile = Paths.get(normalizePath(resultsDir + filePath));
         if (Files.exists(evidenceFile)) {
             uploadEvidence(url, evidenceFile.toString());
+        }
+    }
+
+    private void uploadAttachments(List<String> filePaths, String url) {
+        for (String filePath : filePaths) {
+            uploadEvidenceFile("", filePath, url);
         }
     }
 
