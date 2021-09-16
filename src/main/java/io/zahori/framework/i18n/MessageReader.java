@@ -24,7 +24,8 @@ package io.zahori.framework.i18n;
  */
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
 import java.util.Properties;
 
@@ -39,11 +40,11 @@ public class MessageReader {
     public MessageReader(String fileName) {
 
         prop = new Properties();
-        InputStream input = null;
+        InputStreamReader input = null;
         String messagesFile = fileName + ".properties";
         try {
 
-            input = SystemPropertiesUtils.class.getClassLoader().getResourceAsStream(messagesFile);
+            input = new InputStreamReader(SystemPropertiesUtils.class.getClassLoader().getResourceAsStream(messagesFile), StandardCharsets.UTF_8);
 
             // load properties file
             prop.load(input);

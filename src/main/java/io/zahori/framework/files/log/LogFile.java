@@ -27,6 +27,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 public class LogFile {
 
@@ -55,7 +56,7 @@ public class LogFile {
 
         BufferedWriter out = null;
         try {
-            FileWriter fstream = new FileWriter(fileName, true);
+            FileWriter fstream = new FileWriter(fileName, StandardCharsets.UTF_8, true);
             out = new BufferedWriter(fstream);
 
             out.write(log);
