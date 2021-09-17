@@ -755,7 +755,7 @@ public class TestContext {
         if (Files.exists(Paths.get(filepath))) {
             attachments.add(filepath);
         } else {
-            logError("Error adding attachment. File does not exist: {0}", filepath);
+            logError("Error adding attachment. File does not exist: {}", filepath);
         }
     }
 
