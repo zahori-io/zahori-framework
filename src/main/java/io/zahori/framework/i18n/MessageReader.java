@@ -26,10 +26,10 @@ package io.zahori.framework.i18n;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.text.MessageFormat;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.helpers.MessageFormatter;
 
 import io.zahori.framework.files.properties.SystemPropertiesUtils;
 
@@ -80,7 +80,7 @@ public class MessageReader {
     private String replaceMessageArguments(String message, String... arguments) {
         // replace message arguments with their values
         try {
-            return MessageFormat.format(message, arguments);
+            return MessageFormatter.arrayFormat(message, arguments).getMessage();
         } catch (IllegalArgumentException e) {
             // if message with invalid arguments like: {}
             return message;
