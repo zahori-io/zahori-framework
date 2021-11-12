@@ -71,4 +71,12 @@ public class Pause {
         }
     }
 
+    public static void pauseMillis(int milliseconds) {
+        try {
+            Thread.sleep(milliseconds);
+        } catch (final InterruptedException e) {
+            LOG.debug("Error en metodo pausa: " + e.getMessage());
+        }
+    }
+
 }
