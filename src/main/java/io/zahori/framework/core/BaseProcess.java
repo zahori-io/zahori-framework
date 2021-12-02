@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
+import java.util.Random;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -50,6 +51,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.exception.ZahoriException;
+import io.zahori.framework.utils.Pause;
 import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import io.zahori.model.process.Step;
@@ -64,7 +66,9 @@ public abstract class BaseProcess {
     public static final String ZAHORI_SERVER_HEALTHCHECK_URL = "/healthcheck";
     public static final String ZAHORI_SERVER_PROCESS_REGISTRATION_URL = "/process";
     public static final int SECONDS_WAIT_FOR_SERVER = 5;
-    public static final int MAX_RETRIES_WAIT_FOR_SERVER = 8;
+    public static final int MAX_RETRIES_WAIT_FOR_SERVER = 10;
+    public static final String DEFAULT_BIT_DEPTH = "x24";
+    public static final String DEFAULT_SCREEN_RESOLUTION = "1920x1080" + DEFAULT_BIT_DEPTH;
 
     protected int retries;
 
@@ -72,10 +76,14 @@ public abstract class BaseProcess {
         return processName + " is up!";
     }
 
+    private String getCaseExcutionDetails(CaseExecution caseExecution) {
+        String id = caseExecution.getCas().getName() + "-" + caseExecution.getBrowser().getBrowserName() + "-" + caseExecution.getScreenResolution();
+        return "(" + caseExecution.getCaseExecutionId() + "): " + id;
+    }
+
     protected CaseExecution runProcess(CaseExecution caseExecution, ProcessRegistration processRegistration, String serverUrl, String remote,
             String remoteUrl) {
-        String id = "[" + caseExecution.getCas().getName() + "-" + caseExecution.getBrowser().getBrowserName() + "]";
-        LOG.info("======> Start {}", id);
+        LOG.info("======> Start {}", getCaseExcutionDetails(caseExecution));
 
         TestContext testContext = null;
         try {
@@ -91,8 +99,7 @@ public abstract class BaseProcess {
     }
 
     private TestContext setup(CaseExecution caseExecution, ProcessRegistration processRegistration, String remote, String remoteUrl) {
-        String id = "[" + caseExecution.getCas().getName() + "-" + caseExecution.getBrowser().getBrowserName() + "] ";
-        LOG.info("==== Setup {}", id);
+        LOG.info("==== Setup {}", getCaseExcutionDetails(caseExecution));
 
         TestContext testContext = null;
         try {
@@ -103,9 +110,17 @@ public abstract class BaseProcess {
             testContext.platform = "LINUX"; // TODO
             testContext.bits = "32"; // TODO
             testContext.browserName = caseExecution.getBrowser().getBrowserName().toUpperCase();
-            testContext.version = caseExecution.getBrowser().getDefaultVersion();
+            testContext.version = StringUtils.isBlank(caseExecution.getBrowser().getVersion()) ? caseExecution.getBrowser().getDefaultVersion()
+                    : caseExecution.getBrowser().getVersion();
+            testContext.resolution = StringUtils.isBlank(caseExecution.getScreenResolution()) ? DEFAULT_SCREEN_RESOLUTION
+                    : caseExecution.getScreenResolution() + DEFAULT_BIT_DEPTH;
             testContext.remote = remote;
             testContext.remoteUrl = remoteUrl;
+
+            // TODO investigate: This random pause fixes screenshots in several screen resolutions in parallel executions
+            int millis = randomNumber();
+            Pause.pauseMillis(millis);
+
             testContext.constructor(caseExecution.getConfiguration());
             testContext.startChronometer();
             // testContext.moveMouseToUpperLeftCorner();
@@ -115,21 +130,27 @@ public abstract class BaseProcess {
 
             return testContext;
         } catch (Exception e) {
+            e.printStackTrace();
             throw new ZahoriException(caseExecution.getCas().getName(), "Error on process setup: " + e.getMessage());
         }
     }
 
+    private int randomNumber() {
+        Random rnd = new Random();
+        return 100 + rnd.nextInt(900);
+    }
+
     private void process(TestContext testContext, CaseExecution caseExecution) {
-        String id = "[" + caseExecution.getCas().getName() + "-" + caseExecution.getBrowser().getBrowserName() + "]";
-        LOG.info("==== Process {}", id);
+        LOG.info("==== Process {}", getCaseExcutionDetails(caseExecution));
+
         try {
             run(testContext, caseExecution);
         } catch (final Exception e) {
-            LOG.error("==== Process error {}: {}", id, e.getMessage());
+            LOG.error("==== Process error {}: {}", getCaseExcutionDetails(caseExecution), e.getMessage());
             if (retries < testContext.getMaxRetries()) {
                 retries++;
-                testContext.logStepPassed(id + "Processing error: " + e.getMessage() + "\nTest retries are enabled. Relaunching test (" + retries + " retry of "
-                        + testContext.getMaxRetries() + " max retries).");
+                testContext.logStepPassed(getCaseExcutionDetails(caseExecution) + "Processing error: " + e.getMessage()
+                        + "\nTest retries are enabled. Relaunching test (" + retries + " retry of " + testContext.getMaxRetries() + " max retries).");
                 if (!StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), testContext.browserName)) {
                     testContext.getBrowser().closeWithoutProcessKill();
                 }
@@ -150,8 +171,8 @@ public abstract class BaseProcess {
     protected abstract void run(TestContext testContext, CaseExecution caseExecution);
 
     private void teardown(TestContext testContext, CaseExecution caseExecution) {
-        String id = "[" + caseExecution.getCas().getName() + "-" + caseExecution.getBrowser().getBrowserName() + "]";
-        LOG.info("==== Teardown {}", id);
+        LOG.info("==== Teardown {}", getCaseExcutionDetails(caseExecution));
+
         try {
             if (testContext != null) {
                 testContext.stopVideo();
@@ -263,7 +284,7 @@ public abstract class BaseProcess {
         final String pathSeparator = "/";
         return processRegistration.getClientId() + pathSeparator + processRegistration.getTeamId() + pathSeparator + processRegistration.getName()
                 + pathSeparator + testContext.testCaseName + pathSeparator + testContext.platform + pathSeparator
-                + StringUtils.upperCase(testContext.browserName) + pathSeparator + testContext.testId + pathSeparator;
+                + StringUtils.upperCase(testContext.browserName) + pathSeparator + testContext.resolution + pathSeparator + testContext.testId + pathSeparator;
     }
 
     private void updateStepAttachmentUrl(Step step, String artifactRelativePath) {

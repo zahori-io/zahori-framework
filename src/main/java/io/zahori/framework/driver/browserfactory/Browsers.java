@@ -28,215 +28,230 @@ import org.openqa.selenium.remote.BrowserType;
 /*Clase Browsers.java*/
 public enum Browsers {
 
-	EXPLORER(BrowserType.IE, Browsers.BITS_32, "org.openqa.selenium.ie.InternetExplorerDriver", Browsers.REMOTE_NO),
-	FIREFOX(BrowserType.FIREFOX, Browsers.BITS_32, "org.openqa.selenium.firefox.FirefoxDriver", Browsers.REMOTE_NO),
-	CHROME(BrowserType.CHROME, Browsers.BITS_32, "org.openqa.selenium.chrome.ChromeDriver", Browsers.REMOTE_NO),
-	SAFARI(BrowserType.SAFARI, Browsers.BITS_32, "org.openqa.selenium.safari.SafariDriver", Browsers.REMOTE_NO),
-	EDGE(BrowserType.EDGE, Browsers.BITS_32, "org.openqa.selenium.edge.EdgeDriver", Browsers.REMOTE_NO),
-	OPERA(BrowserType.OPERA, Browsers.BITS_32, "org.openqa.selenium.opera.OperaDriver", Browsers.REMOTE_NO),
-	NULLBROWSER(null, Browsers.BITS_32, "no browser", Browsers.REMOTE_NO);
+    EXPLORER(BrowserType.IE, Browsers.BITS_32, "org.openqa.selenium.ie.InternetExplorerDriver", Browsers.REMOTE_NO),
+    FIREFOX(BrowserType.FIREFOX, Browsers.BITS_32, "org.openqa.selenium.firefox.FirefoxDriver", Browsers.REMOTE_NO),
+    CHROME(BrowserType.CHROME, Browsers.BITS_32, "org.openqa.selenium.chrome.ChromeDriver", Browsers.REMOTE_NO),
+    SAFARI(BrowserType.SAFARI, Browsers.BITS_32, "org.openqa.selenium.safari.SafariDriver", Browsers.REMOTE_NO),
+    EDGE(BrowserType.EDGE, Browsers.BITS_32, "org.openqa.selenium.edge.EdgeDriver", Browsers.REMOTE_NO),
+    OPERA(BrowserType.OPERA, Browsers.BITS_32, "org.openqa.selenium.opera.OperaDriver", Browsers.REMOTE_NO),
+    NULLBROWSER(null, Browsers.BITS_32, "no browser", Browsers.REMOTE_NO);
 
-	private String name;
+    private String name;
 
-	private String bits;
+    private String bits;
 
-	private String packageWebdrivername;
+    private String packageWebdrivername;
 
-	private String platform = "";
+    private String platform = "";
 
-	private String version = "";
+    private String version = "";
 
-	private String remote;
+    private String screenResolution = "";
 
-	private String remoteUrl;
+    private String remote;
 
-	private String downloadPath;
+    private String remoteUrl;
 
-	private String testName;
-	
-	private String caseExecutionId;
+    private String downloadPath;
 
-	public static final String BITS_32 = "32";
+    private String testName;
 
-	public static final String BITS_64 = "64";
+    private String caseExecutionId;
 
-	public static final String VERSION_8 = "8";
+    public static final String BITS_32 = "32";
 
-	public static final String VERSION_9 = "9";
+    public static final String BITS_64 = "64";
 
-	public static final String VERSION_10 = "10";
+    public static final String VERSION_8 = "8";
 
-	public static final String VERSION_11 = "11";
+    public static final String VERSION_9 = "9";
 
-	public static final String VERSION_28 = "28";
+    public static final String VERSION_10 = "10";
 
-	public static final String VERSION_36 = "36";
+    public static final String VERSION_11 = "11";
 
-	public static final String VERSION_38 = "38";
+    public static final String VERSION_28 = "28";
 
-	public static final String EXPLORER_8_32 = BrowserType.IEXPLORE + VERSION_8 + BITS_32;
+    public static final String VERSION_36 = "36";
 
-	public static final String EXPLORER_8_64 = BrowserType.IEXPLORE + VERSION_8 + BITS_64;
+    public static final String VERSION_38 = "38";
 
-	public static final String EXPLORER_9_32 = BrowserType.IEXPLORE + VERSION_9 + BITS_32;
+    public static final String EXPLORER_8_32 = BrowserType.IEXPLORE + VERSION_8 + BITS_32;
 
-	public static final String EXPLORER_9_64 = BrowserType.IEXPLORE + VERSION_9 + BITS_64;
+    public static final String EXPLORER_8_64 = BrowserType.IEXPLORE + VERSION_8 + BITS_64;
 
-	public static final String EXPLORER_10_32 = BrowserType.IEXPLORE + VERSION_10 + BITS_32;
+    public static final String EXPLORER_9_32 = BrowserType.IEXPLORE + VERSION_9 + BITS_32;
 
-	public static final String EXPLORER_10_64 = BrowserType.IEXPLORE + VERSION_10 + BITS_64;
+    public static final String EXPLORER_9_64 = BrowserType.IEXPLORE + VERSION_9 + BITS_64;
 
-	public static final String EXPLORER_11_32 = BrowserType.IEXPLORE + VERSION_11 + BITS_32;
+    public static final String EXPLORER_10_32 = BrowserType.IEXPLORE + VERSION_10 + BITS_32;
 
-	public static final String EXPLORER_11_64 = BrowserType.IEXPLORE + VERSION_11 + BITS_64;
+    public static final String EXPLORER_10_64 = BrowserType.IEXPLORE + VERSION_10 + BITS_64;
 
-	public static final String FIREFOX_28_32 = BrowserType.FIREFOX + VERSION_28 + BITS_32;
+    public static final String EXPLORER_11_32 = BrowserType.IEXPLORE + VERSION_11 + BITS_32;
 
-	public static final String CHROME_38_32 = BrowserType.CHROME + VERSION_38 + BITS_32;
+    public static final String EXPLORER_11_64 = BrowserType.IEXPLORE + VERSION_11 + BITS_64;
 
-	/* Constantes nombre navegador. */
-	public static final String NAVEGADORCHROME = "chrome";
+    public static final String FIREFOX_28_32 = BrowserType.FIREFOX + VERSION_28 + BITS_32;
 
-	public static final String NAVEGADORIE = "internet explorer";
+    public static final String CHROME_38_32 = BrowserType.CHROME + VERSION_38 + BITS_32;
 
-	public static final String REMOTE_YES = "YES";
+    /* Constantes nombre navegador. */
+    public static final String NAVEGADORCHROME = "chrome";
 
-	public static final String REMOTE_NO = "NO";
+    public static final String NAVEGADORIE = "internet explorer";
 
-	Browsers(final String nameWebdriver, final String bits, final String packageWebdrivername, final String remote) {
-		this.name = nameWebdriver;
-		this.bits = bits;
-		this.packageWebdrivername = packageWebdrivername;
-		this.remote = remote;
-		this.remoteUrl = null;
-	}
+    public static final String REMOTE_YES = "YES";
 
-	Browsers(final String nameWebdriver, final String bits, final String packageWebdrivername, final String remote, final String remoteUrl) {
-		this.name = nameWebdriver;
-		this.bits = bits;
-		this.packageWebdrivername = packageWebdrivername;
-		this.remote = remote;
-		this.remoteUrl = remoteUrl;
-	}
+    public static final String REMOTE_NO = "NO";
 
-	public Browsers withPlatform(final String platform) {
-		this.platform = platform;
-		return this;
-	}
+    Browsers(final String nameWebdriver, final String bits, final String packageWebdrivername, final String remote) {
+        this.name = nameWebdriver;
+        this.bits = bits;
+        this.packageWebdrivername = packageWebdrivername;
+        this.remote = remote;
+        this.remoteUrl = null;
+    }
 
-	public Browsers withVersion(final String version) {
-		this.version = version;
-		return this;
-	}
+    Browsers(final String nameWebdriver, final String bits, final String packageWebdrivername, final String remote, final String remoteUrl) {
+        this.name = nameWebdriver;
+        this.bits = bits;
+        this.packageWebdrivername = packageWebdrivername;
+        this.remote = remote;
+        this.remoteUrl = remoteUrl;
+    }
 
-	public Browsers withBits(final String bits) {
-		this.bits = bits;
-		return this;
-	}
+    public Browsers withPlatform(final String platform) {
+        this.platform = platform;
+        return this;
+    }
 
-	public Browsers withRemote(final String remote) {
-		this.remote = remote;
-		return this;
-	}
+    public Browsers withVersion(final String version) {
+        this.version = version;
+        return this;
+    }
 
-	public Browsers withRemoteUrl(final String remoteUrl) {
-		this.remoteUrl = remoteUrl;
-		return this;
-	}
+    public Browsers withScreenResolution(final String screenResolution) {
+        this.screenResolution = screenResolution;
+        return this;
+    }
 
-	public Browsers withDownloadPath(final String downloadPath) {
-		this.downloadPath = downloadPath;
-		return this;
-	}
+    public Browsers withBits(final String bits) {
+        this.bits = bits;
+        return this;
+    }
 
-	public Browsers withTestName(final String testName) {
-		this.testName = testName;
-		return this;
-	}
-	
-	public Browsers withCaseExecution(final String caseExecutionId) {
-		this.caseExecutionId = caseExecutionId;
-		return this;
-	}
+    public Browsers withRemote(final String remote) {
+        this.remote = remote;
+        return this;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public Browsers withRemoteUrl(final String remoteUrl) {
+        this.remoteUrl = remoteUrl;
+        return this;
+    }
 
-	public void setName(final String name) {
-		this.name = name;
-	}
+    public Browsers withDownloadPath(final String downloadPath) {
+        this.downloadPath = downloadPath;
+        return this;
+    }
 
-	public String getPackageWebdrivername() {
-		return packageWebdrivername;
-	}
+    public Browsers withTestName(final String testName) {
+        this.testName = testName;
+        return this;
+    }
 
-	public void setPackageWebdrivername(final String packageWebdrivername) {
-		this.packageWebdrivername = packageWebdrivername;
-	}
+    public Browsers withCaseExecution(final String caseExecutionId) {
+        this.caseExecutionId = caseExecutionId;
+        return this;
+    }
 
-	public String getBits() {
-		return bits;
-	}
+    public String getName() {
+        return name;
+    }
 
-	public void setBits(final String bits) {
-		this.bits = bits;
-	}
+    public void setName(final String name) {
+        this.name = name;
+    }
 
-	public String getPlatform() {
-		return platform;
-	}
+    public String getPackageWebdrivername() {
+        return packageWebdrivername;
+    }
 
-	public void setPlatform(final String platform) {
-		this.platform = platform;
-	}
+    public void setPackageWebdrivername(final String packageWebdrivername) {
+        this.packageWebdrivername = packageWebdrivername;
+    }
 
-	public String getVersion() {
-		return version;
-	}
+    public String getBits() {
+        return bits;
+    }
 
-	public void setVersion(final String version) {
-		this.version = version;
-	}
+    public void setBits(final String bits) {
+        this.bits = bits;
+    }
 
-	public String getRemote() {
-		return remote;
-	}
+    public String getPlatform() {
+        return platform;
+    }
 
-	public void setRemote(final String remote) {
-		this.remote = remote;
-	}
+    public void setPlatform(final String platform) {
+        this.platform = platform;
+    }
 
-	public String getRemoteUrl() {
-		return remoteUrl;
-	}
+    public String getVersion() {
+        return version;
+    }
 
-	public void setRemoteUrl(final String remoteUrl) {
-		this.remoteUrl = remoteUrl;
-	}
+    public void setVersion(final String version) {
+        this.version = version;
+    }
 
-	public String getDownloadPath() {
-		return downloadPath;
-	}
+    public String getScreenResolution() {
+        return screenResolution;
+    }
 
-	public void setDownloadPath(final String downloadPath) {
-		this.downloadPath = downloadPath;
-	}
+    public void setScreenResolution(String screenResolution) {
+        this.screenResolution = screenResolution;
+    }
 
-	public String getTestName() {
-		return this.testName;
-	}
+    public String getRemote() {
+        return remote;
+    }
 
-	public void setTestName(String testName) {
-		this.testName = testName;
-	}
-	
-	public String getCaseExecutionId() {
-		return caseExecutionId;
-	}
-	
-	public void setCaseExecutionId(String caseExecutionId) {
-		this.caseExecutionId = caseExecutionId;
-	}
+    public void setRemote(final String remote) {
+        this.remote = remote;
+    }
+
+    public String getRemoteUrl() {
+        return remoteUrl;
+    }
+
+    public void setRemoteUrl(final String remoteUrl) {
+        this.remoteUrl = remoteUrl;
+    }
+
+    public String getDownloadPath() {
+        return downloadPath;
+    }
+
+    public void setDownloadPath(final String downloadPath) {
+        this.downloadPath = downloadPath;
+    }
+
+    public String getTestName() {
+        return this.testName;
+    }
+
+    public void setTestName(String testName) {
+        this.testName = testName;
+    }
+
+    public String getCaseExecutionId() {
+        return caseExecutionId;
+    }
+
+    public void setCaseExecutionId(String caseExecutionId) {
+        this.caseExecutionId = caseExecutionId;
+    }
 
 }

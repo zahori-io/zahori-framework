@@ -106,8 +106,8 @@ public class Evidences {
 
     private boolean remoteBrowser;
 
-    public Evidences(ZahoriProperties zahoriProperties, Messages messages, String testCaseName, String platform, String browser, String testId,
-            String templatePath, boolean remoteBrowser, ProcessRegistration processRegistration) {
+    public Evidences(ZahoriProperties zahoriProperties, Messages messages, String testCaseName, String platform, String browser, String resolution,
+            String testId, String templatePath, boolean remoteBrowser, ProcessRegistration processRegistration) {
         this.remoteBrowser = remoteBrowser;
         this.zahoriProperties = zahoriProperties;
         this.messages = messages;
@@ -120,8 +120,8 @@ public class Evidences {
                     + File.separator;
         }
         path = zahoriProperties.getResultsDir() + processPath + testCaseName + File.separator
-                + (!StringUtils.isBlank(platform) ? platform + File.separator : "") + (!StringUtils.isBlank(browser) ? browser + File.separator : "") + testId
-                + File.separator;
+                + (!StringUtils.isBlank(platform) ? platform + File.separator : "") + (!StringUtils.isBlank(browser) ? browser + File.separator : "")
+                + (!StringUtils.isBlank(resolution) ? resolution + File.separator : "") + testId + File.separator;
         prepareDirectory(new File(path));
 
         // Get languages defined in zahori.properties

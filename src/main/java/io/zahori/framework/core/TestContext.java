@@ -92,6 +92,7 @@ public class TestContext {
     public String browserName;
     public String bits;
     public String version;
+    public String resolution;
     public String remote;
     public String remoteUrl;
     public String appiumService;
@@ -162,8 +163,8 @@ public class TestContext {
         messages = new Messages(zahoriProperties.getLanguages());
 
         // Prepare evidences from configuration.properties // TODO refactor
-        evidences = new Evidences(zahoriProperties, messages, testCaseName, platform, browserName, testId, getProjectProperty("evidences.template.file.path"),
-                StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote), processRegistration);
+        evidences = new Evidences(zahoriProperties, messages, testCaseName, platform, browserName, resolution, testId,
+                getProjectProperty("evidences.template.file.path"), StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote), processRegistration);
 
         // Test execution parameters from configuration.properties
         timeoutFindElement = zahoriProperties.getTimeoutFindElement();
@@ -227,8 +228,8 @@ public class TestContext {
         messages = new Messages(zahoriProperties.getLanguages());
 
         // Prepare evidences from configuration.properties // TODO refactor
-        evidences = new Evidences(zahoriProperties, messages, testCaseName, platform, browserName, testId, getProjectProperty("evidences.template.file.path"),
-                StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote), processRegistration);
+        evidences = new Evidences(zahoriProperties, messages, testCaseName, platform, browserName, resolution, testId,
+                getProjectProperty("evidences.template.file.path"), StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote), processRegistration);
 
         // Timeout
         timeoutFindElement = (int) configuration.getTimeout();
@@ -241,6 +242,7 @@ public class TestContext {
         evidences.insertTextInDocs("zahori.testInfo.execution.platform", platform);
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.name", browserName);
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.version", version);
+        evidences.insertTextInDocs("zahori.testInfo.execution.browser.resolution", resolution);
         evidences.insertTextInDocs("zahori.testInfo.execution.bits", bits);
         evidences.insertTextInDocs("zahori.testInfo.execution.evidences.path", evidences.getPath());
 
@@ -250,6 +252,7 @@ public class TestContext {
         logInfo("zahori.testInfo.execution.platform", platform);
         logInfo("zahori.testInfo.execution.browser.name", browserName);
         logInfo("zahori.testInfo.execution.browser.version", version);
+        logInfo("zahori.testInfo.execution.browser.resolution", resolution);
         logInfo("zahori.testInfo.execution.bits", bits);
         String txtEvidencesPathProperty = "zahori.testInfo.execution.evidences.path";
         String evidencesPath = getMessage(txtEvidencesPathProperty);
@@ -285,7 +288,7 @@ public class TestContext {
         } else {
             this.zahoriException = new ZahoriException(testCaseName, e.getMessage());
         }
-        logStepWithScreenshot(Status.FAILED, "Test exception: " + messages.getMessageInFirstLanguage(zahoriException.getMessageKey()));
+        logStepWithScreenshot(Status.FAILED, messages.getMessageInFirstLanguage(zahoriException.getMessageKey()));
 
         // throw a new exception in order to make the test fail
         throwZahoriException(zahoriException.getMessageKey(), zahoriException.getMessageArgs());

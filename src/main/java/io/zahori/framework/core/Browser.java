@@ -200,15 +200,15 @@ public class Browser {
             } else {
 
                 Browsers browsers = Browsers.valueOf(testContext.browserName).withBits(testContext.bits).withPlatform(testContext.platform)
-                        .withVersion(testContext.version).withRemote(testContext.remote).withTestName(testContext.testCaseName)
-                        .withRemoteUrl(testContext.remoteUrl).withCaseExecution(testContext.caseExecutionId);
+                        .withVersion(testContext.version).withScreenResolution(testContext.resolution).withRemote(testContext.remote)
+                        .withTestName(testContext.testCaseName).withRemoteUrl(testContext.remoteUrl).withCaseExecution(testContext.caseExecutionId);
 
                 browsers = StringUtils.isEmpty(testContext.getDownloadPath()) ? browsers : browsers.withDownloadPath(testContext.getDownloadPath());
 
                 Proxy proxy = testContext.isHarEnabled() ? testContext.getProxy4Driver() : null;
                 this.wbs = proxy == null ? new WebDriverBrowserSelenium(browsers) : new WebDriverBrowserSelenium(browsers, proxy);
-//				this.wbs = testContext.isHarEnabled() ? new WebDriverBrowserSelenium(browsers, testContext.getProxy4Driver())
-//						: new WebDriverBrowserSelenium(browsers);
+                //				this.wbs = testContext.isHarEnabled() ? new WebDriverBrowserSelenium(browsers, testContext.getProxy4Driver())
+                //						: new WebDriverBrowserSelenium(browsers);
 
                 this.driver = wbs.getWebDriver();
             }
