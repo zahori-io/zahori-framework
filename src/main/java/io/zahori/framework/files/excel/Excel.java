@@ -264,8 +264,8 @@ public class Excel {
         DataFormatter formatter = new DataFormatter();
         FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
 
-        if ( CellType.FORMULA.equals(cell.getCellTypeEnum())) {
-            if (CellType.ERROR.equals(cell.getCachedFormulaResultTypeEnum())) {
+        if ( CellType.FORMULA.equals(cell.getCellType())) {
+            if (CellType.ERROR.equals(cell.getCachedFormulaResultType())) {
                 return "#VALUE!";
             } else {
                 String value = formatter.formatCellValue(cell, evaluator);
