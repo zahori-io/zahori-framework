@@ -1,0 +1,9 @@
+## v0.1.17 (01-04-2022)
+### Bug Fixes
+- Se controla posible NPE al obtener path de evidencias
+- Se controle posible NPE al construir objeto Browser
+
+### Features
+- ZAH-211: Importar evolución framework "viejo Zahorí"
+	> Utilizar emulación de dispositivo móvil en Google Chrome a través de propiedad en zahori.properties [zahori.webdriver.emulated.device.name]
+	> Inyección capabilities con nombre del test en ejecución a través de tag {{testName}}

@@ -73,6 +73,8 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
     private static final String WEBDRIVER_MARIONETTE_BINARY_PATH_UNIX = "webdriver.marionette.firefox.binary.path.unix";
 
     private static final String MAX_FIREFOX_LEGACY_VERSION = "47.0.1";
+    
+    private static final String TEST_NAME_TAG = "{{testName}}";
 
     private static final Logger LOG = Logger.getLogger(CapsBrowserSelenium.class);
 
@@ -100,7 +102,7 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
                 if (isBoolean(extraCapabilities.get(extraCap))) {
                     caps.setCapability(extraCap, Boolean.valueOf(extraCapabilities.get(extraCap)));
                 } else {
-                    caps.setCapability(extraCap, extraCapabilities.get(extraCap));
+                    caps.setCapability(extraCap, translateCap(extraCapabilities.get(extraCap)));
                 }
             }
             caps.setVersion(browsers.getVersion());
@@ -256,6 +258,12 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
 
     private boolean isBoolean(String input) {
         return StringUtils.equalsIgnoreCase("true", input) || StringUtils.equalsIgnoreCase("false", input);
+    }
+    
+    private String translateCap(String originalValue) {
+        return StringUtils.containsIgnoreCase(originalValue,TEST_NAME_TAG)
+                ? originalValue.replace(TEST_NAME_TAG, browsers.getTestName())
+                        : originalValue;
     }
 
 }

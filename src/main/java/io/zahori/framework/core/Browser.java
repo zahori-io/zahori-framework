@@ -73,7 +73,7 @@ public class Browser {
         this.testContext = testContext;
         createLocalServices();
         createDriver();
-        mainDriverHandle = driver.getWindowHandle();
+        mainDriverHandle = driver != null ? driver.getWindowHandle() : StringUtils.EMPTY;
         activeDriverHandle = mainDriverHandle;
         this.allDrivers = new HashMap<>();
         allDrivers.put(mainDriverHandle, driver);
@@ -157,7 +157,7 @@ public class Browser {
             DesiredCapabilities caps = (DesiredCapabilities) ((RemoteWebDriver) driver).getCapabilities();
             caps.setCapability(CapabilityType.PROXY, proxy);
             try {
-                driver = wbs.getDriver(caps);
+                driver = wbs.getDriver(caps, null);
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e1) {
                 LOG.error("Error al cargar el driver: " + e1.getMessage());
             }
@@ -210,14 +210,19 @@ public class Browser {
                 //				this.wbs = testContext.isHarEnabled() ? new WebDriverBrowserSelenium(browsers, testContext.getProxy4Driver())
                 //						: new WebDriverBrowserSelenium(browsers);
 
-                this.driver = wbs.getWebDriver();
+                String emulatedDevice = testContext.zahoriProperties.getEmulatedDeviceName();
+                this.driver = StringUtils.isBlank(emulatedDevice) ? wbs.getWebDriver() : wbs.getWebDriver(emulatedDevice);
             }
             this.testContext.driver = driver;
         }
     }
 
     public WebDriver createNewWindow() {
-        WebDriver newDriver = wbs.getWebDriver();
+    	return createNewWindow(null);
+    }
+    
+    public WebDriver createNewWindow(String mobileDevice) {
+        WebDriver newDriver = StringUtils.isEmpty(mobileDevice) ? wbs.getWebDriver() : wbs.getWebDriver(mobileDevice);
         activeDriverHandle = newDriver.getWindowHandle();
         allDrivers.put(activeDriverHandle, newDriver);
         testContext.driver = newDriver;

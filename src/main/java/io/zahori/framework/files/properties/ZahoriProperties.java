@@ -105,6 +105,10 @@ public class ZahoriProperties {
     public String getChromeDriver() {
         return getProperty("zahori.webdriver.chrome.driver");
     }
+    
+    public String getEmulatedDeviceName() {
+    	return getProperty("zahori.webdriver.emulated.device.name");
+    }
 
     public String getTestUrl() {
         return getProperty("zahori.test.url");
