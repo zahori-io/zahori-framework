@@ -45,7 +45,7 @@
 		<selenium.version>3.141.59</selenium.version>
 		<poi.version>5.1.0</poi.version>
 		<jackson.version>2.13.1</jackson.version>
-		<spring.version>5.3.14</spring.version>
+		<spring.version>5.3.19</spring.version>
 		<slf4j-api.version>1.7.32</slf4j-api.version>
 
 		<sonar.projectKey>zahori-io_zahori-framework</sonar.projectKey>
