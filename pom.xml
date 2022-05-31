@@ -237,7 +237,7 @@
 			<dependency>
 				<groupId>io.appium</groupId>
 				<artifactId>java-client</artifactId>
-				<version>7.6.0</version>
+				<version>8.1.0</version>
 			</dependency>
 
 			<dependency>
@@ -907,7 +907,7 @@
 								<id>enforce</id>
 								<configuration>
 									<rules>
-										<DependencyConvergence />
+										<DependencyConvergence/>
 										<requireMavenVersion>
 											<version>3.6.3</version>
 										</requireMavenVersion>
