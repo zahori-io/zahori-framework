@@ -146,7 +146,7 @@ public abstract class BaseProcess {
         try {
             run(testContext, caseExecution);
         } catch (final Exception e) {
-            LOG.error("==== Process error {}: {}", getCaseExcutionDetails(caseExecution), e.getMessage());
+            LOG.error("==== Process {}: {}", getCaseExcutionDetails(caseExecution), e.getMessage());
             if (retries < testContext.getMaxRetries()) {
                 retries++;
                 testContext.logStepPassed(getCaseExcutionDetails(caseExecution) + "Processing error: " + e.getMessage()
@@ -155,9 +155,9 @@ public abstract class BaseProcess {
                     testContext.getBrowser().closeWithoutProcessKill();
                 }
                 process(testContext, caseExecution);
-            } else {
-                testContext.failTest(e);
-            }
+            } /*else {
+                testContext.failTest(testContext.testPassed, e);
+            }*/
         } finally {
             testContext.stopChronometer();
             testContext.writeSteps2Json();

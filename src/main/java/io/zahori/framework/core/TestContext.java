@@ -278,17 +278,22 @@ public class TestContext {
 
     public void failTest(String messageKey, String... messageArgs) {
         failCause = messageKey;
-        failTest(new ZahoriException(testCaseName, messageKey, messageArgs));
+        failTest(false, new ZahoriException(testCaseName, messageKey, messageArgs));
     }
 
-    public void failTest(Exception e) {
-        testPassed = false;
+    public void passTest(String messageKey, String... messageArgs) {
+        failCause = messageKey;
+        failTest(true, new ZahoriException(testCaseName, messageKey, messageArgs));
+    }
+
+    public void failTest(boolean status, Exception e) {
+        testPassed = status;
         if (e instanceof ZahoriException) {
             this.zahoriException = (ZahoriException) e;
         } else {
             this.zahoriException = new ZahoriException(testCaseName, e.getMessage());
         }
-        logStepWithScreenshot(Status.FAILED, messages.getMessageInFirstLanguage(zahoriException.getMessageKey()));
+        logStepWithScreenshot(testPassed ? Status.PASSED : Status.FAILED, messages.getMessageInFirstLanguage(zahoriException.getMessageKey()));
 
         // throw a new exception in order to make the test fail
         throwZahoriException(zahoriException.getMessageKey(), zahoriException.getMessageArgs());
