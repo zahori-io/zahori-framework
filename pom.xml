@@ -281,7 +281,7 @@
 			<dependency>
 				<groupId>org.javers</groupId>
 				<artifactId>javers-core</artifactId>
-				<version>6.5.3</version>
+				<version>6.6.5</version>
 			</dependency>
 
 			<dependency>
@@ -907,7 +907,7 @@
 								<id>enforce</id>
 								<configuration>
 									<rules>
-										<DependencyConvergence />
+										<DependencyConvergence/>
 										<requireMavenVersion>
 											<version>3.6.3</version>
 										</requireMavenVersion>
