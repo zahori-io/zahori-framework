@@ -79,7 +79,7 @@ public abstract class BaseTest {
                 }
                 testMain();
             } else {
-                testContext.failTest(testContext.testPassed, e);
+                testContext.failTest(e);
             }
         }
     }

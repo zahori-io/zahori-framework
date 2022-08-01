@@ -55,6 +55,7 @@ import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.evidences.Evidences;
 import io.zahori.framework.evidences.Evidences.ZahoriLogLevel;
 import io.zahori.framework.exception.ZahoriException;
+import io.zahori.framework.exception.ZahoriPassedException;
 import io.zahori.framework.files.properties.ProjectProperties;
 import io.zahori.framework.files.properties.SystemPropertiesUtils;
 import io.zahori.framework.files.properties.ZahoriProperties;
@@ -276,24 +277,26 @@ public class TestContext {
         logInfo("Test context initialized!");
     }
 
-    public void failTest(String messageKey, String... messageArgs) {
-        failCause = messageKey;
-        failTest(false, new ZahoriException(testCaseName, messageKey, messageArgs));
-    }
-
     public void passTest(String messageKey, String... messageArgs) {
-        failCause = messageKey;
-        failTest(true, new ZahoriException(testCaseName, messageKey, messageArgs));
+        testPassed = true;
+        String message = getMessage(messageKey, messageArgs);
+        failCause = message;
+        logStepPassedWithScreenshot(message);
+        throw new ZahoriPassedException(testCaseName, message);
     }
 
-    public void failTest(boolean status, Exception e) {
-        testPassed = status;
+    public void failTest(String messageKey, String... messageArgs) {
+        throw new RuntimeException(getMessage(messageKey, messageArgs));
+    }
+
+    protected void failTest(Exception e) {
+        this.testPassed = false;
         if (e instanceof ZahoriException) {
             this.zahoriException = (ZahoriException) e;
         } else {
             this.zahoriException = new ZahoriException(testCaseName, e.getMessage());
+            logStepWithScreenshot(Status.FAILED, getMessage(zahoriException.getMessageKey()));
         }
-        logStepWithScreenshot(testPassed ? Status.PASSED : Status.FAILED, messages.getMessageInFirstLanguage(zahoriException.getMessageKey()));
 
         // throw a new exception in order to make the test fail
         throwZahoriException(zahoriException.getMessageKey(), zahoriException.getMessageArgs());
@@ -354,22 +357,22 @@ public class TestContext {
     }
 
     public void logDebug(String text, String... textArgs) {
-        evidences.console(ZahoriLogLevel.DEBUG, messages.getMessageInFirstLanguage(text, textArgs));
+        evidences.console(ZahoriLogLevel.DEBUG, getMessage(text, textArgs));
         evidences.insertTextInLogFile(ZahoriLogLevel.DEBUG, text, textArgs);
     }
 
     public void logInfo(String text, String... textArgs) {
-        evidences.console(messages.getMessageInFirstLanguage(text, textArgs));
+        evidences.console(getMessage(text, textArgs));
         evidences.insertTextInLogFile(text, textArgs);
     }
 
     public void logWarn(String text, String... textArgs) {
-        evidences.console(ZahoriLogLevel.WARN, messages.getMessageInFirstLanguage(text, textArgs));
+        evidences.console(ZahoriLogLevel.WARN, getMessage(text, textArgs));
         evidences.insertTextInLogFile(ZahoriLogLevel.WARN, text, textArgs);
     }
 
     public void logError(String text, String... textArgs) {
-        evidences.console(ZahoriLogLevel.ERROR, messages.getMessageInFirstLanguage(text, textArgs));
+        evidences.console(ZahoriLogLevel.ERROR, getMessage(text, textArgs));
         evidences.insertTextInLogFile(ZahoriLogLevel.ERROR, text, textArgs);
     }
 
@@ -584,7 +587,7 @@ public class TestContext {
     }
 
     private Notification showGenericNotification(int msDuration, int pixelsWidth, int pixelsHeight, String description, String... descriptionArgs) {
-        Notification info = new Notification(messages.getMessageInFirstLanguage(description, descriptionArgs), pixelsWidth, pixelsHeight);
+        Notification info = new Notification(getMessage(description, descriptionArgs), pixelsWidth, pixelsHeight);
         try {
             Thread.sleep(msDuration);
         } catch (InterruptedException e) {
@@ -596,7 +599,7 @@ public class TestContext {
     }
 
     private Notification showGenericNotification(int msDuration, String description, String... descriptionArgs) {
-        Notification info = new Notification(messages.getMessageInFirstLanguage(description, descriptionArgs));
+        Notification info = new Notification(getMessage(description, descriptionArgs));
         try {
             Thread.sleep(msDuration);
         } catch (InterruptedException e) {

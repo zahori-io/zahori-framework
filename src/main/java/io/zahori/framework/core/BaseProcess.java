@@ -51,6 +51,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.exception.ZahoriException;
+import io.zahori.framework.exception.ZahoriPassedException;
 import io.zahori.framework.utils.Pause;
 import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
@@ -145,8 +146,10 @@ public abstract class BaseProcess {
 
         try {
             run(testContext, caseExecution);
+        } catch (ZahoriPassedException passedException) {
+            LOG.info("==== Process passed {}: {}", getCaseExcutionDetails(caseExecution), passedException.getMessage());
         } catch (final Exception e) {
-            LOG.error("==== Process {}: {}", getCaseExcutionDetails(caseExecution), e.getMessage());
+            LOG.error("==== Process error {}: {}", getCaseExcutionDetails(caseExecution), e.getMessage());
             if (retries < testContext.getMaxRetries()) {
                 retries++;
                 testContext.logStepPassed(getCaseExcutionDetails(caseExecution) + "Processing error: " + e.getMessage()
@@ -155,9 +158,9 @@ public abstract class BaseProcess {
                     testContext.getBrowser().closeWithoutProcessKill();
                 }
                 process(testContext, caseExecution);
-            } /*else {
-                testContext.failTest(testContext.testPassed, e);
-            }*/
+            } else {
+                testContext.failTest(e);
+            }
         } finally {
             testContext.stopChronometer();
             testContext.writeSteps2Json();
