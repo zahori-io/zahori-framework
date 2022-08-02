@@ -97,6 +97,7 @@ public class TestContext {
     public String remote;
     public String remoteUrl;
     public String appiumService;
+    public int retries = 0;
 
     // Properties
     public ZahoriProperties zahoriProperties;
@@ -128,7 +129,7 @@ public class TestContext {
     // MessageReader>();
     private Messages messages;
     private String executionNotes;
-    private String failCause;
+    protected String failCause;
     private boolean retriesDisabled;
     private boolean updateTestResultDisabled;
     public ITestContext testngContext;
@@ -278,15 +279,31 @@ public class TestContext {
     }
 
     public void passTest(String messageKey, String... messageArgs) {
+        passTest(false, messageKey, messageArgs);
+    }
+
+    public void passTestWithScreenshot(String messageKey, String... messageArgs) {
+        passTest(true, messageKey, messageArgs);
+    }
+
+    protected void passTest(boolean withScreenshot, String messageKey, String... messageArgs) {
         testPassed = true;
         String message = getMessage(messageKey, messageArgs);
         failCause = message;
-        logStepPassedWithScreenshot(message);
+        if (withScreenshot) {
+            logStepPassedWithScreenshot(message);
+        } else {
+            logStepPassed(message);
+        }
         throw new ZahoriPassedException(testCaseName, message);
     }
 
     public void failTest(String messageKey, String... messageArgs) {
-        throw new RuntimeException(getMessage(messageKey, messageArgs));
+        logStepFailed(messageKey, messageArgs);
+    }
+
+    public void failTestWithScreenshot(String messageKey, String... messageArgs) {
+        logStepFailedWithScreenshot(messageKey, messageArgs);
     }
 
     protected void failTest(Exception e) {
@@ -444,8 +461,7 @@ public class TestContext {
         currentStep = new ArrayList<>();
 
         if (Status.FAILED.equals(status)) {
-            executionNotes = getMessage(description, descriptionArgs);
-            tms.setExecutionNotes(executionNotes);
+            setExecutionNotes(getMessage(description, descriptionArgs));
         }
 
         return step;
@@ -462,8 +478,7 @@ public class TestContext {
         currentStep = new ArrayList<>();
 
         if (Status.FAILED.equals(status)) {
-            executionNotes = getMessage(description, descriptionArgs);
-            tms.setExecutionNotes(executionNotes);
+            setExecutionNotes(getMessage(description, descriptionArgs));
         }
 
         return step;

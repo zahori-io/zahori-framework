@@ -71,8 +71,6 @@ public abstract class BaseProcess {
     public static final String DEFAULT_BIT_DEPTH = "x24";
     public static final String DEFAULT_SCREEN_RESOLUTION = "1920x1080" + DEFAULT_BIT_DEPTH;
 
-    protected int retries;
-
     protected String healthcheck(String processName) {
         return processName + " is up!";
     }
@@ -127,8 +125,6 @@ public abstract class BaseProcess {
             // testContext.moveMouseToUpperLeftCorner();
             testContext.startVideo();
 
-            retries = 0; // TODO
-
             return testContext;
         } catch (Exception e) {
             e.printStackTrace();
@@ -149,25 +145,37 @@ public abstract class BaseProcess {
         } catch (ZahoriPassedException passedException) {
             LOG.info("==== Process passed {}: {}", getCaseExcutionDetails(caseExecution), passedException.getMessage());
         } catch (final Exception e) {
-            LOG.error("==== Process error {}: {}", getCaseExcutionDetails(caseExecution), e.getMessage());
-            if (retries < testContext.getMaxRetries()) {
-                retries++;
-                testContext.logStepPassed(getCaseExcutionDetails(caseExecution) + "Processing error: " + e.getMessage()
-                        + "\nTest retries are enabled. Relaunching test (" + retries + " retry of " + testContext.getMaxRetries() + " max retries).");
-                if (!StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), testContext.browserName)) {
-                    testContext.getBrowser().closeWithoutProcessKill();
-                }
-                process(testContext, caseExecution);
-            } else {
-                testContext.failTest(e);
-            }
+            manageException(testContext, caseExecution, e);
         } finally {
             testContext.stopChronometer();
             testContext.writeSteps2Json();
             testContext.logInfo("Test Finished: " + testContext.testCaseName);
             testContext.logInfo("Test duration: " + testContext.getTestDuration() + " seconds");
-            testContext.setExecutionNotes("Test duration: " + testContext.getTestDuration() + " seconds");
             testContext.reportTestResult();
+        }
+    }
+
+    private void manageException(TestContext testContext, CaseExecution caseExecution, Exception e) {
+        LOG.error("==== Process error {}: {}", getCaseExcutionDetails(caseExecution), e.getMessage());
+        if (testContext.retries < testContext.getMaxRetries()) {
+            testContext.retries++;
+            testContext.failCause = StringUtils.EMPTY;
+            testContext.resetExecutionNotes();
+            testContext.setExecutionNotes(testContext.retries + " retries. ");
+
+            if (!(e instanceof ZahoriException)) {
+                testContext.logPartialStepFailedWithScreenshot(e.getMessage());
+            }
+
+            testContext.logStepPassed(
+                    "\nCase failed! but retries are enabled, rerunning case... (Retry " + testContext.retries + " of " + testContext.getMaxRetries() + ")");
+
+            if (!StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), testContext.browserName)) {
+                testContext.getBrowser().closeWithoutProcessKill();
+            }
+            process(testContext, caseExecution);
+        } else {
+            testContext.failTest(e);
         }
     }
 
