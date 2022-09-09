@@ -340,8 +340,7 @@ public class TestContext {
 
         // Update test result on Test Link, ALM,...
         if (!updateTestResultDisabled) {
-            tms.updateTestResult(testCaseName, testPassed, testSteps, testDuration, tmsTestSetId, tmsTestCaseId, tmsTestExecId, tmsTestPlanId, browserName,
-                    platform);
+            tms.updateTestResult(testCaseName, testPassed, testSteps, testDuration, tmsTestSetId, tmsTestCaseId, tmsTestExecId, browserName, platform);
         }
     }
 

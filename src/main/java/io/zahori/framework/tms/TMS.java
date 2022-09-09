@@ -51,6 +51,11 @@ import io.zahori.tms.alm.restclient.ALMRestClient.EntityType;
 
 public class TMS {
 
+    // Supported repositories
+    private static final String ALM = "ALM";
+    private static final String TEST_LINK = "TestLink";
+    private static final String JIRA_XRAY = "Jira Xray";
+
     private static final Logger LOG = LoggerFactory.getLogger(TMS.class);
 
     // TMS
@@ -80,16 +85,12 @@ public class TMS {
     }
 
     public TMS(ZahoriProperties zahoriProperties, Evidences evidences, Messages messages, String startDate) {
-        tms = zahoriProperties.getTMS();
-        this.zahoriProperties = zahoriProperties;
-        this.evidences = evidences;
-        this.messages = messages;
-        executionNotes = null;
+        this(zahoriProperties, evidences, messages);
         date = startDate;
     }
 
     public void updateTestResult(String testCaseName, boolean passed, List<List<Step>> testSteps, int testDuration, String tmsTestSetId, String tmsTestCaseId,
-            String tmsTestExecId, String tmsTestPlanId, String browserName, String platformName) {
+            String tmsTestExecId, String browserName, String platformName) {
 
         // TMS is disabled
         if (!zahoriProperties.isTMSEnabled()) {
@@ -97,14 +98,14 @@ public class TMS {
         }
 
         // TMS not supported
-        if (!("TestLink").equalsIgnoreCase(tms) && !("ALM").equalsIgnoreCase(tms) && !("XRAY").equalsIgnoreCase(tms)) {
+        if (!TEST_LINK.equalsIgnoreCase(tms) && !ALM.equalsIgnoreCase(tms) && !JIRA_XRAY.equalsIgnoreCase(tms)) {
             throw new RuntimeException("TMS " + tms + " not supported");
         }
 
         logInfo("Uploading test results to " + tms);
 
         // Create TestLink instance
-        if (("TestLink").equalsIgnoreCase(tms)) {
+        if (TEST_LINK.equalsIgnoreCase(tms)) {
             MyTrustManager.disableSSL();
             pingTMS(zahoriProperties.getTestLinkUrl());
             logInfo("Connecting to " + tms + ": " + zahoriProperties.getTestLinkUrl());
@@ -113,7 +114,7 @@ public class TMS {
         }
 
         // Create XRAY instance
-        if (("XRAY").equalsIgnoreCase(tms)) {
+        if (JIRA_XRAY.equalsIgnoreCase(tms)) {
             String jiraUrl = zahoriProperties.getXrayUrl();
             checkParameter(tms, "jiraUrl", jiraUrl);
             String jiraUser = zahoriProperties.getXrayUser();
@@ -124,7 +125,7 @@ public class TMS {
         }
 
         // Create ALM instance
-        if (("ALM").equalsIgnoreCase(tms)) {
+        if (ALM.equalsIgnoreCase(tms)) {
             // pingTMS(zahoriProperties.getALMUrl());
             alm = new ALMRestClient(zahoriProperties.getALMUrl(), zahoriProperties.getALMDomain(), zahoriProperties.getALMProject());
             logInfo("Connecting to " + tms + ": " + zahoriProperties.getALMUrl());
@@ -141,7 +142,7 @@ public class TMS {
 
         // 1.c) XRAY
         List<String> evidencesFiles = getEvidencesFilesToUpload(passed);
-        if (updateResultXray(tmsTestPlanId, tmsTestExecId, tmsTestCaseId, passed, evidencesFiles) < 0) {
+        if (updateResultXray(zahoriProperties.getXrayTestPlanId(), tmsTestExecId, tmsTestCaseId, passed, evidencesFiles) < 0) {
             logInfo("Cannot update test result on JIRA XRAY");
         }
 
@@ -339,8 +340,8 @@ public class TMS {
     // JIRA XRAY - update test run result
     private int updateResultXray(String testPlanId, String testExecutionId, String testCaseId, boolean passed, List<String> evidencesFiles) {
         if (xray != null) {
-            checkParameter("XRAY", "testPlanId", testPlanId);
-            checkParameter("XRAY", "testCaseId", testCaseId);
+            checkParameter(JIRA_XRAY, "testPlanId", testPlanId);
+            checkParameter(JIRA_XRAY, "testCaseId", testCaseId);
             String newTExec = testExecutionId;
             if (StringUtils.isEmpty(newTExec) || !xray.existsTEOnJira(newTExec)) {
                 newTExec = processTestExecutionOnXray();
@@ -370,13 +371,13 @@ public class TMS {
         String environment = System.getProperty("entorno");
         environment = StringUtils.isEmpty(environment) ? "UNDEFINED ENV" : environment;
         summary = StringUtils.replace(summary, "{environment}", environment);
-        String testExecutionId = xray.look4TE(summary);
+        String testExecutionId = xray.look4TE(zahoriProperties.getXrayProjectKey(), summary);
         if (StringUtils.isEmpty(testExecutionId)) {
             testExecutionId = xray.createTestExecution(zahoriProperties.getXrayProjectKey(), summary, zahoriProperties.getXrayTestExecDescription(),
                     zahoriProperties.getXrayTestExecPriorityId(), zahoriProperties.getXrayTestExecLabels(), zahoriProperties.getXrayTestExecComponents(),
                     zahoriProperties.getXrayTestExecAssignee());
             if (StringUtils.isEmpty(testExecutionId)) {
-                logInfo("An error has been ocurred when trying to create new Test Execution on JIRA");
+                logInfo("An error has ocurred when trying to create new Test Execution on JIRA");
             } else {
                 logInfo("Created new Test Execution on JIRA: " + testExecutionId);
             }
@@ -442,7 +443,7 @@ public class TMS {
 
     private void checkParameter(String tms, String parameterName, String parameter) {
         if (StringUtils.isBlank(parameter)) {
-            throw new RuntimeException("Error updating test in " + parameter + " -> " + parameterName + " not provided");
+            throw new RuntimeException("Error updating test in " + tms + ": " + parameterName + " not provided");
         }
     }
 

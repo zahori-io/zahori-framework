@@ -420,15 +420,28 @@ public class ZahoriProperties {
     }
 
     public String getXrayUrl() {
+        if (configuration != null) {
+            return configuration.getUploadRepositoryUrl();
+        }
         return getProperty("zahori.test.results.tms.xray.url");
     }
 
     public String getXrayUser() {
+        if (configuration != null) {
+            return configuration.getUploadRepositoryUser();
+        }
         return getProperty("zahori.test.results.tms.xray.username");
     }
 
     public String getXrayPassword() {
+        if (configuration != null) {
+            return configuration.getUploadRepositoryPass();
+        }
         return getProperty("zahori.test.results.tms.xray.password");
+    }
+
+    public String getXrayTestPlanId() {
+        return getProperty("zahori.test.results.tms.xray.tplan.id");
     }
 
     public String getXrayTestExecDescription() {

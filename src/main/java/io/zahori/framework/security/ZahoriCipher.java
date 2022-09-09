@@ -31,7 +31,14 @@ import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class ZahoriCipher {
+
+    private static final String CHARSET = "UTF8";
+    private static final String ALGORITHM = "DES";
+    private static final String SECRET_ENV_VAR = "ZAHORI_CIPHER_SECRET";
+    private String secret = StringUtils.isBlank(System.getenv(SECRET_ENV_VAR)) ? "YourSecr" : System.getenv(SECRET_ENV_VAR);
 
     DESKeySpec keySpec;
     SecretKeyFactory keyFactory;
@@ -41,8 +48,8 @@ public class ZahoriCipher {
     // as material for generating the keySpec
     public ZahoriCipher() {
         try {
-            keySpec = new DESKeySpec("YourSecr".getBytes("UTF8"));
-            keyFactory = SecretKeyFactory.getInstance("DES");
+            keySpec = new DESKeySpec(secret.getBytes(CHARSET));
+            keyFactory = SecretKeyFactory.getInstance(ALGORITHM);
             key = keyFactory.generateSecret(keySpec);
         } catch (Exception e) {
             System.out.println(e.getMessage());
@@ -52,9 +59,9 @@ public class ZahoriCipher {
 
     public String encode(String text) {
         try {
-            byte[] cleartext = text.getBytes("UTF8");
-            Cipher cipher = Cipher.getInstance("DES"); // cipher is not thread
-                                                       // safe
+            byte[] cleartext = text.getBytes(CHARSET);
+            Cipher cipher = Cipher.getInstance(ALGORITHM); // cipher is not thread
+            // safe
             cipher.init(Cipher.ENCRYPT_MODE, key);
             String encryptedPwd = new String(Base64.getEncoder().encode(cipher.doFinal(cleartext)));
 
@@ -70,8 +77,8 @@ public class ZahoriCipher {
         try {
             byte[] encrypedPwdBytes = Base64.getDecoder().decode(text);
 
-            Cipher cipher = Cipher.getInstance("DES");// cipher is not thread
-                                                      // safe
+            Cipher cipher = Cipher.getInstance(ALGORITHM);// cipher is not thread
+            // safe
             cipher.init(Cipher.DECRYPT_MODE, key);
             byte[] plainTextPwdBytes = (cipher.doFinal(encrypedPwdBytes));
             return new String(plainTextPwdBytes, StandardCharsets.UTF_8);

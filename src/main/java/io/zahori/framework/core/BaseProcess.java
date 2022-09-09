@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
 
@@ -115,6 +116,11 @@ public abstract class BaseProcess {
                     : caseExecution.getScreenResolution() + DEFAULT_BIT_DEPTH;
             testContext.remote = remote;
             testContext.remoteUrl = remoteUrl;
+
+            // Read TMS variables
+            Map<String, String> caseData = caseExecution.getCas().getDataMap();
+            testContext.tmsTestCaseId = caseData.get("TMS_TC_ID");
+            testContext.tmsTestExecId = caseData.get("TMS_TE_ID");
 
             // TODO investigate: This random pause fixes screenshots in several screen resolutions in parallel executions
             int millis = randomNumber();

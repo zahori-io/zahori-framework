@@ -186,6 +186,7 @@ public class Evidences {
     public void console(String text) {
         if (StringUtils.isBlank(text)) {
             LOG.info("");
+            return;
         }
         // Print \n using LOG.info("")
         text = StringUtils.replace(text, "\n", " \n");

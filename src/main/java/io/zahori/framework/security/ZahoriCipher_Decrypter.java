@@ -27,64 +27,60 @@ import java.awt.event.KeyEvent;
 
 import javax.swing.ImageIcon;
 
-
 public class ZahoriCipher_Decrypter extends javax.swing.JFrame {
-	    
-	private static final long serialVersionUID = 1222719892838685366L;
-	
-	private javax.swing.JLabel sourceTextLabel;
+
+    private static final long serialVersionUID = 1222719892838685366L;
+
+    private javax.swing.JLabel sourceTextLabel;
     private javax.swing.JButton cipherButton;
     private javax.swing.JTextArea resultLabel;
     private javax.swing.JTextField sourceTextField;
-    
-    
+
     public ZahoriCipher_Decrypter() {
         initComponents();
     }
-	    
-	    
-	public static void main(String args[]) {
-		java.awt.EventQueue.invokeLater(new Runnable() {
-											public void run() {
-												new ZahoriCipher_Decrypter().setVisible(true);
-											}
-	    });
-	}
-		    
-	    
-		private void initComponents() {
-		sourceTextField = new javax.swing.JTextField(20);
-	    sourceTextLabel = new javax.swing.JLabel();
-	    cipherButton = new javax.swing.JButton();
-	    resultLabel = new javax.swing.JTextArea(1,30);
 
-	    setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-	    setTitle("Zahori Cipher");
+    public static void main(String args[]) {
+        java.awt.EventQueue.invokeLater(new Runnable() {
+            public void run() {
+                new ZahoriCipher_Decrypter().setVisible(true);
+            }
+        });
+    }
 
-	    sourceTextLabel.setText("Please, enter the text to be encrypted.");
+    private void initComponents() {
+        sourceTextField = new javax.swing.JTextField(20);
+        sourceTextLabel = new javax.swing.JLabel();
+        cipherButton = new javax.swing.JButton();
+        resultLabel = new javax.swing.JTextArea(1, 30);
 
-	    cipherButton.setText("Encrypt it !");
-	    cipherButton.addActionListener(new java.awt.event.ActionListener() {
-	    	public void actionPerformed(java.awt.event.ActionEvent evt) {
-	    		cipherButtonActionPerformed(evt);
-	        }
-	    });
-	    
-	    sourceTextField.addKeyListener(new java.awt.event.KeyAdapter() {
-	        public void keyTyped(java.awt.event.KeyEvent evt) {
-	            if(sourceTextField.getText().length()>=25&&!(evt.getKeyChar()==KeyEvent.VK_DELETE||evt.getKeyChar()==KeyEvent.VK_BACK_SPACE)) {
-	                getToolkit().beep();
-	                evt.consume();
-	             }
-	         }
-	    });
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Zahori Cipher");
 
-	    resultLabel.setText("");
-	    resultLabel.setEditable(false);
+        sourceTextLabel.setText("Please, enter the text to be decrypted.");
 
-	    javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-	    getContentPane().setLayout(layout);
-	    layout.setHorizontalGroup(
+        cipherButton.setText("Decrypt it !");
+        cipherButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cipherButtonActionPerformed(evt);
+            }
+        });
+
+        sourceTextField.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyTyped(java.awt.event.KeyEvent evt) {
+                if (sourceTextField.getText().length() >= 25 && !(evt.getKeyChar() == KeyEvent.VK_DELETE || evt.getKeyChar() == KeyEvent.VK_BACK_SPACE)) {
+                    getToolkit().beep();
+                    evt.consume();
+                }
+            }
+        });
+
+        resultLabel.setText("");
+        resultLabel.setEditable(false);
+
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+        layout.setHorizontalGroup(
 	    		layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 	            	.addGroup(layout.createSequentialGroup()
 	            			.addContainerGap()
@@ -99,13 +95,13 @@ public class ZahoriCipher_Decrypter extends javax.swing.JFrame {
 	            									.addComponent(resultLabel)))
 	            									.addContainerGap(27, Short.MAX_VALUE))
 	    		);
-	    
-	    ImageIcon img = new ImageIcon("src/main/resources/icono_jframe.png");
-	    setIconImage(img.getImage());
-	    setResizable(false);
 
-	    layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, cipherButton, sourceTextField);
-	    layout.setVerticalGroup(
+        ImageIcon img = new ImageIcon("src/main/resources/icono_jframe.png");
+        setIconImage(img.getImage());
+        setResizable(false);
+
+        layout.linkSize(javax.swing.SwingConstants.HORIZONTAL, cipherButton, sourceTextField);
+        layout.setVerticalGroup(
 	            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
 	            	  .addGroup(layout.createSequentialGroup()
 	            			  .addContainerGap()
@@ -121,20 +117,17 @@ public class ZahoriCipher_Decrypter extends javax.swing.JFrame {
 	        	pack();
 	    }
 
-	    
-		private void cipherButtonActionPerformed (java.awt.event.ActionEvent evt) {
-			String result;
-			try{
-				ZahoriCipher cipher = new ZahoriCipher();
-				result = cipher.decode(sourceTextField.getText());
-			} catch (Exception e){
-				result = "A problem has been found on encryption process.";
-				System.out.println(e.getMessage());
-			}
-			
-			resultLabel.setText(result);
-	    }
-	    
+    private void cipherButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        String result;
+        try {
+            ZahoriCipher cipher = new ZahoriCipher();
+            result = cipher.decode(sourceTextField.getText());
+        } catch (Exception e) {
+            result = "A problem has been found on encryption process.";
+            System.out.println(e.getMessage());
+        }
 
+        resultLabel.setText(result);
+    }
 
 }
