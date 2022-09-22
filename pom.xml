@@ -43,7 +43,7 @@
 		<skip.integration.tests>false</skip.integration.tests>
 		<skip.unit.tests>true</skip.unit.tests>
 		<selenium.version>3.141.59</selenium.version>
-		<poi.version>5.1.0</poi.version>
+		<poi.version>5.2.2</poi.version>
 		<jackson.version>2.13.3</jackson.version>
 		<spring.version>5.3.21</spring.version>
 		<slf4j-api.version>1.7.36</slf4j-api.version>
@@ -269,6 +269,12 @@
 				<groupId>org.apache.poi</groupId>
 				<artifactId>poi</artifactId>
 				<version>${poi.version}</version>
+			</dependency>
+
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-api</artifactId>
+				<version>2.17.2</version>
 			</dependency>
 			<!-- To process excel files with extension .xlsx -->
 			<dependency>
@@ -612,6 +618,11 @@
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+		</dependency>
+
 		<!-- To process excel files with extension .xlsx -->
 		<dependency>
 			<groupId>org.apache.poi</groupId>
