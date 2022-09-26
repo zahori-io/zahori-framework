@@ -261,7 +261,7 @@
 			<dependency>
 				<groupId>org.yaml</groupId>
 				<artifactId>snakeyaml</artifactId>
-				<version>1.32</version>
+				<version>1.33</version>
 			</dependency>
 
 			<!-- To process excel files with extension .xls -->
