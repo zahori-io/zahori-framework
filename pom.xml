@@ -44,7 +44,7 @@
 		<skip.unit.tests>true</skip.unit.tests>
 		<selenium.version>3.141.59</selenium.version>
 		<poi.version>5.2.3</poi.version>
-		<jackson.version>2.13.4</jackson.version>
+		<jackson.version>2.13.4.2</jackson.version>
 		<spring.version>5.3.23</spring.version>
 		<slf4j-api.version>1.7.36</slf4j-api.version>
 
