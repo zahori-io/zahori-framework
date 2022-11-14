@@ -72,6 +72,10 @@ public class WebDriverBrowserSelenium {
     }
 
     public WebDriver getWebDriver() {
+    	return getWebDriver(null);
+    }
+    
+    public WebDriver getWebDriver(String mobileDevice) {
         WebDriver driver = null;
         String testName = browsers.getTestName();
 
@@ -89,8 +93,8 @@ public class WebDriverBrowserSelenium {
             if (!StringUtils.isEmpty(browsers.getCaseExecutionId()))
                 caps.setCapability("name", browsers.getCaseExecutionId());
 
-            driver = getDriver(caps);
-
+            driver = getDriver(caps, mobileDevice);
+            
             if (driver != null) {
                 setProperties(driver);
             }
@@ -107,15 +111,15 @@ public class WebDriverBrowserSelenium {
         driver.manage().window().maximize();
     }
 
-    public WebDriver getDriver(final DesiredCapabilities caps)
+    public WebDriver getDriver(final DesiredCapabilities caps, String mobileDevice)
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         WebDriver driver;
-        final Method meth = getClass().getMethod(PREFIX_NAME_METHOD + browsers.getRemote(), Browsers.class, DesiredCapabilities.class);
-        driver = (WebDriver) meth.invoke(this, this.browsers, caps);
+        final Method meth = getClass().getMethod(PREFIX_NAME_METHOD + browsers.getRemote(), Browsers.class, DesiredCapabilities.class, String.class);
+        driver = (WebDriver) meth.invoke(this, this.browsers, caps, mobileDevice);
         return driver;
     }
 
-    public WebDriver getWebDriverRemoteYES(final Browsers navega, final DesiredCapabilities caps) {
+    public WebDriver getWebDriverRemoteYES(final Browsers navega, final DesiredCapabilities caps, final String mobileDevice) {
 
         WebDriver driver = null;
         try {
@@ -125,6 +129,12 @@ public class WebDriverBrowserSelenium {
                 for (String pref : extraPreferences.keySet()) {
                     String argument = StringUtils.isEmpty(extraPreferences.get(pref)) ? pref : pref + "=" + extraPreferences.get(pref);
                     options.addArguments(argument);
+                }
+                
+                if (!StringUtils.isEmpty(mobileDevice)) {
+                    Map<String, String> mobileEmulation = new HashMap<>();
+                    mobileEmulation.put("deviceName", mobileDevice);
+                    options.setExperimentalOption("mobileEmulation", mobileEmulation);
                 }
 
                 caps.setCapability(ChromeOptions.CAPABILITY, options);
@@ -140,7 +150,7 @@ public class WebDriverBrowserSelenium {
         return driver;
     }
 
-    public WebDriver getWebDriverRemoteNO(final Browsers navega, final DesiredCapabilities caps)
+    public WebDriver getWebDriverRemoteNO(final Browsers navega, final DesiredCapabilities caps, final String mobileDevice)
             throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
         Platform currentPlatform = caps.getPlatform();
         if (isWindowsPlatform(currentPlatform)) {
@@ -197,6 +207,12 @@ public class WebDriverBrowserSelenium {
             for (String key : extraPreferences.keySet()) {
                 String argument = StringUtils.isEmpty(extraPreferences.get(key)) ? key : key + "=" + extraPreferences.get(key);
                 options.addArguments(argument);
+            }
+            
+            if (!StringUtils.isEmpty(mobileDevice)) {
+                Map<String, String> mobileEmulation = new HashMap<>();
+                mobileEmulation.put("deviceName", mobileDevice);
+                options.setExperimentalOption("mobileEmulation", mobileEmulation);
             }
 
             try {

@@ -597,7 +597,7 @@ public class TestContext {
     }
 
     public String getEvidencesFolder() {
-        return evidences.getEvidencesPath();
+        return evidences == null ? null : evidences.getEvidencesPath();
     }
 
     private Notification showGenericNotification(int msDuration, int pixelsWidth, int pixelsHeight, String description, String... descriptionArgs) {
