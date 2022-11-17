@@ -25,6 +25,7 @@ package io.zahori.framework.core;
 
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
 public class HostPage extends Page {
@@ -157,8 +158,8 @@ public class HostPage extends Page {
     private void initHostBrowser() {
         WebDriver driver = this.testContext.getHostDriver();
         if (driver == null) {
-            DesiredCapabilities caps = DesiredCapabilities.firefox();
-            driver = new FirefoxDriver(caps);
+            FirefoxOptions options = new FirefoxOptions();
+            driver = new FirefoxDriver(options);
             driver.manage().window().maximize();
             this.testContext.setHostDriver(driver);
         }

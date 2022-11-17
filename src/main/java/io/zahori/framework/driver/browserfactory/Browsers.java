@@ -23,17 +23,17 @@ package io.zahori.framework.driver.browserfactory;
  * #L%
  */
 
-import org.openqa.selenium.remote.BrowserType;
+import org.openqa.selenium.remote.Browser;
 
 /*Clase Browsers.java*/
 public enum Browsers {
 
-    EXPLORER(BrowserType.IE, Browsers.BITS_32, "org.openqa.selenium.ie.InternetExplorerDriver", Browsers.REMOTE_NO),
-    FIREFOX(BrowserType.FIREFOX, Browsers.BITS_32, "org.openqa.selenium.firefox.FirefoxDriver", Browsers.REMOTE_NO),
-    CHROME(BrowserType.CHROME, Browsers.BITS_32, "org.openqa.selenium.chrome.ChromeDriver", Browsers.REMOTE_NO),
-    SAFARI(BrowserType.SAFARI, Browsers.BITS_32, "org.openqa.selenium.safari.SafariDriver", Browsers.REMOTE_NO),
-    EDGE(BrowserType.EDGE, Browsers.BITS_32, "org.openqa.selenium.edge.EdgeDriver", Browsers.REMOTE_NO),
-    OPERA(BrowserType.OPERA, Browsers.BITS_32, "org.openqa.selenium.opera.OperaDriver", Browsers.REMOTE_NO),
+    EXPLORER(Browser.IE.browserName(), Browsers.BITS_32, "org.openqa.selenium.ie.InternetExplorerDriver", Browsers.REMOTE_NO),
+    FIREFOX(Browser.FIREFOX.browserName(), Browsers.BITS_32, "org.openqa.selenium.firefox.FirefoxDriver", Browsers.REMOTE_NO),
+    CHROME(Browser.CHROME.browserName(), Browsers.BITS_32, "org.openqa.selenium.chrome.ChromeDriver", Browsers.REMOTE_NO),
+    SAFARI(Browser.SAFARI.browserName(), Browsers.BITS_32, "org.openqa.selenium.safari.SafariDriver", Browsers.REMOTE_NO),
+    EDGE(Browser.EDGE.browserName(), Browsers.BITS_32, "org.openqa.selenium.edge.EdgeDriver", Browsers.REMOTE_NO),
+    OPERA(Browser.OPERA.browserName(), Browsers.BITS_32, "org.openqa.selenium.opera.OperaDriver", Browsers.REMOTE_NO),
     NULLBROWSER(null, Browsers.BITS_32, "no browser", Browsers.REMOTE_NO);
 
     private String name;
@@ -76,30 +76,25 @@ public enum Browsers {
 
     public static final String VERSION_38 = "38";
 
-    public static final String EXPLORER_8_32 = BrowserType.IEXPLORE + VERSION_8 + BITS_32;
+    public static final String EXPLORER_8_32 = Browser.IE.browserName() + VERSION_8 + BITS_32;
 
-    public static final String EXPLORER_8_64 = BrowserType.IEXPLORE + VERSION_8 + BITS_64;
+    public static final String EXPLORER_8_64 =Browser.IE.browserName() + VERSION_8 + BITS_64;
 
-    public static final String EXPLORER_9_32 = BrowserType.IEXPLORE + VERSION_9 + BITS_32;
+    public static final String EXPLORER_9_32 =Browser.IE.browserName() + VERSION_9 + BITS_32;
 
-    public static final String EXPLORER_9_64 = BrowserType.IEXPLORE + VERSION_9 + BITS_64;
+    public static final String EXPLORER_9_64 =Browser.IE.browserName() + VERSION_9 + BITS_64;
 
-    public static final String EXPLORER_10_32 = BrowserType.IEXPLORE + VERSION_10 + BITS_32;
+    public static final String EXPLORER_10_32 =Browser.IE.browserName() + VERSION_10 + BITS_32;
 
-    public static final String EXPLORER_10_64 = BrowserType.IEXPLORE + VERSION_10 + BITS_64;
+    public static final String EXPLORER_10_64 =Browser.IE.browserName() + VERSION_10 + BITS_64;
 
-    public static final String EXPLORER_11_32 = BrowserType.IEXPLORE + VERSION_11 + BITS_32;
+    public static final String EXPLORER_11_32 =Browser.IE.browserName() + VERSION_11 + BITS_32;
 
-    public static final String EXPLORER_11_64 = BrowserType.IEXPLORE + VERSION_11 + BITS_64;
+    public static final String EXPLORER_11_64 =Browser.IE.browserName() + VERSION_11 + BITS_64;
 
-    public static final String FIREFOX_28_32 = BrowserType.FIREFOX + VERSION_28 + BITS_32;
+    public static final String FIREFOX_28_32 = Browser.FIREFOX.browserName() + VERSION_28 + BITS_32;
 
-    public static final String CHROME_38_32 = BrowserType.CHROME + VERSION_38 + BITS_32;
-
-    /* Constantes nombre navegador. */
-    public static final String NAVEGADORCHROME = "chrome";
-
-    public static final String NAVEGADORIE = "internet explorer";
+    public static final String CHROME_38_32 = Browser.CHROME.browserName() + VERSION_38 + BITS_32;
 
     public static final String REMOTE_YES = "YES";
 

@@ -23,23 +23,17 @@ package io.zahori.framework.files.transforms;
  * #L%
  */
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-
-import javax.xml.stream.FactoryConfigurationError;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLEventWriter;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import de.odysseus.staxon.json.JsonXMLConfig;
 import de.odysseus.staxon.json.JsonXMLConfigBuilder;
 import de.odysseus.staxon.json.JsonXMLInputFactory;
 import de.odysseus.staxon.xml.util.PrettyXMLEventWriter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.xml.stream.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class Json2XML {
 

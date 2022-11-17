@@ -23,15 +23,14 @@ package io.zahori.framework.i18n;
  * #L%
  */
 
+import io.zahori.framework.files.properties.SystemPropertiesUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.helpers.MessageFormatter;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.helpers.MessageFormatter;
-
-import io.zahori.framework.files.properties.SystemPropertiesUtils;
 
 public class MessageReader {
 

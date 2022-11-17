@@ -23,14 +23,13 @@ package io.zahori.framework.utils;
  * #L%
  */
 
+import io.zahori.framework.exception.WebdriverException;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import io.zahori.framework.exception.WebdriverException;
 
 public class WebdriverUtils {
 

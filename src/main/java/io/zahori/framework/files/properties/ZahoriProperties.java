@@ -23,21 +23,20 @@ package io.zahori.framework.files.properties;
  * #L%
  */
 
+import io.zahori.framework.evidences.Evidences.ZahoriLogLevel;
+import io.zahori.framework.exception.ZahoriException;
+import io.zahori.framework.security.ZahoriCipher;
+import io.zahori.framework.utils.BooleanUtils;
+import io.zahori.model.process.Configuration;
+import org.apache.commons.lang3.EnumUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-
-import org.apache.commons.lang3.EnumUtils;
-import org.apache.commons.lang3.StringUtils;
-
-import io.zahori.framework.evidences.Evidences.ZahoriLogLevel;
-import io.zahori.framework.exception.ZahoriException;
-import io.zahori.framework.security.ZahoriCipher;
-import io.zahori.framework.utils.BooleanUtils;
-import io.zahori.model.process.Configuration;
 
 public class ZahoriProperties {
 

@@ -23,11 +23,11 @@ package io.zahori.framework.rest;
  * #L%
  */
 
-import java.util.Map;
-
 import org.apache.commons.lang3.StringUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import java.util.Map;
 
 public class JSONExtractor {
 

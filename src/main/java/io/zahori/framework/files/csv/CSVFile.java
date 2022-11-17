@@ -23,14 +23,14 @@ package io.zahori.framework.files.csv;
  * #L%
  */
 
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Objects;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.Objects;
 
 public class CSVFile {
 
@@ -44,7 +44,7 @@ public class CSVFile {
         CSVParser csvFileParser = null;
 
         // Create the CSVFormat object with the header mapping
-        CSVFormat csvFileFormat = CSVFormat.DEFAULT.withHeader().withDelimiter(';');
+        CSVFormat csvFileFormat = CSVFormat.Builder.create().setDelimiter(';').build();
 
         try {
 

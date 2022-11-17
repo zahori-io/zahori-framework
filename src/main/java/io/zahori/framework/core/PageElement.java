@@ -23,30 +23,23 @@ package io.zahori.framework.core;
  * #L%
  */
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-
+import io.zahori.framework.robot.UtilsRobot;
+import io.zahori.framework.utils.Chronometer;
+import io.zahori.framework.utils.Pause;
+import io.zahori.framework.utils.WebdriverUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.InvalidElementStateException;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.Keys;
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.Point;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Action;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-import io.zahori.framework.robot.UtilsRobot;
-import io.zahori.framework.utils.Chronometer;
-import io.zahori.framework.utils.Pause;
-import io.zahori.framework.utils.WebdriverUtils;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class PageElement {
 
@@ -117,7 +110,10 @@ public class PageElement {
         try {
             scroll();
 
-            WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement - chrono.getElapsedSeconds());
+
+
+
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds()).longValue()));
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
             return true;
         } catch (final Exception e) {
@@ -129,7 +125,7 @@ public class PageElement {
         Chronometer chrono = new Chronometer();
         webElement = findElement();
         try {
-            WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement - chrono.getElapsedSeconds());
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds()).longValue()));
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
             webElement.click();
             testContext.logInfo("Click on " + this);
@@ -169,7 +165,7 @@ public class PageElement {
                 scroll();
             }
 
-            WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement - chrono.getElapsedSeconds());
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds()).longValue()));
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
 
             webElement.click();
@@ -226,7 +222,7 @@ public class PageElement {
         Chronometer chrono = new Chronometer();
         webElement = findElement();
         try {
-            WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement - chrono.getElapsedSeconds());
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds()).longValue()));
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
             while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement)) {
                 Pause.pause();
@@ -592,10 +588,12 @@ public class PageElement {
     }
 
     public boolean isPresent() {
+
+
         try {
             switchWithLocators();
-            driver.manage().timeouts().implicitlyWait(0L, TimeUnit.SECONDS);
-            final WebDriverWait wait = new WebDriverWait(driver, 0L);
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
+            final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(0L));
             wait.until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
             return driver.findElement(locator.getBy()) != null;
         } catch (final Exception e) {
@@ -637,7 +635,7 @@ public class PageElement {
     public boolean isVisibleWithoutWait() {
         try {
             switchWithLocators();
-            driver.manage().timeouts().implicitlyWait(0L, TimeUnit.SECONDS);
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
             webElement = driver.findElement(locator.getBy());
             return webElement.isDisplayed();
         } catch (final Exception e) {
@@ -658,7 +656,7 @@ public class PageElement {
     public void initWebElement() {
         try {
             switchWithLocators();
-            driver.manage().timeouts().implicitlyWait(0L, TimeUnit.SECONDS);
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
             this.webElement = driver.findElement(locator.getBy());
         } catch (final NullPointerException | NoSuchElementException e) {
             this.webElement = null;
@@ -708,9 +706,10 @@ public class PageElement {
     }
 
     private WebElement findElementPresent() {
+
         try {
             switchWithLocators();
-            final WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.longValue());
+            final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(testContext.timeoutFindElement.longValue()));
             return (WebElement) wait.until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
         } catch (final Exception e) {
             throw new RuntimeException("Element is not present in DOM: " + this);
@@ -720,7 +719,7 @@ public class PageElement {
     private WebElement findElementVisible() {
         try {
             switchWithLocators();
-            final WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement.longValue());
+            final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(testContext.timeoutFindElement.longValue()));
             return (WebElement) wait.until(ExpectedConditions.visibilityOfElementLocated(locator.getBy()));
         } catch (final Exception e) {
             throw new RuntimeException("Element is not visible: " + this);
@@ -732,7 +731,7 @@ public class PageElement {
         final WebElement webElement = findElement();
         try {
             while (!StringUtils.equals(webElement.getAttribute(VALUE), text) && (chrono.getElapsedSeconds() < testContext.timeoutFindElement)) {
-                WebDriverWait wait = new WebDriverWait(driver, testContext.timeoutFindElement - chrono.getElapsedSeconds());
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds()).longValue()));
                 wait.until(ExpectedConditions.elementToBeClickable(webElement));
                 while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement)) {
                     Pause.pause();

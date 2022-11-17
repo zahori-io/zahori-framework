@@ -23,12 +23,12 @@ package io.zahori.framework.utils;
  * #L%
  */
 
-import java.io.File;
-
 import org.sikuli.basics.Settings;
 import org.sikuli.script.Key;
 import org.sikuli.script.KeyModifier;
 import org.sikuli.script.Screen;
+
+import java.io.File;
 
 public class SikuliUtils {
 

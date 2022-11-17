@@ -23,14 +23,9 @@ package io.zahori.framework.driver.browserfactory;
  * #L%
  */
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
+import io.github.bonigarcia.wdm.WebDriverManager;
+import io.zahori.framework.driver.DriverFactory;
+import io.zahori.framework.files.properties.ZahoriProperties;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.Platform;
@@ -43,15 +38,23 @@ import org.openqa.selenium.ie.InternetExplorerOptions;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
-import org.testng.log4testng.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import io.zahori.framework.files.properties.ZahoriProperties;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class WebDriverBrowserSelenium {
 
     private static final int TIME_WAIT_ELEMENT_NOT_PRESENT_TWENTY_SG = 20;
 
-    private static final Logger LOG = Logger.getLogger(WebDriverBrowserSelenium.class);
+    private static final Logger LOG = LoggerFactory.getLogger(WebDriverBrowserSelenium.class);
 
     private static final String PREFIX_NAME_METHOD = "getWebDriverRemote";
 
@@ -73,10 +76,12 @@ public class WebDriverBrowserSelenium {
 
     public WebDriver getWebDriver() {
         WebDriver driver = null;
+
+
         String testName = browsers.getTestName();
 
         try {
-            DesiredCapabilities caps = new CapsBrowserSelenium(browsers).getCapsByNavigator();
+            /*DesiredCapabilities caps = new CapsBrowserSelenium(browsers).getCapsByNavigator();
             if (proxy != null) {
                 caps.setCapability(CapabilityType.PROXY, proxy);
             }
@@ -87,23 +92,23 @@ public class WebDriverBrowserSelenium {
             
             // Zahori Capabilities
             if (!StringUtils.isEmpty(browsers.getCaseExecutionId()))
-                caps.setCapability("name", browsers.getCaseExecutionId());
+                caps.setCapability("name", browsers.getCaseExecutionId());*/
 
-            driver = getDriver(caps);
+            //driver = getDriver(caps);
+            driver = new DriverFactory().create(browsers);
 
             if (driver != null) {
                 setProperties(driver);
             }
 
-        } catch (final IllegalArgumentException | SecurityException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException
-                | IllegalAccessException | InstantiationException e) {
+        } catch (final IllegalArgumentException | SecurityException e) {
             LOG.error(e.getMessage() + e.getCause());
         }
         return driver;
     }
 
     public void setProperties(final WebDriver driver) {
-        driver.manage().timeouts().implicitlyWait(TIME_WAIT_ELEMENT_NOT_PRESENT_TWENTY_SG, TimeUnit.SECONDS);
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(TIME_WAIT_ELEMENT_NOT_PRESENT_TWENTY_SG));
         driver.manage().window().maximize();
     }
 
@@ -142,10 +147,10 @@ public class WebDriverBrowserSelenium {
 
     public WebDriver getWebDriverRemoteNO(final Browsers navega, final DesiredCapabilities caps)
             throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
-        Platform currentPlatform = caps.getPlatform();
+/*        Platform currentPlatform = caps.getPlatform();
         if (isWindowsPlatform(currentPlatform)) {
             caps.setPlatform(Platform.WINDOWS);
-        }
+        }*/
         ZahoriProperties zahoriProperties = new ZahoriProperties();
 
         Map<String, String> extraPreferences = zahoriProperties.getBrowserPreferencesToBeAdded(navega.getName());

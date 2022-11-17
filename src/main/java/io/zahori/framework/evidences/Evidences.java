@@ -23,29 +23,6 @@ package io.zahori.framework.evidences;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.Proxy;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebDriver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import io.zahori.framework.driver.browserfactory.BrowserMobProxy;
 import io.zahori.framework.files.doc.Word;
 import io.zahori.framework.files.log.LogFile;
@@ -58,6 +35,23 @@ import io.zahori.model.Status;
 import io.zahori.model.Step;
 import io.zahori.model.process.ProcessRegistration;
 import net.lightbody.bmp.core.har.Har;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.Proxy;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class Evidences {
 

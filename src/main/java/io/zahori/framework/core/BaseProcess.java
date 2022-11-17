@@ -1,11 +1,21 @@
 package io.zahori.framework.core;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.zahori.framework.driver.browserfactory.Browsers;
+import io.zahori.framework.exception.ZahoriException;
+import io.zahori.framework.exception.ZahoriPassedException;
+import io.zahori.framework.utils.Pause;
+import io.zahori.model.process.CaseExecution;
+import io.zahori.model.process.ProcessRegistration;
+import io.zahori.model.process.Step;
+import io.zahori.model.process.Test;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -18,46 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
-
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-/*-
- * #%L
- * zahori-framework
- * $Id:$
- * $HeadURL:$
- * %%
- * Copyright (C) 2021 PANEL SISTEMAS INFORMATICOS,S.L
- * %%
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- * #L%
- */
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import io.zahori.framework.driver.browserfactory.Browsers;
-import io.zahori.framework.exception.ZahoriException;
-import io.zahori.framework.exception.ZahoriPassedException;
-import io.zahori.framework.utils.Pause;
-import io.zahori.model.process.CaseExecution;
-import io.zahori.model.process.ProcessRegistration;
-import io.zahori.model.process.Step;
-import io.zahori.model.process.Test;
 
 public abstract class BaseProcess {
 
@@ -205,7 +175,7 @@ public abstract class BaseProcess {
 
     protected void pause(int seconds) {
         try {
-            Thread.sleep((long) (seconds * 1000));
+            Thread.sleep((seconds * 1000));
         } catch (InterruptedException e) {
             LOG.error("Error while pausing: {}", e.getMessage());
             Thread.currentThread().interrupt();

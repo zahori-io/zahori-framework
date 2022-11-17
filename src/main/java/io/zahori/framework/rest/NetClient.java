@@ -23,6 +23,9 @@ package io.zahori.framework.rest;
  * #L%
  */
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -32,9 +35,6 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 
 public class NetClient {
 

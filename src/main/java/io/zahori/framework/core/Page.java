@@ -23,15 +23,11 @@ package io.zahori.framework.core;
  * #L%
  */
 
-import io.appium.java_client.FindsByAndroidUIAutomator;
-import io.appium.java_client.PerformsTouchActions;
-import io.appium.java_client.TouchAction;
-import io.appium.java_client.touch.offset.PointOption;
+
 import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
-
 import org.openqa.selenium.*;
-import org.openqa.selenium.interactions.Actions;
+
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -39,6 +35,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -244,9 +241,11 @@ public class Page implements Serializable {
             }
         }
 
+
+
         WebElement element = null;
         try {
-            element = (WebElement) new WebDriverWait(driver, testContext.timeoutFindElement).until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
+            element = (WebElement) new WebDriverWait(driver, Duration.ofSeconds(testContext.timeoutFindElement.longValue())).until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
 
         } catch (NoSuchElementException | TimeoutException e) {
             return elementsList;
@@ -280,36 +279,6 @@ public class Page implements Serializable {
                         "Static wait duration isn't defined properly: " + waitSeconds, e);
             }
         }
-    }
-
-    public void tap(int fingers, int x, int y, int duration) {
-        if (this.testContext.isMobileDriver()) {
-            this.testContext
-                    .logInfo("Tap (" + duration + " seconds) with " + fingers + " fingers on x=" + x + ", y=" + y);
-            TouchAction touchAction = new TouchAction((PerformsTouchActions) this.testContext.driver);
-            touchAction.tap(new PointOption().withCoordinates(x, y)).perform();
-
-        }
-    }
-
-    // public void scrollTo(String text) {
-    // if (testContext.isMobileDriver()) {
-    // testContext.logInfo("Scroll to text \"" + text);
-    // ((AppiumDriver) testContext.driver).scrollTo(text);
-    // }
-    // }
-
-    public void scrollTo(String text) {
-        // String uiScrollables = AndroidDriver.UiScrollable("new
-        // UiSelector().descriptionContains(\"" + text + "\")") +
-        // AndroidDriver.UiScrollable("new UiSelector().textContains(\"" + text
-        // +
-        // "\")");
-        // (MobileElement) findElementByAndroidUIAutomator(uiScrollables);
-        WebElement element = ((FindsByAndroidUIAutomator) this.testContext.driver)
-                .findElementByAndroidUIAutomator("new UiSelector().text(\"" + text + "\")");
-        Actions action = new Actions(this.testContext.driver);
-        action.moveToElement(element).build().perform();
     }
 
 }

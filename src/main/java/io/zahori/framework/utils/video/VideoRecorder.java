@@ -23,33 +23,22 @@ package io.zahori.framework.utils.video;
  * #L%
  */
 
-import static org.monte.media.FormatKeys.EncodingKey;
-import static org.monte.media.FormatKeys.FrameRateKey;
-import static org.monte.media.FormatKeys.KeyFrameIntervalKey;
-import static org.monte.media.FormatKeys.MIME_AVI;
-import static org.monte.media.FormatKeys.MediaTypeKey;
-import static org.monte.media.FormatKeys.MimeTypeKey;
-import static org.monte.media.VideoFormatKeys.CompressorNameKey;
-import static org.monte.media.VideoFormatKeys.DepthKey;
-import static org.monte.media.VideoFormatKeys.ENCODING_AVI_TECHSMITH_SCREEN_CAPTURE;
-import static org.monte.media.VideoFormatKeys.QualityKey;
+import org.monte.media.Format;
+import org.monte.media.FormatKeys.*;
+import org.monte.media.math.Rational;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.awt.AWTException;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
-import java.awt.Rectangle;
-import java.awt.Toolkit;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
-import org.monte.media.Format;
-import org.monte.media.FormatKeys.MediaType;
-import org.monte.media.math.Rational;
-import org.testng.log4testng.Logger;
+import static org.monte.media.FormatKeys.*;
+import static org.monte.media.VideoFormatKeys.*;
+
 
 public class VideoRecorder implements EnterpriseScreenRecorder {
-
-    private static final Logger LOG = Logger.getLogger(VideoRecorder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(VideoRecorder.class);
 
     private CustomScreenRecorder screenRecorder;
 

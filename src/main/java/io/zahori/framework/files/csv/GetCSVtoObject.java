@@ -23,13 +23,6 @@ package io.zahori.framework.files.csv;
  * #L%
  */
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -39,6 +32,13 @@ import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class GetCSVtoObject {
 
@@ -66,7 +66,7 @@ public class GetCSVtoObject {
 
             in = new InputStreamReader(new BOMInputStream(resourceAsStream), ENCODING);
 
-            parser = new CSVParser(in, CSVFormat.EXCEL.withHeader().withDelimiter(SEPARADOR));
+            parser = new CSVParser(in, CSVFormat.Builder.create().setDelimiter(SEPARADOR).build());
 
             CSVRecord fila = (CSVRecord) CollectionUtils.find(parser.getRecords(),
                     number -> claveFila.equals(((CSVRecord) number).get(nombreClave)));
@@ -97,7 +97,8 @@ public class GetCSVtoObject {
 
             in = new InputStreamReader(new BOMInputStream(resourceAsStream), ENCODING);
 
-            parser = new CSVParser(in, CSVFormat.EXCEL.withHeader().withDelimiter(SEPARADOR));
+            parser = new CSVParser(in, CSVFormat.Builder.create().setDelimiter(SEPARADOR).build());
+
 
             listaFilas = new ArrayList<>(parser.getRecords());
             CollectionUtils.filter(listaFilas, number -> claveFila.equals(((CSVRecord) number).get(nombreClave)));

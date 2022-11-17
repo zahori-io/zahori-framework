@@ -23,14 +23,13 @@ package io.zahori.framework.utils;
  * #L%
  */
 
-import java.awt.MouseInfo;
-import java.util.List;
-
+import io.zahori.framework.robot.UtilsRobot;
 import org.openqa.selenium.Point;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.zahori.framework.robot.UtilsRobot;
+import java.awt.*;
+import java.util.List;
 
 public class ThreadIE extends Thread {
 

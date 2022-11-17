@@ -23,14 +23,6 @@ package io.zahori.framework.driver.browserfactory;
  * #L%
  */
 
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.Proxy;
-
 import io.zahori.framework.security.ZahoriCipher;
 import net.lightbody.bmp.BrowserMobProxyServer;
 import net.lightbody.bmp.client.ClientUtil;
@@ -40,6 +32,13 @@ import net.lightbody.bmp.core.har.HarLog;
 import net.lightbody.bmp.core.har.HarPage;
 import net.lightbody.bmp.proxy.CaptureType;
 import net.lightbody.bmp.proxy.auth.AuthType;
+import org.apache.commons.lang3.StringUtils;
+import org.openqa.selenium.Proxy;
+
+import java.net.InetSocketAddress;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class BrowserMobProxy {
 

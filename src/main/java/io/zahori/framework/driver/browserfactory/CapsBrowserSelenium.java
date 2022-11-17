@@ -23,12 +23,8 @@ package io.zahori.framework.driver.browserfactory;
  * #L%
  */
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.nio.file.Paths;
-import java.util.Map;
-import java.util.logging.Level;
-
+import io.zahori.framework.files.properties.ZahoriProperties;
+import io.zahori.framework.utils.ZahoriStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.Platform;
 import org.openqa.selenium.firefox.FirefoxDriver;
@@ -40,13 +36,17 @@ import org.openqa.selenium.logging.LoggingPreferences;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.safari.SafariOptions;
-import org.testng.log4testng.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import io.zahori.framework.files.properties.ZahoriProperties;
-import io.zahori.framework.utils.ZahoriStringUtils;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.nio.file.Paths;
+import java.util.Map;
+import java.util.logging.Level;
 
 public class CapsBrowserSelenium extends DesiredCapabilities {
-
+/**
     private static final String SUFFIX_NAME_METHOD = "Caps";
 
     private static final String PREFIX_NAME_METHOD = "get";
@@ -59,11 +59,6 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
 
     private static final String WEBDRIVER_IE_DRIVER_PATH = "webdriver.ie.driver.path";
 
-    //    private static final String SAFARI_OPTIONS_DRIVER_EXTENSION = "safari.options.driverExtension";
-    //
-    //    /** Costante que establece donde esta el path de Safari (Para windows 7). */
-    //    private static final String SAFARI_OPTIONS_DATA_DIR = "safari.options.dataDir";
-
     private static final String WEBDRIVER_MARIONETTE_DRIVER_PATH_WINDOWS = "webdriver.marionette.driver.path.windows";
 
     private static final String WEBDRIVER_MARIONETTE_DRIVER_PATH_UNIX = "webdriver.marionette.driver.path.unix";
@@ -73,8 +68,7 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
     private static final String WEBDRIVER_MARIONETTE_BINARY_PATH_UNIX = "webdriver.marionette.firefox.binary.path.unix";
 
     private static final String MAX_FIREFOX_LEGACY_VERSION = "47.0.1";
-
-    private static final Logger LOG = Logger.getLogger(CapsBrowserSelenium.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CapsBrowserSelenium.class);
 
     private Browsers browsers;
 
@@ -257,5 +251,5 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
     private boolean isBoolean(String input) {
         return StringUtils.equalsIgnoreCase("true", input) || StringUtils.equalsIgnoreCase("false", input);
     }
-
+**/
 }

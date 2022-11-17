@@ -23,9 +23,8 @@ package io.zahori.framework.security;
  * #L%
  */
 
+import javax.swing.*;
 import java.awt.event.KeyEvent;
-
-import javax.swing.ImageIcon;
 
 public class ZahoriCipher_GUI extends javax.swing.JFrame {
 

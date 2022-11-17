@@ -23,13 +23,10 @@ package io.zahori.framework.utils;
  * #L%
  */
 
-import java.awt.Dimension;
-import java.awt.Rectangle;
-import java.awt.Robot;
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
-
-import javax.imageio.ImageIO;
 
 public class ScreenShot {
 

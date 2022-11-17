@@ -23,16 +23,14 @@ package io.zahori.framework.utils.video;
  * #L%
  */
 
-import java.awt.AWTException;
-import java.awt.GraphicsConfiguration;
-import java.awt.Rectangle;
-import java.io.File;
-import java.io.IOException;
-import java.util.List;
-
 import org.monte.media.Format;
 import org.monte.media.Registry;
 import org.monte.screenrecorder.ScreenRecorder;
+
+import java.awt.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 public class CustomScreenRecorder extends ScreenRecorder {
 

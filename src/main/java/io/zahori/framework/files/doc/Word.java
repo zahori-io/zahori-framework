@@ -23,25 +23,17 @@ package io.zahori.framework.files.doc;
  * #L%
  */
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-
 import org.apache.commons.lang3.StringUtils;
 import org.docx4j.dml.wordprocessingDrawing.Inline;
 import org.docx4j.jaxb.Context;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.WordprocessingML.BinaryPartAbstractImage;
-import org.docx4j.wml.BooleanDefaultTrue;
-import org.docx4j.wml.Color;
-import org.docx4j.wml.Drawing;
-import org.docx4j.wml.ObjectFactory;
-import org.docx4j.wml.P;
-import org.docx4j.wml.R;
-import org.docx4j.wml.RPr;
-import org.docx4j.wml.Text;
+import org.docx4j.wml.*;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class Word {
 

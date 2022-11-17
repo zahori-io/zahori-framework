@@ -23,33 +23,10 @@ package io.zahori.framework.core;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.net.UnknownHostException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.Proxy;
-import org.openqa.selenium.WebDriver;
-import org.testng.ITestContext;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-
-import io.appium.java_client.AppiumDriver;
-import io.appium.java_client.android.AndroidDriver;
-import io.appium.java_client.ios.IOSDriver;
 import io.zahori.framework.driver.browserfactory.BrowserMobProxy;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.evidences.Evidences;
@@ -68,6 +45,21 @@ import io.zahori.model.Status;
 import io.zahori.model.Step;
 import io.zahori.model.process.Configuration;
 import io.zahori.model.process.ProcessRegistration;
+import org.apache.commons.lang3.StringUtils;
+import org.openqa.selenium.Proxy;
+import org.openqa.selenium.WebDriver;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class TestContext {
 
@@ -132,17 +124,8 @@ public class TestContext {
     protected String failCause;
     private boolean retriesDisabled;
     private boolean updateTestResultDisabled;
-    public ITestContext testngContext;
 
     public TestContext() {
-    }
-
-    public TestContext(ITestContext testNGContext) {
-        this.testngContext = testNGContext;
-        // Load TestNG parameters
-        loadTestNGParameters(testNGContext);
-
-        constructor();
     }
 
     public void constructor() {
@@ -344,34 +327,6 @@ public class TestContext {
         }
     }
 
-    private void loadTestNGParameters(ITestContext testNGContext) {
-        // Test case name
-        testCaseName = testNGContext.getName();
-
-        platform = testNGContext.getCurrentXmlTest().getParameter("platform");
-        if (StringUtils.isBlank(platform)) {
-            platform = testNGContext.getCurrentXmlTest().getParameter("platformName");
-        }
-
-        browserName = testNGContext.getCurrentXmlTest().getParameter("browser");
-        if (StringUtils.isBlank(browserName)) {
-            browserName = testNGContext.getCurrentXmlTest().getParameter("browserName");
-        }
-        version = testNGContext.getCurrentXmlTest().getParameter("version");
-        bits = testNGContext.getCurrentXmlTest().getParameter("bits");
-        remote = testNGContext.getCurrentXmlTest().getParameter("remote");
-        remoteUrl = testNGContext.getCurrentXmlTest().getParameter("remoteUrl");
-        // TMS parameters
-        tmsTestSetId = testNGContext.getCurrentXmlTest().getParameter("TMS_TestSetId");
-        tmsTestCaseId = testNGContext.getCurrentXmlTest().getParameter("TMS_TestCaseId");
-        String testExecSP = System.getProperty("tmsTestExecId");
-        tmsTestExecId = StringUtils.isEmpty(testExecSP) ? testNGContext.getCurrentXmlTest().getParameter("TMS_TestExecId") : testExecSP;
-        String testPlanSP = System.getProperty("tmsTestPlanId");
-        tmsTestPlanId = StringUtils.isEmpty(testPlanSP) ? testNGContext.getCurrentXmlTest().getParameter("TMS_TestPlanId") : testPlanSP;
-        appiumService = testNGContext.getCurrentXmlTest().getParameter("appiumService");
-        caseExecutionId = testNGContext.getCurrentXmlTest().getParameter("CaseExecutionId");
-    }
-
     public void logDebug(String text, String... textArgs) {
         evidences.console(ZahoriLogLevel.DEBUG, getMessage(text, textArgs));
         evidences.insertTextInLogFile(ZahoriLogLevel.DEBUG, text, textArgs);
@@ -517,7 +472,7 @@ public class TestContext {
 
     public void moveMouseToUpperLeftCorner() {
         try {
-            if ((driver == null) || isMobileDriver() || StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
+            if ((driver == null)  || StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
                 // move mouse does not apply
                 return;
             }
@@ -622,28 +577,6 @@ public class TestContext {
         }
 
         return info;
-    }
-
-    public Map<String, String> getTestNGParameters(ITestContext testNGContext) {
-        Map<String, String> result = new HashMap<>(testNGContext.getCurrentXmlTest().getAllParameters());
-        result.put("remoteUrl", remoteUrl);
-        return result;
-    }
-
-    public boolean isMobilePlatform(String platform) {
-        return "android".equalsIgnoreCase(platform) || "ios".equalsIgnoreCase(platform);
-    }
-
-    public boolean isMobileDriver() {
-        return driver instanceof AppiumDriver;
-    }
-
-    public boolean isAndroidDriver() {
-        return (driver != null) && AndroidDriver.class.equals(driver.getClass());
-    }
-
-    public boolean isIOSDriver() {
-        return (driver != null) && IOSDriver.class.equals(driver.getClass());
     }
 
     public void setExecutionNotes(String notes) {

@@ -23,21 +23,7 @@ package io.zahori.framework.tms;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.common.net.InetAddresses;
-
 import io.zahori.framework.evidences.Evidences;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import io.zahori.framework.i18n.Messages;
@@ -48,6 +34,18 @@ import io.zahori.model.Run;
 import io.zahori.model.Step;
 import io.zahori.tms.alm.restclient.ALMRestClient;
 import io.zahori.tms.alm.restclient.ALMRestClient.EntityType;
+import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class TMS {
 

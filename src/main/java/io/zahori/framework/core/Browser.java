@@ -23,16 +23,10 @@ package io.zahori.framework.core;
  * #L%
  */
 
-import java.awt.Robot;
-import java.awt.event.KeyEvent;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
+import io.zahori.framework.driver.browserfactory.Browsers;
+import io.zahori.framework.driver.browserfactory.WebDriverBrowserSelenium;
+import io.zahori.framework.utils.Chronometer;
+import io.zahori.framework.utils.Pause;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.TimeoutException;
@@ -43,24 +37,25 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.appium.java_client.service.local.AppiumDriverLocalService;
-import io.appium.java_client.service.local.AppiumServerHasNotBeenStartedLocallyException;
-import io.appium.java_client.service.local.AppiumServiceBuilder;
-import io.zahori.framework.driver.browserfactory.Browsers;
-import io.zahori.framework.driver.browserfactory.WebDriverBrowserSelenium;
-import io.zahori.framework.driver.mobilefactory.MobileDriverFactory;
-import io.zahori.framework.utils.Chronometer;
-import io.zahori.framework.utils.Pause;
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 public class Browser {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestContext.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Browser.class);
     public static final String LOADING_PAGE = "Loading page: ";
 
     private WebDriver driver;
     public TestContext testContext;
     private WebDriverBrowserSelenium wbs;
-    private AppiumDriverLocalService service;
     private Map<String, WebDriver> allDrivers;
     private String mainDriverHandle;
     private String activeDriverHandle;
@@ -71,7 +66,6 @@ public class Browser {
 
     public Browser(TestContext testContext) {
         this.testContext = testContext;
-        createLocalServices();
         createDriver();
         mainDriverHandle = driver.getWindowHandle();
         activeDriverHandle = mainDriverHandle;
@@ -95,10 +89,6 @@ public class Browser {
     private void close(boolean killProcess) {
         if (testContext.isHarEnabled()) {
             testContext.storeHarLog();
-        }
-
-        if (this.testContext.isAppiumLocalService() && service != null) {
-            service.stop();
         }
 
         try {
@@ -147,7 +137,9 @@ public class Browser {
 
     public void loadPageWithProxy(String url, String urlProxy, String user, String password) {
         createDriver();
-        driver.manage().timeouts().pageLoadTimeout(100L, TimeUnit.MILLISECONDS);
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofMillis(100L));
+
+
         try {
             driver.get(url);
         } catch (TimeoutException e) {
@@ -162,7 +154,7 @@ public class Browser {
                 LOG.error("Error al cargar el driver: " + e1.getMessage());
             }
         } finally {
-            driver.manage().timeouts().pageLoadTimeout(10L, TimeUnit.SECONDS);
+            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(10L));
             driver.get(url);
         }
 
@@ -177,41 +169,26 @@ public class Browser {
         setBrowserZoomTo100();
     }
 
-    private void createLocalServices() {
-        if (this.testContext.isAppiumLocalService()) {
-            service = AppiumDriverLocalService.buildService(new AppiumServiceBuilder().usingAnyFreePort());
-
-            service.start();
-
-            if (service == null || !service.isRunning()) {
-                throw new AppiumServerHasNotBeenStartedLocallyException("An appium server node is not started!");
-            }
-            this.testContext.setRemoteUrl(service.getUrl().toString());
-        }
-    }
 
     private void createDriver() {
         if (driver == null) {
             if (StringUtils.equalsIgnoreCase(PLATFORM_WINDOWS, testContext.platform)) {
                 matarProceso("WerFault.exe");
             }
-            if (testContext.isMobilePlatform(testContext.platform)) {
-                driver = MobileDriverFactory.getDriver(testContext.getTestNGParameters(testContext.testngContext));
-            } else {
 
-                Browsers browsers = Browsers.valueOf(testContext.browserName).withBits(testContext.bits).withPlatform(testContext.platform)
-                        .withVersion(testContext.version).withScreenResolution(testContext.resolution).withRemote(testContext.remote)
-                        .withTestName(testContext.testCaseName).withRemoteUrl(testContext.remoteUrl).withCaseExecution(testContext.caseExecutionId);
+            Browsers browsers = Browsers.valueOf(testContext.browserName).withBits(testContext.bits).withPlatform(testContext.platform)
+                    .withVersion(testContext.version).withScreenResolution(testContext.resolution).withRemote(testContext.remote)
+                    .withTestName(testContext.testCaseName).withRemoteUrl(testContext.remoteUrl).withCaseExecution(testContext.caseExecutionId);
 
-                browsers = StringUtils.isEmpty(testContext.getDownloadPath()) ? browsers : browsers.withDownloadPath(testContext.getDownloadPath());
+            browsers = StringUtils.isEmpty(testContext.getDownloadPath()) ? browsers : browsers.withDownloadPath(testContext.getDownloadPath());
 
-                Proxy proxy = testContext.isHarEnabled() ? testContext.getProxy4Driver() : null;
-                this.wbs = proxy == null ? new WebDriverBrowserSelenium(browsers) : new WebDriverBrowserSelenium(browsers, proxy);
-                //				this.wbs = testContext.isHarEnabled() ? new WebDriverBrowserSelenium(browsers, testContext.getProxy4Driver())
-                //						: new WebDriverBrowserSelenium(browsers);
+            Proxy proxy = testContext.isHarEnabled() ? testContext.getProxy4Driver() : null;
+            this.wbs = proxy == null ? new WebDriverBrowserSelenium(browsers) : new WebDriverBrowserSelenium(browsers, proxy);
+            //				this.wbs = testContext.isHarEnabled() ? new WebDriverBrowserSelenium(browsers, testContext.getProxy4Driver())
+            //						: new WebDriverBrowserSelenium(browsers);
 
-                this.driver = wbs.getWebDriver();
-            }
+            this.driver = wbs.getWebDriver();
+
             this.testContext.driver = driver;
         }
     }
@@ -296,7 +273,7 @@ public class Browser {
     }
 
     public void setLoadingPageTimeoutInSeconds(int timeoutInSeconds) {
-        driver.manage().timeouts().pageLoadTimeout(timeoutInSeconds, TimeUnit.SECONDS);
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds((long)timeoutInSeconds));
     }
 
     private void selectCertificate(int numCertificado) {

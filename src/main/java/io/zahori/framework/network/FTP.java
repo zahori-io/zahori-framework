@@ -23,25 +23,20 @@ package io.zahori.framework.network;
  * #L%
  */
 
-import static org.apache.commons.net.ftp.FTP.BINARY_FILE_TYPE;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
+import io.zahori.framework.exception.MethodException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.zahori.framework.exception.MethodException;
+import java.io.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.apache.commons.net.ftp.FTP.BINARY_FILE_TYPE;
 
 public class FTP {
 

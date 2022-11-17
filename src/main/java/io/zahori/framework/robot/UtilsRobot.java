@@ -23,24 +23,17 @@ package io.zahori.framework.robot;
  * #L%
  */
 
-import java.awt.AWTException;
-import java.awt.Dimension;
-import java.awt.MouseInfo;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.event.InputEvent;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
-
-import javax.imageio.ImageIO;
-
+import io.zahori.framework.exception.MethodException;
 import org.openqa.selenium.WebElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.zahori.framework.exception.MethodException;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.event.InputEvent;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 
 public class UtilsRobot {
 
@@ -199,8 +192,8 @@ public class UtilsRobot {
     }
 
     public void click() {
-        this.robot.mousePress(InputEvent.BUTTON1_MASK);
-        this.robot.mouseRelease(InputEvent.BUTTON1_MASK);
+        this.robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+        this.robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
     }
 
     public void pressKey(int key) {

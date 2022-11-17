@@ -23,6 +23,20 @@ package io.zahori.framework.tms.xray;
  * #L%
  */
 
+import io.zahori.framework.core.TestContext;
+import io.zahori.framework.rest.NetClient;
+import io.zahori.framework.rest.ServiceInfo;
+import io.zahori.framework.security.ZahoriCipher;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -35,21 +49,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.zahori.framework.core.TestContext;
-import io.zahori.framework.rest.NetClient;
-import io.zahori.framework.rest.ServiceInfo;
-import io.zahori.framework.security.ZahoriCipher;
 
 public class XrayRestClient {
 

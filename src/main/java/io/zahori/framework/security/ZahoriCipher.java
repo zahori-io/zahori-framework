@@ -23,15 +23,14 @@ package io.zahori.framework.security;
  * #L%
  */
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.DESKeySpec;
-
-import org.apache.commons.lang3.StringUtils;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 public class ZahoriCipher {
 

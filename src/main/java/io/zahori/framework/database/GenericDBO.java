@@ -23,14 +23,14 @@ package io.zahori.framework.database;
  * #L%
  */
 
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import io.zahori.framework.core.TestContext;
+import io.zahori.framework.utils.Utils;
 
 import java.util.List;
 import java.util.Map;
 
-import io.zahori.framework.core.TestContext;
-import io.zahori.framework.utils.Utils;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class GenericDBO {
 

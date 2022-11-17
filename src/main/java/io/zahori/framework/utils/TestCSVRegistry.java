@@ -23,16 +23,15 @@ package io.zahori.framework.utils;
  * #L%
  */
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import io.zahori.framework.files.csv.PutObjectToCSV;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.zahori.framework.files.csv.PutObjectToCSV;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TestCSVRegistry {
 

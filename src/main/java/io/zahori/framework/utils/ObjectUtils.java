@@ -23,14 +23,13 @@ package io.zahori.framework.utils;
  * #L%
  */
 
-import java.util.List;
-
+import io.zahori.framework.core.TestContext;
 import org.javers.core.Javers;
 import org.javers.core.JaversBuilder;
 import org.javers.core.diff.Diff;
 import org.javers.core.diff.changetype.ValueChange;
 
-import io.zahori.framework.core.TestContext;
+import java.util.List;
 
 public class ObjectUtils {
 
