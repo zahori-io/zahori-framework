@@ -16,7 +16,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up JDK 11
+    - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
         java-version: '17'
@@ -31,4 +31,4 @@ jobs:
 #     - name: List keys
 #       run: gpg -K        
     - name: Build with Maven
-      run: mvn -Penforcer -B package --file pom.xml
+      run: mvn -B package --file pom.xml
