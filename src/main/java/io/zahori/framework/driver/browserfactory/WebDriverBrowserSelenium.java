@@ -23,19 +23,14 @@ package io.zahori.framework.driver.browserfactory;
  * #L%
  */
 
-import io.github.bonigarcia.wdm.WebDriverManager;
 import io.zahori.framework.driver.DriverFactory;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.Capabilities;
-import org.openqa.selenium.Platform;
-import org.openqa.selenium.Proxy;
-import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.ie.InternetExplorerOptions;
-import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
@@ -48,7 +43,6 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class WebDriverBrowserSelenium {
 
@@ -98,7 +92,7 @@ public class WebDriverBrowserSelenium {
             driver = new DriverFactory().create(browsers);
 
             if (driver != null) {
-                setProperties(driver);
+                setProperties(driver, browsers);
             }
 
         } catch (final IllegalArgumentException | SecurityException e) {
@@ -107,9 +101,17 @@ public class WebDriverBrowserSelenium {
         return driver;
     }
 
-    public void setProperties(final WebDriver driver) {
+    public void setProperties(final WebDriver driver, Browsers browsers) {
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(TIME_WAIT_ELEMENT_NOT_PRESENT_TWENTY_SG));
-        driver.manage().window().maximize();
+        resizeWindow(driver, browsers);
+
+    }
+
+    private static void resizeWindow(WebDriver driver, Browsers browsers) {
+        //driver.manage().window().maximize();
+        String resolution = browsers.getScreenResolution();
+        LOG.debug("mI RESOLUCIONES ES: " +  resolution);
+        driver.manage().window().setSize(new Dimension(Integer.valueOf(resolution.split("x")[0]).intValue(), Integer.valueOf(resolution.split("x")[1]).intValue()));
     }
 
     public WebDriver getDriver(final DesiredCapabilities caps)

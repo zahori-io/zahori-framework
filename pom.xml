@@ -46,13 +46,14 @@
 		<poi.version>5.2.3</poi.version>
 		<jackson.version>2.14.0</jackson.version>
 		<spring.version>5.3.24</spring.version>
-		<slf4j-api.version>2.0.3</slf4j-api.version>
+		<slf4j-api.version>2.0.4</slf4j-api.version>
 
 		<sonar.projectKey>zahori-io_zahori-framework</sonar.projectKey>
 		<sonar.organization>zahoriio</sonar.organization>
 		<sonar.host.url>https://sonarcloud.io</sonar.host.url>
 
 		<netty.version>4.1.85.Final</netty.version>
+		<asm.version>9.4</asm.version>
 	</properties>
 
 	<scm>
@@ -297,7 +298,7 @@
 				<version>6.8.0</version>
 			</dependency>
 
-			<dependency>
+<!--			<dependency>
 				<groupId>com.sikulix</groupId>
 				<artifactId>sikulixapi</artifactId>
 				<version>2.0.5</version>
@@ -311,7 +312,7 @@
 						<artifactId>log4j</artifactId>
 					</exclusion>
 				</exclusions>
-			</dependency>
+			</dependency>-->
 
 			<dependency>
 				<groupId>com.github.jnr</groupId>
@@ -326,27 +327,27 @@
 			<dependency>
 				<groupId>org.ow2.asm</groupId>
 				<artifactId>asm</artifactId>
-				<version>9.4</version>
+				<version>${asm.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.ow2.asm</groupId>
 				<artifactId>asm-util</artifactId>
-				<version>9.4</version>
+				<version>${asm.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.ow2.asm</groupId>
 				<artifactId>asm-commons</artifactId>
-				<version>9.4</version>
+				<version>${asm.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.ow2.asm</groupId>
 				<artifactId>asm-tree</artifactId>
-				<version>9.4</version>
+				<version>${asm.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.ow2.asm</groupId>
 				<artifactId>asm-analysis</artifactId>
-				<version>9.4</version>
+				<version>${asm.version}</version>
 			</dependency>
 
 			<!-- Apache Commons Net library Contains a collection of network utilities
@@ -868,10 +869,10 @@
 			<artifactId>javax.activation-api</artifactId>
 		</dependency>
 
-		<dependency>
+<!--		<dependency>
 			<groupId>com.sikulix</groupId>
 			<artifactId>sikulixapi</artifactId>
-		</dependency>
+		</dependency>-->
 		<dependency>
 			<groupId>com.github.jnr</groupId>
 			<artifactId>jnr-ffi</artifactId>
