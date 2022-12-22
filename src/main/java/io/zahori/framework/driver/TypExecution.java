@@ -24,6 +24,12 @@ package io.zahori.framework.driver;
  */
 
 public enum TypExecution {
-    REMOTE(),
-    LOCAL();
+    REMOTE("YES"),
+    LOCAL("NO");
+
+    private String name;
+
+    TypExecution(final String name) {
+        this.name = name;
+    }
 }

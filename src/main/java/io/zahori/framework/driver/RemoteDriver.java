@@ -25,10 +25,38 @@ package io.zahori.framework.driver;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.zahori.framework.driver.browserfactory.Browsers;
+import org.apache.commons.lang3.StringUtils;
+import org.openqa.selenium.Capabilities;
+import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.remote.AbstractDriverOptions;
+import org.openqa.selenium.remote.LocalFileDetector;
+import org.openqa.selenium.remote.RemoteWebDriver;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class RemoteDriver implements Driver{
     public WebDriver getDriver(Browsers browsers){
-        return WebDriverManager.getInstance(browsers.getName()).browserVersion(browsers.getVersion()).remoteAddress(browsers.getRemoteUrl()).create();
+        AbstractDriverOptions<?> options = getOptions(browsers);
+        WebDriver webDriver = WebDriverManager.getInstance(browsers.getName().toUpperCase()).browserVersion(browsers.getVersion()).remoteAddress(browsers.getRemoteUrl()).capabilities(options).create();
+        ((RemoteWebDriver)webDriver).setFileDetector(new LocalFileDetector());
+
+        return webDriver;
+    }
+
+    public AbstractDriverOptions<?> getOptions(Browsers browsers) {
+        AbstractDriverOptions<?> options = OptionsFactory.valueOf(browsers.name()).getOptions();
+        options.setAcceptInsecureCerts(true);
+        options.setBrowserVersion(browsers.getVersion());
+
+        options.setCapability("name", browsers.getCaseExecutionId());
+        options.setCapability("testName", browsers.getTestName());
+
+        options.setCapability("enableVNC", true);
+        options.setCapability("enableVideo", false);
+
+        options.setCapability("screenResolution", browsers.getScreenResolution());
+        return options;
     }
 }

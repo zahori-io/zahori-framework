@@ -25,7 +25,9 @@ package io.zahori.framework.driver;
 
 import io.zahori.framework.driver.browserfactory.Browsers;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.remote.AbstractDriverOptions;
 
 public interface Driver {
     WebDriver getDriver(Browsers browsers);
+    AbstractDriverOptions<?> getOptions(Browsers browsers);
 }

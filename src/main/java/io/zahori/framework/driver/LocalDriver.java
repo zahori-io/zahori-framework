@@ -25,11 +25,27 @@ package io.zahori.framework.driver;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.zahori.framework.driver.browserfactory.Browsers;
+import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.remote.AbstractDriverOptions;
+
+import java.time.Duration;
 
 public class LocalDriver implements Driver{
     public  WebDriver getDriver(Browsers browsers){
-        return  WebDriverManager.getInstance(browsers.getName()).create();
+        return  WebDriverManager.getInstance(browsers.getName()).capabilities(getOptions(browsers)).create();
+    }
+
+    public AbstractDriverOptions<?> getOptions(Browsers browsers) {
+        AbstractDriverOptions<?> options = OptionsFactory.valueOf(browsers.name()).getOptions();
+        options.setAcceptInsecureCerts(true);
+        options.setImplicitWaitTimeout(Duration.ofSeconds(100));
+
+        options.setCapability("name", browsers.getCaseExecutionId());
+        options.setCapability("testName", browsers.getTestName());
+
+        options.setCapability("screenResolution", browsers.getScreenResolution());
+        return options;
     }
     
 }

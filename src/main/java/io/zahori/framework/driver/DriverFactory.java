@@ -30,12 +30,14 @@ import org.openqa.selenium.WebDriver;
         private TypExecution execType;
 
         public WebDriver create(Browsers browsers) {
-        Driver mdriver = null;
-        if ("YES".equalsIgnoreCase(browsers.getRemote())) {
-            mdriver = new RemoteDriver();
-        } else {
-            mdriver = new LocalDriver();
-        }
-        return mdriver.getDriver(browsers);
+            Driver mdriver = null;
+
+            if ("YES".equalsIgnoreCase(browsers.getRemote())) {
+                mdriver = new RemoteDriver();
+            } else {
+                mdriver = new LocalDriver();
+            }
+
+            return mdriver.getDriver(browsers);
     }
 }

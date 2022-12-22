@@ -103,6 +103,7 @@ public class WebDriverBrowserSelenium {
 
     public void setProperties(final WebDriver driver, Browsers browsers) {
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(TIME_WAIT_ELEMENT_NOT_PRESENT_TWENTY_SG));
+        driver.manage().window().maximize();
         resizeWindow(driver, browsers);
 
     }
