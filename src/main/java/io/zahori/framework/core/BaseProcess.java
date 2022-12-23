@@ -1,5 +1,29 @@
 package io.zahori.framework.core;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Random;
+
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /*-
  * #%L
  * zahori-framework
@@ -25,6 +49,7 @@ package io.zahori.framework.core;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.exception.ZahoriException;
 import io.zahori.framework.exception.ZahoriPassedException;
@@ -33,24 +58,6 @@ import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import io.zahori.model.process.Step;
 import io.zahori.model.process.Test;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Random;
 
 public abstract class BaseProcess {
 
@@ -155,6 +162,7 @@ public abstract class BaseProcess {
     }
 
     private void manageException(TestContext testContext, CaseExecution caseExecution, Exception e) {
+        e.printStackTrace();
         LOG.error("==== Process error {}: {}", getCaseExcutionDetails(caseExecution), e.getMessage());
         if (testContext.retries < testContext.getMaxRetries()) {
             testContext.retries++;
