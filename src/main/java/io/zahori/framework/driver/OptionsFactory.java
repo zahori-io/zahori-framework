@@ -17,6 +17,7 @@ public enum OptionsFactory {
             chromeOptions.addArguments("--disable-notifications");
             chromeOptions.setHeadless(false);
             chromeOptions.setAcceptInsecureCerts(true);
+            chromeOptions.setPageLoadStrategy(PageLoadStrategy.EAGER);
             return chromeOptions;
         }
     },
