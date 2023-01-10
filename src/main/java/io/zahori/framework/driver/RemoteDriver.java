@@ -40,7 +40,9 @@ public class RemoteDriver implements Driver{
     public WebDriver getDriver(Browsers browsers){
         AbstractDriverOptions<?> options = getOptions(browsers);
         WebDriver webDriver = WebDriverManager.getInstance(browsers.getName().toUpperCase()).browserVersion(browsers.getVersion()).remoteAddress(browsers.getRemoteUrl()).capabilities(options).create();
+        
         ((RemoteWebDriver)webDriver).setFileDetector(new LocalFileDetector());
+        webDriver.manage().window().maximize();
 
         return webDriver;
     }
