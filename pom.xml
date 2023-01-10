@@ -205,8 +205,8 @@
                 XML file format as used in docx documents, pptx presentations, and xlsx spreadsheets. -->
 			<dependency>
 				<groupId>org.docx4j</groupId>
-				<artifactId>docx4j</artifactId>
-				<version>6.1.2</version>
+				<artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
+				<version>8.3.3</version>
 				<exclusions>
 					<exclusion>
 						<groupId>org.slf4j</groupId>
@@ -225,6 +225,7 @@
 				<artifactId>alm-rest-client</artifactId>
 				<version>0.1.4</version>
 			</dependency>
+
 			<dependency>
 				<groupId>org.springframework</groupId>
 				<artifactId>spring-aop</artifactId>
@@ -796,7 +797,7 @@
 
 		<dependency>
 			<groupId>org.docx4j</groupId>
-			<artifactId>docx4j</artifactId>
+			<artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
 		</dependency>
 
 		<dependency>
