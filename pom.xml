@@ -54,6 +54,9 @@
 
 		<netty.version>4.1.86.Final</netty.version>
 		<asm.version>9.4</asm.version>
+
+		<spring-cloud-version>3.1.5</spring-cloud-version>
+		<spring-boot-version>2.7.7</spring-boot-version>
 	</properties>
 
 	<scm>
@@ -658,6 +661,24 @@
 				<version>${netty.version}</version>
 			</dependency>
 
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-commons</artifactId>
+				<version>${spring-cloud-version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot</artifactId>
+				<version>${spring-boot-version}</version>
+			</dependency>
+			
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-autoconfigure</artifactId>
+				<version>${spring-boot-version}</version>
+			</dependency>
+
 		</dependencies>
 	</dependencyManagement>
 
@@ -986,6 +1007,21 @@
 		<dependency>
 			<groupId>io.netty</groupId>
 			<artifactId>netty-common</artifactId>
+		</dependency>
+
+		<dependency>
+		    <groupId>org.springframework.cloud</groupId>
+		    <artifactId>spring-cloud-commons</artifactId>
+		</dependency>
+           
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot</artifactId>
+		</dependency>
+		
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-autoconfigure</artifactId>
 		</dependency>
 
 	</dependencies>
