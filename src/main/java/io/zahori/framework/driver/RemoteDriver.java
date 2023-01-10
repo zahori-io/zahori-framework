@@ -43,7 +43,7 @@ public class RemoteDriver implements Driver{
         
         ((RemoteWebDriver)webDriver).setFileDetector(new LocalFileDetector());
         webDriver.manage().window().maximize();
-
+        
         return webDriver;
     }
 
@@ -52,13 +52,15 @@ public class RemoteDriver implements Driver{
         options.setAcceptInsecureCerts(true);
         options.setBrowserVersion(browsers.getVersion());
 
-        options.setCapability("name", browsers.getCaseExecutionId());
-        options.setCapability("testName", browsers.getTestName());
+        Map<String, Object> selenoidOptions = new HashMap<>(); 
+        selenoidOptions.put("name", browsers.getCaseExecutionId());
+        selenoidOptions.put("testName", browsers.getTestName());
+        selenoidOptions.put("enableVNC", true);
+        selenoidOptions.put("enableVideo", false);
+        selenoidOptions.put("screenResolution", browsers.getScreenResolution());
 
-        options.setCapability("enableVNC", true);
-        options.setCapability("enableVideo", false);
+        options.setCapability("selenoid:options", selenoidOptions);
 
-        options.setCapability("screenResolution", browsers.getScreenResolution());
         return options;
     }
 }
