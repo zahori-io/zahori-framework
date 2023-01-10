@@ -103,16 +103,6 @@ public class WebDriverBrowserSelenium {
 
     public void setProperties(final WebDriver driver, Browsers browsers) {
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(TIME_WAIT_ELEMENT_NOT_PRESENT_TWENTY_SG));
-        driver.manage().window().maximize();
-        resizeWindow(driver, browsers);
-
-    }
-
-    private static void resizeWindow(WebDriver driver, Browsers browsers) {
-        //driver.manage().window().maximize();
-        String resolution = browsers.getScreenResolution();
-        LOG.debug("mI RESOLUCIONES ES: " +  resolution);
-        driver.manage().window().setSize(new Dimension(Integer.valueOf(resolution.split("x")[0]).intValue(), Integer.valueOf(resolution.split("x")[1]).intValue()));
     }
 
     public WebDriver getDriver(final DesiredCapabilities caps)
