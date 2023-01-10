@@ -26,6 +26,7 @@ package io.zahori.framework.driver;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import org.apache.commons.lang3.StringUtils;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 
@@ -33,7 +34,11 @@ import java.time.Duration;
 
 public class LocalDriver implements Driver{
     public  WebDriver getDriver(Browsers browsers){
-        return  WebDriverManager.getInstance(browsers.getName()).capabilities(getOptions(browsers)).create();
+        WebDriver webDriver = WebDriverManager.getInstance(browsers.getName()).capabilities(getOptions(browsers)).create();
+
+        resizeWindow(webDriver, browsers);
+
+        return webDriver;
     }
 
     public AbstractDriverOptions<?> getOptions(Browsers browsers) {
@@ -47,5 +52,9 @@ public class LocalDriver implements Driver{
         options.setCapability("screenResolution", browsers.getScreenResolution());
         return options;
     }
-    
+
+    private void resizeWindow(WebDriver driver, Browsers browsers) {
+        String resolution = browsers.getScreenResolution();
+        driver.manage().window().setSize(new Dimension(Integer.valueOf(resolution.split("x")[0]).intValue(), Integer.valueOf(resolution.split("x")[1]).intValue()));
+    }
 }
