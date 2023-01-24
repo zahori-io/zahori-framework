@@ -299,7 +299,7 @@
 			<dependency>
 				<groupId>org.javers</groupId>
 				<artifactId>javers-core</artifactId>
-				<version>6.8.1</version>
+				<version>6.8.2</version>
 			</dependency>
 
 <!--			<dependency>
@@ -1198,7 +1198,7 @@
 								<id>enforce</id>
 								<configuration>
 									<rules>
-										<DependencyConvergence />
+										<DependencyConvergence/>
 										<requireMavenVersion>
 											<version>3.6.3</version>
 										</requireMavenVersion>
