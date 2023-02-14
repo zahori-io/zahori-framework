@@ -20,12 +20,6 @@ import org.springframework.web.client.RestTemplate;
 import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 
-/**
- *************************************************************************************
- * Zahori process. Please, don't edit this class unless you know what you are doing :)
- *************************************************************************************
- */
-
 @RestController
 @RequestMapping(BaseProcess.BASE_URL)
 public abstract class ZahoriProcess extends BaseProcess {
@@ -73,17 +67,16 @@ public abstract class ZahoriProcess extends BaseProcess {
     @EventListener
     private void onApplicationEvent(ApplicationReadyEvent event) {
         LOG.info("============== PROCESS STARTED ==============");
+        
         String baseUrl = getServerUrl();
-        LOG.info("Zahori server uri: {}", baseUrl);
-
-        String serverStatus = new RestTemplate().getForObject(baseUrl + BaseProcess.ZAHORI_SERVER_HEALTHCHECK_URL, String.class);
-        LOG.info("Zahori server status: {}", serverStatus);
+        LOG.info("Zahori server url: {}", baseUrl);
+        waitZahoriServerHealthcheck(baseUrl);
 
         // Register process in server
         ProcessRegistration processRegistration = new ProcessRegistration(name, clientId, teamId, procTypeId);
         ResponseEntity<ProcessRegistration> processRegistrationResponse = new RestTemplate()
                 .postForEntity(baseUrl + BaseProcess.ZAHORI_SERVER_PROCESS_REGISTRATION_URL, processRegistration, ProcessRegistration.class);
-        processRegistrationResponse.getStatusCode();
+
         LOG.info("Process registration - status: {}", processRegistrationResponse.getStatusCode());
         LOG.info("Process registration - processId: {}", processRegistrationResponse.getBody().getProcessId());
     }
@@ -95,15 +88,16 @@ public abstract class ZahoriProcess extends BaseProcess {
 
         ServiceInstance serviceInstance = loadBalancer.choose(BaseProcess.ZAHORI_SERVER_SERVICE_NAME);
         if (serviceInstance == null) {
-            serviceInstance = waitZahoriServer(loadBalancer);
+            serviceInstance = waitZahoriServerToBeRegisteredInRegistry(loadBalancer);
         }
 
-        return serviceInstance.getUri().toString() + zahoriServerContext;
+        return serviceInstance.getUri().toString() + "/" + zahoriServerContext;
     }
 
-    private ServiceInstance waitZahoriServer(LoadBalancerClient loadBalancer) {
+    private ServiceInstance waitZahoriServerToBeRegisteredInRegistry(LoadBalancerClient loadBalancer) {
         ServiceInstance serviceInstance = null;
-        LOG.warn("Zahori server seems to be down or started just a few seconds ago and is still registering in eureka server");
+        LOG.warn(
+                "Zahori server is not registered in the service registry (Consul): Zahori server may be down or still starting.");
         for (int i = 1; i <= BaseProcess.MAX_RETRIES_WAIT_FOR_SERVER; i++) {
             LOG.warn("Waiting " + BaseProcess.SECONDS_WAIT_FOR_SERVER + " seconds before retrying again...");
             pause(BaseProcess.SECONDS_WAIT_FOR_SERVER);
@@ -112,11 +106,38 @@ public abstract class ZahoriProcess extends BaseProcess {
                 return serviceInstance;
             }
             if (serviceInstance == null && i >= BaseProcess.MAX_RETRIES_WAIT_FOR_SERVER) {
-                String errorMessage = "Timeout waiting for Zahori server. Is it started and registered in eureka?";
+                String errorMessage = "Timeout waiting for Zahori server to be registered in the service registry (Consul). Is Zahori server started?";
                 LOG.error(errorMessage);
                 throw new RuntimeException(errorMessage);
             }
         }
         return serviceInstance;
     }
+
+    private void waitZahoriServerHealthcheck(String baseUrl) {
+        for (int i = 1; i <= BaseProcess.MAX_RETRIES_WAIT_FOR_SERVER; i++) {
+
+            try {
+                ResponseEntity<String> response = new RestTemplate().getForEntity(baseUrl + BaseProcess.ZAHORI_SERVER_HEALTHCHECK_URL,
+                        String.class);
+                LOG.info("Zahori server status: {}", response.getStatusCode().value());
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    return;
+                }
+            } catch (Exception e) {
+                LOG.warn(
+                        "Zahori server is unreachable: it may be down, still starting or there is no network connectivity");
+            }
+
+            LOG.warn("Waiting " + BaseProcess.SECONDS_WAIT_FOR_SERVER + " seconds before retrying again...");
+            pause(BaseProcess.SECONDS_WAIT_FOR_SERVER);
+
+            if (i >= BaseProcess.MAX_RETRIES_WAIT_FOR_SERVER) {
+                String errorMessage = "Timeout waiting for Zahori server: it seems to be down or there is no network connectivity";
+                LOG.error(errorMessage);
+                throw new RuntimeException(errorMessage);
+            }
+        }
+    }
+
 }
