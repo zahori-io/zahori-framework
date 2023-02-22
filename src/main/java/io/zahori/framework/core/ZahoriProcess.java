@@ -1,5 +1,7 @@
 package io.zahori.framework.core;
 
+import io.zahori.model.process.CaseExecution;
+import io.zahori.model.process.ProcessRegistration;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
+import org.springframework.cloud.consul.discovery.ReregistrationPredicate;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,9 +20,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
-
-import io.zahori.model.process.CaseExecution;
-import io.zahori.model.process.ProcessRegistration;
 
 @RestController
 @RequestMapping(BaseProcess.BASE_URL)
@@ -67,7 +68,7 @@ public abstract class ZahoriProcess extends BaseProcess {
     @EventListener
     private void onApplicationEvent(ApplicationReadyEvent event) {
         LOG.info("============== PROCESS STARTED ==============");
-        
+
         String baseUrl = getServerUrl();
         LOG.info("Zahori server url: {}", baseUrl);
         waitZahoriServerHealthcheck(baseUrl);
@@ -79,6 +80,18 @@ public abstract class ZahoriProcess extends BaseProcess {
 
         LOG.info("Process registration - status: {}", processRegistrationResponse.getStatusCode());
         LOG.info("Process registration - processId: {}", processRegistrationResponse.getBody().getProcessId());
+    }
+
+    /*
+        Bean needed for reregistration if consul is restarted
+        Also the following properties are needed in application.properties
+        - spring.cloud.consul.discovery.heartbeat.enabled= true
+        - spring.cloud.consul.discovery.heartbeat.reregister-service-on-failure=true
+        See: https://github.com/spring-cloud/spring-cloud-consul/issues/727
+     */
+    @Bean
+    public ReregistrationPredicate reRegistrationPredicate() {
+        return e -> e.getStatusCode() >= 400;
     }
 
     private String getServerUrl() {
