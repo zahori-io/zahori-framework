@@ -311,7 +311,7 @@
             <dependency>
                 <groupId>org.yaml</groupId>
                 <artifactId>snakeyaml</artifactId>
-                <version>1.33</version>
+                <version>2.0</version>
             </dependency>
 
             <!-- To process excel files with extension .xls -->
@@ -1251,7 +1251,7 @@
                                 <id>enforce</id>
                                 <configuration>
                                     <rules>
-                                        <DependencyConvergence />
+                                        <DependencyConvergence/>
                                         <requireMavenVersion>
                                             <version>3.6.3</version>
                                         </requireMavenVersion>
