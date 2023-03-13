@@ -16,6 +16,7 @@ public enum OptionsFactory {
             ChromeOptions chromeOptions = new ChromeOptions();
             chromeOptions.addArguments("--disable-infobars");
             chromeOptions.addArguments("--disable-notifications");
+            chromeOptions.addArguments("--remote-allow-origins=*");
             chromeOptions.setHeadless(false);
             chromeOptions.setAcceptInsecureCerts(true);
             chromeOptions.setPageLoadStrategy(PageLoadStrategy.EAGER);

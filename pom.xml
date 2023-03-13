@@ -3,7 +3,7 @@
 	
 	<groupId>io.zahori</groupId>
 	<artifactId>zahori-framework</artifactId>
-	<version>0.2.2</version>
+	<version>0.2.2.1</version>
 	<packaging>jar</packaging>
 	<name>zahori-framework</name>
 
