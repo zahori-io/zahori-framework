@@ -54,7 +54,7 @@
         <netty.version>4.1.89.Final</netty.version>
         <asm.version>9.4</asm.version>
 
-        <spring-boot-version>2.7.8</spring-boot-version>
+        <spring-boot-version>2.7.9</spring-boot-version>
     </properties>
 
     <scm>
@@ -1251,7 +1251,7 @@
                                 <id>enforce</id>
                                 <configuration>
                                     <rules>
-                                        <DependencyConvergence />
+                                        <DependencyConvergence/>
                                         <requireMavenVersion>
                                             <version>3.6.3</version>
                                         </requireMavenVersion>
