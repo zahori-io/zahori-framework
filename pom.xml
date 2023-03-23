@@ -337,7 +337,7 @@
             <dependency>
                 <groupId>org.javers</groupId>
                 <artifactId>javers-core</artifactId>
-                <version>6.11.0</version>
+                <version>6.13.0</version>
             </dependency>
 
             <!--			<dependency>
