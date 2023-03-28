@@ -27,15 +27,11 @@ jobs:
         path: ~/.m2
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
-
-    - name: Build with Maven
-      run: mvn -B clean verify --file pom.xml
-      
-    - name: SonarCloud Scan
-      uses: SonarSource/sonarcloud-github-action@v1.9
+    
+    - name: Build with Maven and run SonarQube analysis
+      run: mvn -B clean verify org.sonarsource.scanner.maven:sonar --file pom.xml
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}        
 
       
       
