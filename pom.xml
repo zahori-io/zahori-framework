@@ -52,7 +52,7 @@
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
 
         <netty.version>4.1.90.Final</netty.version>
-        <asm.version>9.4</asm.version>
+        <asm.version>9.5</asm.version>
 
         <spring-boot-version>2.7.10</spring-boot-version>
     </properties>
