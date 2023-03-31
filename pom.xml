@@ -207,7 +207,8 @@
             <dependency>
                 <groupId>org.docx4j</groupId>
                 <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
-                <version>11.4.9</version>
+                <!-- NO ACTUALIZAR SIN PROBAR EVIDENCIAS DOC -->
+                <version>8.3.9</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>
