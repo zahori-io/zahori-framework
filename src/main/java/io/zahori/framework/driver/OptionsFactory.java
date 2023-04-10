@@ -40,7 +40,7 @@ public enum OptionsFactory {
             chromeOptions.addArguments("--disable-infobars");
             chromeOptions.addArguments("--disable-notifications");
             chromeOptions.addArguments("--remote-allow-origins=*");
-            chromeOptions.setHeadless(false);
+            chromeOptions.addArguments("--headless=new");
             chromeOptions.setAcceptInsecureCerts(true);
             chromeOptions.setPageLoadStrategy(PageLoadStrategy.EAGER);
             return chromeOptions;
@@ -50,7 +50,7 @@ public enum OptionsFactory {
         @Override
         public FirefoxOptions getOptions() {
             FirefoxOptions firefoxOptions = new FirefoxOptions();
-            firefoxOptions.setHeadless(false);
+            firefoxOptions.addArguments("-headless");
             firefoxOptions.setAcceptInsecureCerts(true);
 
             return firefoxOptions;
@@ -68,7 +68,7 @@ public enum OptionsFactory {
         @Override
         public EdgeOptions getOptions() {
             EdgeOptions edgeOptions = new EdgeOptions();
-            edgeOptions.setHeadless(false);
+            edgeOptions.addArguments("--headless");
             edgeOptions.setAcceptInsecureCerts(true);
 
             return edgeOptions;

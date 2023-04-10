@@ -25,8 +25,8 @@ package io.zahori.framework.utils;
 
 import io.zahori.framework.files.csv.PutObjectToCSV;
 import org.apache.commons.io.FileUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +35,7 @@ import java.util.List;
 
 public class TestCSVRegistry {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TestCSVRegistry.class);
+    private static final Logger LOG = LogManager.getLogger(TestCSVRegistry.class);
 
     private File testResultsFile;
 

@@ -26,8 +26,9 @@ package io.zahori.framework.files.transforms;
 import de.odysseus.staxon.json.JsonXMLConfig;
 import de.odysseus.staxon.json.JsonXMLConfigBuilder;
 import de.odysseus.staxon.json.JsonXMLOutputFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLEventWriter;
@@ -39,7 +40,7 @@ import java.io.OutputStream;
 
 public class XML2Json {
 
-    private static final Logger LOG = LoggerFactory.getLogger(XML2Json.class);
+    private static final Logger LOG = LogManager.getLogger(XML2Json.class);
 
     private String xmlPath;
     private String jsonPath;

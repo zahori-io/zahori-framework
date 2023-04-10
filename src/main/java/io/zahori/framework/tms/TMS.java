@@ -35,8 +35,9 @@ import io.zahori.model.Step;
 import io.zahori.tms.alm.restclient.ALMRestClient;
 import io.zahori.tms.alm.restclient.ALMRestClient.EntityType;
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -54,7 +55,7 @@ public class TMS {
     private static final String TEST_LINK = "TestLink";
     private static final String JIRA_XRAY = "Jira Xray";
 
-    private static final Logger LOG = LoggerFactory.getLogger(TMS.class);
+    private static final Logger LOG = LogManager.getLogger(TMS.class);
 
     // TMS
     private String tms;

@@ -276,7 +276,7 @@ public class Excel {
                 String value = formatter.formatCellValue(cell);
                 return value;
             } catch (Exception e) {
-                cell.setCellType(CellType.STRING);
+                //cell.setCellType(CellType.STRING);
                 return cell.getRichStringCellValue().toString();
             }
         }

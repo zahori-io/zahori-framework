@@ -23,14 +23,14 @@ package io.zahori.framework.utils;
  * #L%
  */
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.UnsupportedCommandException;
 import org.openqa.selenium.WebDriver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class TimeoutThread extends Thread {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TimeoutThread.class);
+    private static final Logger LOG = LogManager.getLogger(TimeoutThread.class);
 
     private boolean executionStopped = false;
 

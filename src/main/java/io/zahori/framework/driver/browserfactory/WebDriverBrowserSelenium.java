@@ -26,6 +26,8 @@ package io.zahori.framework.driver.browserfactory;
 import io.zahori.framework.driver.DriverFactory;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.firefox.FirefoxOptions;
@@ -33,8 +35,7 @@ import org.openqa.selenium.ie.InternetExplorerDriver;
 import org.openqa.selenium.ie.InternetExplorerOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -48,7 +49,7 @@ public class WebDriverBrowserSelenium {
 
     private static final int TIME_WAIT_ELEMENT_NOT_PRESENT_TWENTY_SG = 20;
 
-    private static final Logger LOG = LoggerFactory.getLogger(WebDriverBrowserSelenium.class);
+    private static final Logger LOG = LogManager.getLogger(WebDriverBrowserSelenium.class);
 
     private static final String PREFIX_NAME_METHOD = "getWebDriverRemote";
 

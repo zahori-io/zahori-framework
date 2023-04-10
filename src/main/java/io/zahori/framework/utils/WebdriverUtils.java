@@ -23,17 +23,19 @@ package io.zahori.framework.utils;
  * #L%
  */
 
+import io.zahori.framework.driver.browserfactory.WebDriverBrowserSelenium;
 import io.zahori.framework.exception.WebdriverException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 public class WebdriverUtils {
 
-    private static final Logger LOG = LoggerFactory.getLogger(WebdriverUtils.class);
+    private static final Logger LOG = LogManager.getLogger(WebdriverUtils.class);
     public static final String HTML = "//html";
     public static final String HTML_OBJECT_HASN_T_BEEN_FOUND = "HTML object hasn't been found.";
 

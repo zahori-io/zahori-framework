@@ -53,12 +53,13 @@ import java.util.Properties;
 import java.util.Random;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 public abstract class BaseProcess {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BaseProcess.class);
+    private static final Logger LOG = LogManager.getLogger(BaseProcess.class);
     public static final String BASE_URL = "/";
     public static final String RUN_URL = "run";
     public static final String ZAHORI_SERVER_SERVICE_NAME = "server";

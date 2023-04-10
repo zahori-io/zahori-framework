@@ -24,9 +24,10 @@ package io.zahori.framework.robot;
  */
 
 import io.zahori.framework.exception.MethodException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.WebElement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -37,7 +38,7 @@ import java.io.IOException;
 
 public class UtilsRobot {
 
-    private static final Logger LOG = LoggerFactory.getLogger(UtilsRobot.class);
+    private static final Logger LOG = LogManager.getLogger(UtilsRobot.class);
 
     private Robot robot = null;
 

@@ -28,14 +28,14 @@ import io.zahori.framework.driver.browserfactory.WebDriverBrowserSelenium;
 import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.RemoteWebDriver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 
 public class Browser {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Browser.class);
+    private static final Logger LOG = LogManager.getLogger(Browser.class);
     public static final String LOADING_PAGE = "Loading page: ";
 
     private WebDriver driver;

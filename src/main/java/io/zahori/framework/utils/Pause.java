@@ -23,15 +23,15 @@ package io.zahori.framework.utils;
  * #L%
  */
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Pause {
 
     private Pause() {
     }
 
-    private static final Logger LOG = LoggerFactory.getLogger(Pause.class);
+    private static final Logger LOG = LogManager.getLogger(Pause.class);
 
     public static final int SHORTSLEEPTIME = 100;
 

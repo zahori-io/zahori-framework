@@ -27,8 +27,9 @@ import io.zahori.framework.exception.MethodException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 import java.io.*;
 import java.util.Calendar;
@@ -40,7 +41,7 @@ import static org.apache.commons.net.ftp.FTP.BINARY_FILE_TYPE;
 
 public class FTP {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FTP.class);
+    private static final Logger LOG = LogManager.getLogger(FTP.class);
 
     protected final String server;
     protected final String user;

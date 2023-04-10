@@ -30,8 +30,8 @@ import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.input.BOMInputStream;
 import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,7 +48,7 @@ public class GetCSVtoObject {
 
     private String ruta;
 
-    private static final Logger LOG = LoggerFactory.getLogger(GetCSVtoObject.class);
+    private static final Logger LOG = LogManager.getLogger(GetCSVtoObject.class);
 
     private static final char SEPARADOR = ';';
 

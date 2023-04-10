@@ -27,8 +27,9 @@ import de.odysseus.staxon.json.JsonXMLConfig;
 import de.odysseus.staxon.json.JsonXMLConfigBuilder;
 import de.odysseus.staxon.json.JsonXMLInputFactory;
 import de.odysseus.staxon.xml.util.PrettyXMLEventWriter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 import javax.xml.stream.*;
 import java.io.IOException;
@@ -37,7 +38,7 @@ import java.io.OutputStream;
 
 public class Json2XML {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Json2XML.class);
+    private static final Logger LOG = LogManager.getLogger(Json2XML.class);
 
     private String jsonPath;
     private String xmlPath;

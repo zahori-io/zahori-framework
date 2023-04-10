@@ -25,8 +25,9 @@ package io.zahori.framework.database;
 
 import io.zahori.framework.utils.Notification;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -36,7 +37,7 @@ import java.util.Map;
 
 public class DataBase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DataBase.class);
+    private static final Logger LOG = LogManager.getLogger(DataBase.class);
     private static final String ERROR_EXECUTING_QUERY = "Error executing query -> ";
 
     private final String driver;

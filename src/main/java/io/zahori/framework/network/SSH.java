@@ -27,8 +27,8 @@ import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import io.zahori.framework.exception.MethodException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,7 +36,8 @@ import java.util.Properties;
 
 public class SSH {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SSH.class);
+    private static final Logger LOG = LogManager.getLogger(SSH.class);
+
     public static final String ERROR_AL_EJECUTAR_EL_COMANDO_CAUSA = "Error al ejecutar el comando. Causa: ";
 
     protected final String server;

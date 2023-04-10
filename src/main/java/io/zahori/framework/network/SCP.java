@@ -29,14 +29,15 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
 import io.zahori.framework.exception.MethodException;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 import java.io.*;
 
 public class SCP {
 
-    private static final Logger LOG = LoggerFactory.getLogger(SCP.class);
+    private static final Logger LOG = LogManager.getLogger(SCP.class);
     public static final String ERROR_AL_SUBIR_DESCARGAR_EL_FICHERO_CAUSA = "Error al subir/descargar el fichero. Causa: ";
 
     protected final String server;
