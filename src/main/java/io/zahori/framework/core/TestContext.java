@@ -296,6 +296,7 @@ public class TestContext {
         } else {
             this.zahoriException = new ZahoriException(testCaseName, e.getMessage());
             logStepWithScreenshot(Status.FAILED, getMessage(zahoriException.getMessageKey()));
+            logError(ExceptionUtils.getStackTrace(e));
         }
 
         // throw a new exception in order to make the test fail

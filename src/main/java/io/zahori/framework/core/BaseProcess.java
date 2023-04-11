@@ -132,7 +132,6 @@ public abstract class BaseProcess {
     }
 
     private void manageException(TestContext testContext, CaseExecution caseExecution, Exception e) {
-        e.printStackTrace();
         LOG.error("==== Process error {}: {}", getCaseExcutionDetails(caseExecution), e.getMessage());
         if (testContext.retries < testContext.getMaxRetries()) {
             testContext.retries++;
