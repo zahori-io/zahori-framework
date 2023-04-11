@@ -209,8 +209,9 @@
                 XML file format as used in docx documents, pptx presentations, and xlsx spreadsheets. -->
 			<dependency>
 				<groupId>org.docx4j</groupId>
+				<!-- NO ACTUALIZAR SIN PROBAR EVIDENCIAS DOC -->
 				<artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
-				<version>8.3.3</version>
+				<version>8.3.9</version>
 				<exclusions>
 					<exclusion>
 						<groupId>org.slf4j</groupId>
