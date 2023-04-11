@@ -36,8 +36,7 @@ import org.openqa.selenium.logging.LoggingPreferences;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.safari.SafariOptions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -68,7 +67,7 @@ public class CapsBrowserSelenium extends DesiredCapabilities {
     private static final String WEBDRIVER_MARIONETTE_BINARY_PATH_UNIX = "webdriver.marionette.firefox.binary.path.unix";
 
     private static final String MAX_FIREFOX_LEGACY_VERSION = "47.0.1";
-    private static final Logger LOG = LoggerFactory.getLogger(CapsBrowserSelenium.class);
+    private static final Logger LOG = LogManager.getLogger(CapsBrowserSelenium.class);
 
     private Browsers browsers;
 

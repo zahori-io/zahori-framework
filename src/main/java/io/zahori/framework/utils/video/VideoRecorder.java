@@ -23,11 +23,12 @@ package io.zahori.framework.utils.video;
  * #L%
  */
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.monte.media.Format;
 import org.monte.media.FormatKeys.*;
 import org.monte.media.math.Rational;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import java.awt.*;
 import java.io.File;
@@ -38,7 +39,7 @@ import static org.monte.media.VideoFormatKeys.*;
 
 
 public class VideoRecorder implements EnterpriseScreenRecorder {
-    private static final Logger LOG = LoggerFactory.getLogger(VideoRecorder.class);
+    private static final Logger LOG = LogManager.getLogger(VideoRecorder.class);
 
     private CustomScreenRecorder screenRecorder;
 

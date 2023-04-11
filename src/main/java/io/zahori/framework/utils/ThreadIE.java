@@ -24,16 +24,16 @@ package io.zahori.framework.utils;
  */
 
 import io.zahori.framework.robot.UtilsRobot;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.Point;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.util.List;
 
 public class ThreadIE extends Thread {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ThreadIE.class);
+    private static final Logger LOG = LogManager.getLogger(ThreadIE.class);
 
     private static final int MOVE_ZERO = 0;
 

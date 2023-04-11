@@ -23,8 +23,9 @@ package io.zahori.framework.files.transforms;
  * #L%
  */
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -33,7 +34,7 @@ import java.io.OutputStream;
 
 public class JsonXmlUtils {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JsonXmlUtils.class);
+    private static final Logger LOG = LogManager.getLogger(JsonXmlUtils.class);
 
     public JsonXmlUtils() {
         super();

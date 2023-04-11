@@ -24,8 +24,9 @@ package io.zahori.framework.core;
  */
 
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -53,7 +54,7 @@ import io.zahori.model.process.ProcessRegistration;
 @RequestMapping(BaseProcess.BASE_URL)
 public abstract class ZahoriProcess extends BaseProcess {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ZahoriProcess.class);
+    private static final Logger LOG = LogManager.getLogger(ZahoriProcess.class);
 
     @Autowired
     private LoadBalancerClient loadBalancer;

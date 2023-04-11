@@ -30,12 +30,12 @@ import io.zahori.framework.security.ZahoriCipher;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,7 +52,7 @@ import java.util.Map;
 
 public class XrayRestClient {
 
-    private static final Logger LOG = LoggerFactory.getLogger(XrayRestClient.class);
+    private static final Logger LOG = LogManager.getLogger(XrayRestClient.class);
 
     private static final String TAG_TESTEXEC_ID = "{{testExecId}}";
     private static final String TAG_TESTPLAN_ID = "{{testPlanId}}";

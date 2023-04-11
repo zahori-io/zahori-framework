@@ -24,8 +24,9 @@ package io.zahori.framework.utils;
  */
 
 import org.apache.commons.lang.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -36,7 +37,7 @@ public class Utils {
 
     private static final String MONTH_NAME_FORMAT = "MMMM";
 
-    private static final Logger LOG = LoggerFactory.getLogger(Utils.class);
+    private static final Logger LOG = LogManager.getLogger(Utils.class);
 
     private static final String SI = "si";
 

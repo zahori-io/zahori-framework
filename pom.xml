@@ -46,7 +46,6 @@
 		<poi.version>5.2.3</poi.version>
 		<jackson.version>2.14.1</jackson.version>
 		<spring.version>5.3.24</spring.version>
-		<slf4j-api.version>2.0.6</slf4j-api.version>
 
 		<sonar.projectKey>zahori-io_zahori-framework</sonar.projectKey>
 		<sonar.organization>zahoriio</sonar.organization>
@@ -57,6 +56,8 @@
 
 		<spring-cloud-version>3.1.5</spring-cloud-version>
 		<spring-boot-version>2.7.7</spring-boot-version>
+
+		<log4j.version>2.17.2</log4j.version>
 	</properties>
 
 	<scm>
@@ -283,11 +284,6 @@
 				<version>${poi.version}</version>
 			</dependency>
 
-			<dependency>
-				<groupId>org.apache.logging.log4j</groupId>
-				<artifactId>log4j-api</artifactId>
-				<version>2.19.0</version>
-			</dependency>
 			<!-- To process excel files with extension .xlsx -->
 			<dependency>
 				<groupId>org.apache.poi</groupId>
@@ -301,22 +297,6 @@
 				<artifactId>javers-core</artifactId>
 				<version>6.8.1</version>
 			</dependency>
-
-<!--			<dependency>
-				<groupId>com.sikulix</groupId>
-				<artifactId>sikulixapi</artifactId>
-				<version>2.0.5</version>
-				<exclusions>
-					<exclusion>
-						<groupId>org.slf4j</groupId>
-						<artifactId>slf4j-log4j12</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>log4j</groupId>
-						<artifactId>log4j</artifactId>
-					</exclusion>
-				</exclusions>
-			</dependency>-->
 
 			<dependency>
 				<groupId>com.github.jnr</groupId>
@@ -425,26 +405,6 @@
 				<groupId>commons-io</groupId>
 				<artifactId>commons-io</artifactId>
 				<version>2.11.0</version>
-			</dependency>
-			<dependency>
-				<groupId>log4j</groupId>
-				<artifactId>log4j</artifactId>
-				<version>1.2.17</version>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-api</artifactId>
-				<version>${slf4j-api.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>jcl-over-slf4j</artifactId>
-				<version>${slf4j-api.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.slf4j</groupId>
-				<artifactId>slf4j-log4j12</artifactId>
-				<version>${slf4j-api.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>commons-logging</groupId>
@@ -679,6 +639,21 @@
 				<version>${spring-boot-version}</version>
 			</dependency>
 
+			<!-- Dependencia de Log4j2 API -->
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-api</artifactId>
+				<version>${log4j.version}</version>
+			</dependency>
+
+			<!-- Dependencia de Log4j2 Core -->
+			<dependency>
+				<groupId>org.apache.logging.log4j</groupId>
+				<artifactId>log4j-core</artifactId>
+				<version>${log4j.version}</version>
+			</dependency>
+
+
 		</dependencies>
 	</dependencyManagement>
 
@@ -779,10 +754,6 @@
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi</artifactId>
 		</dependency>
-		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-api</artifactId>
-		</dependency>
 
 		<!-- To process excel files with extension .xlsx -->
 		<dependency>
@@ -873,10 +844,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-api</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
 		</dependency>
@@ -933,8 +900,6 @@
 			<groupId>stax</groupId>
 			<artifactId>stax-api</artifactId>
 		</dependency>
-
-
 
 		<dependency>
 			<groupId>io.netty</groupId>
@@ -1022,6 +987,18 @@
 		<dependency>
 		    <groupId>org.springframework.boot</groupId>
 		    <artifactId>spring-boot-autoconfigure</artifactId>
+		</dependency>
+
+		<!-- Dependencia de Log4j2 API -->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+		</dependency>
+
+		<!-- Dependencia de Log4j2 Core -->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
 		</dependency>
 
 	</dependencies>

@@ -37,12 +37,13 @@ import io.zahori.model.process.ProcessRegistration;
 import net.lightbody.bmp.core.har.Har;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import java.io.File;
 import java.io.IOException;
@@ -64,7 +65,7 @@ public class Evidences {
     private static final String LOG_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
     private SimpleDateFormat sdf;
 
-    private static final Logger LOG = LoggerFactory.getLogger(Evidences.class);
+    private static final Logger LOG = LogManager.getLogger(Evidences.class);
 
     private static final String UNDERSCORE = "_";
 
