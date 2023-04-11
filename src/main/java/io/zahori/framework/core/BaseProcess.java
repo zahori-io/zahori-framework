@@ -10,11 +10,6 @@ import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import io.zahori.model.process.Step;
 import io.zahori.model.process.Test;
-import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -28,6 +23,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
+import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public abstract class BaseProcess {
 
