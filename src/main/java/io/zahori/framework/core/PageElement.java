@@ -12,21 +12,24 @@ package io.zahori.framework.core;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import io.zahori.framework.robot.UtilsRobot;
 import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
 import io.zahori.framework.utils.WebdriverUtils;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Action;
@@ -34,12 +37,6 @@ import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 public class PageElement {
 
@@ -54,7 +51,6 @@ public class PageElement {
     public Page page;
     public TestContext testContext;
     private WebDriver driver;
-    private final Locator[] frameLocators;
 
     public WebElement webElement;
 
@@ -64,16 +60,6 @@ public class PageElement {
         this.page = page;
         this.testContext = page.testContext;
         this.driver = this.testContext.driver;
-        this.frameLocators = null;
-    }
-
-    public PageElement(Page page, Locator[] frameLocators, String name, Locator locator) {
-        this.name = name;
-        this.locator = locator;
-        this.page = page;
-        this.testContext = page.testContext;
-        this.driver = this.testContext.driver;
-        this.frameLocators = frameLocators;
     }
 
     @Override
@@ -109,9 +95,6 @@ public class PageElement {
         webElement = findElement();
         try {
             scroll();
-
-
-
 
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds()).longValue()));
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
@@ -491,16 +474,16 @@ public class PageElement {
         try {
             String text;
             switch (webElement.getTagName()) {
-            case "select":
-                final Select select = new Select(webElement);
-                text = select.getFirstSelectedOption().getText().trim();
-                break;
-            case "input":
-                text = webElement.getAttribute(VALUE);
-                break;
-            default:
-                text = webElement.getText().trim();
-                break;
+                case "select":
+                    final Select select = new Select(webElement);
+                    text = select.getFirstSelectedOption().getText().trim();
+                    break;
+                case "input":
+                    text = webElement.getAttribute(VALUE);
+                    break;
+                default:
+                    text = webElement.getText().trim();
+                    break;
             }
 
             testContext.logInfo(GET_TEXT + text + FROM + this);
@@ -589,26 +572,13 @@ public class PageElement {
 
     public boolean isPresent() {
 
-
         try {
-            switchWithLocators();
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
             final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(0L));
             wait.until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
             return driver.findElement(locator.getBy()) != null;
         } catch (final Exception e) {
             return false;
-        }
-    }
-
-    private void switchWithLocators() {
-        if (frameLocators != null) {
-            page.switchToDefaultContent();
-            for (final Locator actualFrame : frameLocators) {
-                page.switchToFrame(new PageElement(page, "frameElement", actualFrame));
-            }
-        } else {
-            page.switchToDefaultContent();
         }
     }
 
@@ -634,7 +604,6 @@ public class PageElement {
 
     public boolean isVisibleWithoutWait() {
         try {
-            switchWithLocators();
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
             webElement = driver.findElement(locator.getBy());
             return webElement.isDisplayed();
@@ -655,7 +624,6 @@ public class PageElement {
 
     public void initWebElement() {
         try {
-            switchWithLocators();
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
             this.webElement = driver.findElement(locator.getBy());
         } catch (final NullPointerException | NoSuchElementException e) {
@@ -691,7 +659,6 @@ public class PageElement {
     }
 
     private boolean waitElementVisible_initiated(Chronometer crono) {
-        switchWithLocators();
         boolean found = false;
         try {
             while (!found && (crono.getElapsedSeconds() < testContext.timeoutFindElement)) {
@@ -708,7 +675,6 @@ public class PageElement {
     private WebElement findElementPresent() {
 
         try {
-            switchWithLocators();
             final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(testContext.timeoutFindElement.longValue()));
             return (WebElement) wait.until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
         } catch (final Exception e) {
@@ -718,7 +684,6 @@ public class PageElement {
 
     private WebElement findElementVisible() {
         try {
-            switchWithLocators();
             final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(testContext.timeoutFindElement.longValue()));
             return (WebElement) wait.until(ExpectedConditions.visibilityOfElementLocated(locator.getBy()));
         } catch (final Exception e) {
