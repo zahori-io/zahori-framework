@@ -276,8 +276,13 @@ public class XrayRestClient {
     private void initRestObjects() {
         params = new HashMap<>();
         headers = new HashMap<>();
-        String auth = Base64.encodeBase64String((jiraUser + ":" + jiraPassword).getBytes());
-        headers.put("Authorization", "Basic " + auth);
+        // Basic authentication: 
+        // String auth = Base64.encodeBase64String((jiraUser + ":" + jiraPassword).getBytes());
+        // headers.put("Authorization", "Basic " + auth);
+
+        // Personal token authentication: 
+        headers.put("Authorization", "Bearer " + jiraPassword);
+
         headers.put("Content-Type", "application/json");
     }
 
