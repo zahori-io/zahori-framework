@@ -55,7 +55,7 @@
         <netty.version>4.1.92.Final</netty.version>
         <asm.version>9.5</asm.version>
 
-        <spring-boot-version>3.0.6</spring-boot-version>
+        <spring-boot-version>3.0.7</spring-boot-version>
     </properties>
 
     <scm>
