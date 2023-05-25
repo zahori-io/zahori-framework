@@ -45,7 +45,6 @@
         <selenium.version>4.9.0</selenium.version>
         <poi.version>5.2.3</poi.version>
         <jackson.version>2.15.0</jackson.version>
-        <!--<slf4j-api.version>2.0.7</slf4j-api.version>-->
         <log4j.version>2.20.0</log4j.version>
 
         <sonar.projectKey>zahori-io_zahori-framework</sonar.projectKey>
@@ -56,6 +55,8 @@
         <asm.version>9.5</asm.version>
 
         <spring-boot-version>3.0.6</spring-boot-version>
+        <spring-cloud.version>2022.0.2</spring-cloud.version>
+
     </properties>
 
     <scm>
@@ -124,6 +125,7 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Selenium -->
             <dependency>
                 <groupId>org.seleniumhq.selenium</groupId>
                 <artifactId>selenium-api</artifactId>
@@ -188,9 +190,9 @@
             <dependency>
                 <groupId>io.github.bonigarcia</groupId>
                 <artifactId>webdrivermanager</artifactId>
-                <version>5.3.1</version>
+                <version>5.3.2</version>
             </dependency>
-
+            <!-- FIN Selenium -->
             <dependency>
                 <groupId>com.github.stephenc.monte</groupId>
                 <artifactId>monte-screen-recorder</artifactId>
@@ -229,62 +231,22 @@
                 <version>0.1.4</version>
             </dependency>
 
+            <!-- Spring Boot -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter</artifactId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <type>pom</type>
                 <version>${spring-boot-version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.springframework.boot</groupId>
-                        <artifactId>spring-boot-starter-logging</artifactId>
-                    </exclusion>
-                </exclusions>
+                <scope>import</scope>
             </dependency>
-
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-log4j2</artifactId>
-                <version>${spring-boot-version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-devtools</artifactId>
-                <version>${spring-boot-version}</version>
-                <scope>runtime</scope>
-                <optional>true</optional>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-test</artifactId>
-                <version>${spring-boot-version}</version>
-                <scope>test</scope>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-web</artifactId>
-                <version>${spring-boot-version}</version>        
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-actuator</artifactId>
-                <version>${spring-boot-version}</version>
-            </dependency>
-
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-starter-consul-discovery</artifactId>
-                <version>4.0.2</version>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
-
-            <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-starter-loadbalancer</artifactId>
-                <version>4.0.2</version>
-            </dependency>
-
+            <!-- FIN Spring Boot -->
             <!-- Test Link -->
             <dependency>
                 <groupId>br.eti.kinoshita</groupId>
@@ -1081,11 +1043,6 @@
                 <artifactId>spring-boot-devtools</artifactId>
                 <scope>runtime</scope>
                 <optional>true</optional>
-            </dependency>
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter-test</artifactId>
-                <scope>test</scope>
             </dependency>
 
             <dependency>
