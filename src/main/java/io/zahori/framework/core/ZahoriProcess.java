@@ -12,21 +12,21 @@ package io.zahori.framework.core;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import org.apache.commons.lang.StringUtils;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +37,7 @@ import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.cloud.consul.discovery.ReregistrationPredicate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.event.EventListener;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -84,9 +85,34 @@ public abstract class ZahoriProcess extends BaseProcess {
     }
 
     @PostMapping(BaseProcess.RUN_URL)
-    public CaseExecution runProcess(@RequestBody CaseExecution caseExecution) {
-        ProcessRegistration processRegistration = new ProcessRegistration(name, clientId, teamId, procTypeId);
-        return super.runProcess(caseExecution, processRegistration, getServerUrl(), remote, selenoidUrl);
+    public ResponseEntity<Object> runProcess(@RequestBody CaseExecution caseExecution) {
+        try {
+//            printJsonBody(caseExecution);
+            ProcessRegistration processRegistration = new ProcessRegistration(name, clientId, teamId, procTypeId);
+            caseExecution = super.runProcess(caseExecution, processRegistration, getServerUrl(), remote, selenoidUrl);
+            return new ResponseEntity<>(caseExecution, HttpStatus.OK);
+        } catch (Exception e) {
+            e.printStackTrace();
+            LOG.error(e.getMessage());
+            caseExecution.setNotes(e.getMessage());
+            return new ResponseEntity<>(caseExecution, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Error e) {
+            e.printStackTrace();
+            LOG.error(e.getMessage());
+            caseExecution.setNotes(e.getClass().getSimpleName() + ": " + e.getMessage());
+            return new ResponseEntity<>(caseExecution, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private void printJsonBody(CaseExecution caseExecution) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(caseExecution);
+            LOG.info(json);
+        } catch (JsonProcessingException ex) {
+            LOG.warn("Error printing request body: {}", ex.getMessage());
+        }
+
     }
 
     @EventListener
