@@ -12,12 +12,12 @@ package io.zahori.framework.evidences;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -34,17 +34,8 @@ import io.zahori.framework.utils.video.VideoRecorder;
 import io.zahori.model.Status;
 import io.zahori.model.Step;
 import io.zahori.model.process.ProcessRegistration;
-import net.lightbody.bmp.core.har.Har;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.Proxy;
-import org.openqa.selenium.TakesScreenshot;
-import org.openqa.selenium.WebDriver;
-
-
+import java.awt.Color;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -53,6 +44,15 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import javax.imageio.ImageIO;
+import net.lightbody.bmp.core.har.Har;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.Proxy;
+import org.openqa.selenium.TakesScreenshot;
+import org.openqa.selenium.WebDriver;
 
 public class Evidences {
 
@@ -69,7 +69,7 @@ public class Evidences {
 
     private static final String UNDERSCORE = "_";
 
-    private static final String[] BOLD_LIST = new String[] { "[STEP ", "[TEST " };
+    private static final String[] BOLD_LIST = new String[]{"[STEP ", "[TEST "};
     private static final String RED = "FF0000";
 
     private String evidenceFileNamePattern;
@@ -293,11 +293,11 @@ public class Evidences {
                 File image = (step.getAttachments() == null) || step.getAttachments().isEmpty() ? null : step.getAttachments().get(0);
                 if (image != null) {
                     switch (status) {
-                    case Status.FAILED:
-                        doc.getValue().insertarImagenColor(image, messages.getMessage(doc.getKey(), step.getDescription(), step.getDescriptionArgs()), RED);
-                        break;
-                    default:
-                        doc.getValue().insertarImagen(image, messages.getMessage(doc.getKey(), step.getDescription(), step.getDescriptionArgs()));
+                        case Status.FAILED:
+                            doc.getValue().insertarImagenColor(image, messages.getMessage(doc.getKey(), step.getDescription(), step.getDescriptionArgs()), RED);
+                            break;
+                        default:
+                            doc.getValue().insertarImagen(image, messages.getMessage(doc.getKey(), step.getDescription(), step.getDescriptionArgs()));
                     }
 
                 } else {
@@ -318,19 +318,19 @@ public class Evidences {
 
         } else {
             switch (status) {
-            case Status.FAILED:
-                if (hasBoldText(text)) {
-                    doc.getValue().insertarTextoColorNegrita(text, RED);
-                } else {
-                    doc.getValue().insertarTextoColor(text, RED);
-                }
-                break;
-            default:
-                if (hasBoldText(text)) {
-                    doc.getValue().insertarTextoNegrita(text);
-                } else {
-                    doc.getValue().insertarTexto(text);
-                }
+                case Status.FAILED:
+                    if (hasBoldText(text)) {
+                        doc.getValue().insertarTextoColorNegrita(text, RED);
+                    } else {
+                        doc.getValue().insertarTextoColor(text, RED);
+                    }
+                    break;
+                default:
+                    if (hasBoldText(text)) {
+                        doc.getValue().insertarTextoNegrita(text);
+                    } else {
+                        doc.getValue().insertarTexto(text);
+                    }
 
             }
         }
@@ -338,12 +338,12 @@ public class Evidences {
     }
 
     public String createScreenshot(int numPaso, int numSubPaso, WebDriver driver) {
-        String screenshot = null;
+        String screenshotJpgFilePath = null;
         if (screenshots != null) {
-            screenshot = path + "Step_" + numPaso + "_" + numSubPaso + ".png";
+            screenshotJpgFilePath = path + "Step_" + numPaso + "_" + numSubPaso + ".jpg";
             try {
                 File screenShotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-                FileUtils.copyFile(screenShotFile, new File(screenshot));
+                savePngFileAsJpg(screenShotFile, screenshotJpgFilePath);
             } catch (Exception e) {
                 String error = "Error creating screenshot: " + e.getMessage();
                 console(ZahoriLogLevel.ERROR, error);
@@ -351,7 +351,25 @@ public class Evidences {
                 insertFailedTextInDocs(error);
             }
         }
-        return screenshot;
+        return screenshotJpgFilePath;
+    }
+
+    private void savePngFileAsJpg(File pngFile, String jpgFilePath) throws IOException {
+        // Long start = System.currentTimeMillis();
+        BufferedImage pngImage = ImageIO.read(pngFile);
+
+        // jpg needs BufferedImage.TYPE_INT_RGB
+        // png needs BufferedImage.TYPE_INT_ARGB
+        // create a blank, RGB, same width and height
+        BufferedImage jpgImage = new BufferedImage(pngImage.getWidth(), pngImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+
+        // draw a white background and puts the originalImage on it.
+        jpgImage.createGraphics().drawImage(pngImage, 0, 0, Color.WHITE, null);
+
+        // save image
+        File jpgFile = new File(jpgFilePath);
+        ImageIO.write(jpgImage, "jpg", jpgFile);
+        // LOG.debug("Convert png to jpg --> time: " + (System.currentTimeMillis() - start));
     }
 
     public void startVideo() {
