@@ -73,6 +73,7 @@ public class TestContext {
     public List<List<Step>> testSteps = new ArrayList<>();
     private int testDuration = 0;
     private long testStartupTime;
+    private long stepStartupTime;
 
     public ProcessRegistration processRegistration;
 
@@ -408,6 +409,7 @@ public class TestContext {
     private Step logStep(String status, String description, String... descriptionArgs) {
         Step step = new Step(null, "" + (testSteps.size() + 1), status, description);
         step.setDescriptionArgs(descriptionArgs);
+        setStepDuration(step);
 
         currentStep.add(step);
         testSteps.add(currentStep);
@@ -424,6 +426,7 @@ public class TestContext {
     private Step logStepWithScreenshot(String status, String description, String... descriptionArgs) {
         Step step = new Step(null, String.valueOf(testSteps.size() + 1), status, description);
         step.setDescriptionArgs(descriptionArgs);
+        setStepDuration(step);
 
         createScreenshot(step);
         currentStep.add(step);
@@ -438,6 +441,15 @@ public class TestContext {
         return step;
     }
 
+    private void setStepDuration(Step step) {
+        long stepDurationLong = System.currentTimeMillis() - stepStartupTime;
+        int stepDuration = (Long.valueOf(TimeUnit.MILLISECONDS.toSeconds(stepDurationLong))).intValue();
+        step.setDuration(stepDuration);
+
+        // Reset duration for next step
+        stepStartupTime = System.currentTimeMillis();
+    }
+    
     private void createScreenshot(Step step) {
         if (StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
             return;
@@ -451,6 +463,7 @@ public class TestContext {
 
     public void startChronometer() {
         testStartupTime = System.currentTimeMillis();
+        stepStartupTime = System.currentTimeMillis();
     }
 
     public void stopChronometer() {
@@ -472,7 +485,7 @@ public class TestContext {
 
     public void moveMouseToUpperLeftCorner() {
         try {
-            if ((driver == null)  || StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
+            if ((driver == null) || StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
                 // move mouse does not apply
                 return;
             }
