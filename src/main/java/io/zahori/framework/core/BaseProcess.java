@@ -232,6 +232,7 @@ public abstract class BaseProcess {
 
         caseExecution.setStatus(test.getTestStatus());
         caseExecution.setDate(test.getExecutionDate());
+        caseExecution.setDateTimestamp(System.currentTimeMillis());
         caseExecution.setNotes(test.getExecutionNotes());
         caseExecution.setDurationSeconds(test.getDurationSeconds());
 
