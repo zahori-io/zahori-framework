@@ -52,9 +52,11 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.openqa.selenium.Proxy;
@@ -295,12 +297,30 @@ public class TestContext {
             this.zahoriException = (ZahoriException) e;
         } else {
             this.zahoriException = new ZahoriException(testCaseName, e.getMessage());
-            logStepWithScreenshot(Status.FAILED, getMessage(zahoriException.getMessageKey()));
+            logStepWithScreenshot(Status.FAILED, getMessage(zahoriException.getMessageKey()) + getErrorLine(e));
             logError(ExceptionUtils.getStackTrace(e));
         }
 
         // throw a new exception in order to make the test fail
         throwZahoriException(zahoriException.getMessageKey(), zahoriException.getMessageArgs());
+    }
+
+    private String getErrorLine(Exception e) {
+        String[] lines = StringUtils.split(ExceptionUtils.getStackTrace(e), "\n");
+        if (lines == null || lines.length == 0) {
+            return "";
+        }
+
+        List<String> linesList = Arrays.asList(lines);
+        for (int i = 0; i < linesList.size(); i++) {
+            if (i == 0) {
+                continue;
+            }
+            if (!StringUtils.startsWith(linesList.get(i), "	at io.zahori.framework")) {
+                return " " + linesList.get(i);
+            }
+        }
+        return "";
     }
 
     private void throwZahoriException(String errorMessageKey, String... errorMessageArgs) {
