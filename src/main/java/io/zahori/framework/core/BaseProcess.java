@@ -22,7 +22,6 @@ package io.zahori.framework.core;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zahori.framework.driver.browserfactory.Browsers;
@@ -51,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -132,7 +130,7 @@ public abstract class BaseProcess {
             return testContext;
         } catch (Exception e) {
             e.printStackTrace();
-            throw new ZahoriException(caseExecution.getCas().getName(), "Error on process setup: " + e.getMessage());
+            throw new ZahoriException("", "Error initializing case: " + e.getMessage());
         }
     }
 
@@ -191,15 +189,37 @@ public abstract class BaseProcess {
         try {
             if (testContext != null) {
                 testContext.stopVideo();
-                // Delete test case evidences directory to free up disk space
-                FileUtils.deleteDirectory(new File(testContext.evidences.getPath()));
+
                 if (testContext.getBrowser() != null) {
                     testContext.getBrowser().close();
                 }
             }
-
         } catch (Exception e) {
-            throw new ZahoriException(caseExecution.getCas().getName(), "Error on process teardown: " + e.getMessage());
+            LOG.error("Error on process teardown: {}", e.getMessage());
+        } finally {
+            if (testContext != null) {
+                // do asynchronously:
+                new Thread(() -> {
+                    uploadResultsToTms(testContext);
+                    deleteEvidenceDirectory(testContext);
+                }).start();
+            }
+        }
+    }
+
+    private void uploadResultsToTms(TestContext testContext) {
+        try {
+            testContext.uploadResultsToTms();
+        } catch (Exception ex) {
+            LOG.error("Error uploading case results to {}: {}", testContext.getTmsName(), ex.getMessage());
+        }
+    }
+
+    private void deleteEvidenceDirectory(TestContext testContext) {
+        try {
+            testContext.deleteEvidenceDirectory();
+        } catch (Exception ex) {
+            LOG.error("Error deleting evidence directory: {}", ex.getMessage());
         }
     }
 

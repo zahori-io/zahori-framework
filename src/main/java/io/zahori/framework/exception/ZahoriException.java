@@ -1,5 +1,7 @@
 package io.zahori.framework.exception;
 
+import org.apache.commons.lang3.StringUtils;
+
 /*-
  * #%L
  * zahori-framework
@@ -12,17 +14,16 @@ package io.zahori.framework.exception;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 public class ZahoriException extends RuntimeException {
 
     private static final long serialVersionUID = 1L;
@@ -32,7 +33,7 @@ public class ZahoriException extends RuntimeException {
 
     public ZahoriException(String testCaseName, String messageKey, String... messageArgs) {
         super();
-        this.message = testCaseName + ": " + messageKey;
+        this.message = StringUtils.isNotBlank(testCaseName) ? (testCaseName + ": " + messageKey) : messageKey;
         this.messageKey = messageKey;
         this.messageArgs = messageArgs.clone();
     }

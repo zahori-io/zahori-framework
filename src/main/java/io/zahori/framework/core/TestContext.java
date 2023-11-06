@@ -341,11 +341,17 @@ public class TestContext {
             logInfo(zahoriException.getMessageKey(), zahoriException.getMessageArgs());
             evidences.insertFailedTextInDocs(zahoriException.getMessageKey(), zahoriException.getMessageArgs());
         }
+    }
 
-        // Update test result on Test Link, ALM,...
+    // Update test result on Test Link, ALM,...
+    public void uploadResultsToTms() {
         if (!updateTestResultDisabled) {
             tms.updateTestResult(testCaseName, testPassed, testSteps, testDuration, tmsTestSetId, tmsTestCaseId, tmsTestExecId, browserName, platform);
         }
+    }
+
+    public void deleteEvidenceDirectory() throws IOException {
+        FileUtils.deleteDirectory(new File(evidences.getPath()));
     }
 
     public void logDebug(String text, String... textArgs) {
@@ -469,7 +475,7 @@ public class TestContext {
         // Reset duration for next step
         stepStartupTime = System.currentTimeMillis();
     }
-    
+
     private void createScreenshot(Step step) {
         if (StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
             return;
@@ -673,6 +679,10 @@ public class TestContext {
 
     public int getTestDuration() {
         return testDuration;
+    }
+
+    public String getTmsName() {
+        return tms.getTms();
     }
 
     public boolean isAppiumLocalService() {

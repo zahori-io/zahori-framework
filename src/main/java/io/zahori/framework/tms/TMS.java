@@ -12,17 +12,16 @@ package io.zahori.framework.tms;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import com.google.common.net.InetAddresses;
 import io.zahori.framework.evidences.Evidences;
 import io.zahori.framework.files.properties.ZahoriProperties;
@@ -34,11 +33,6 @@ import io.zahori.model.Run;
 import io.zahori.model.Step;
 import io.zahori.tms.alm.restclient.ALMRestClient;
 import io.zahori.tms.alm.restclient.ALMRestClient.EntityType;
-import org.apache.commons.lang.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -47,6 +41,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class TMS {
 
@@ -86,6 +83,10 @@ public class TMS {
     public TMS(ZahoriProperties zahoriProperties, Evidences evidences, Messages messages, String startDate) {
         this(zahoriProperties, evidences, messages);
         date = startDate;
+    }
+
+    public String getTms() {
+        return tms;
     }
 
     public void updateTestResult(String testCaseName, boolean passed, List<List<Step>> testSteps, int testDuration, String tmsTestSetId, String tmsTestCaseId,
@@ -132,7 +133,6 @@ public class TMS {
         }
 
         // 1. CREATE NEW TEST RUN
-
         // 1.a) TestLink
         int executionId = updateResultTestLink(tmsTestCaseId, passed);
 
@@ -146,7 +146,6 @@ public class TMS {
         }
 
         // 2. UPLOAD EVIDENCES TO TEST RUN
-
         // 2.a) When test is PASSED
         if (passed) {
             // Doc
@@ -420,8 +419,9 @@ public class TMS {
                 : (zahoriProperties.isHarLogFileEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenFailed());
 
         if (uploadDoc) {
-            for (String docFileName : evidences.getDocFileNames())
+            for (String docFileName : evidences.getDocFileNames()) {
                 evidencesFiles.add(evidences.getEvidencesPath() + docFileName);
+            }
         }
 
         if (uploadVideo) {
@@ -429,8 +429,9 @@ public class TMS {
         }
 
         if (uploadLog) {
-            for (String logFileName : evidences.getLogFileNames())
+            for (String logFileName : evidences.getLogFileNames()) {
                 evidencesFiles.add(evidences.getEvidencesPath() + logFileName);
+            }
         }
 
         if (uploadHarLog) {
