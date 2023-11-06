@@ -42,7 +42,7 @@
 
         <skip.integration.tests>false</skip.integration.tests>
         <skip.unit.tests>true</skip.unit.tests>
-        <selenium.version>4.9.1</selenium.version>
+        <selenium.version>4.15.0</selenium.version>
         <poi.version>5.2.3</poi.version>
         <jackson.version>2.15.1</jackson.version>
         <log4j.version>2.20.0</log4j.version>
@@ -139,7 +139,7 @@
             </dependency>
             <dependency>
                 <groupId>org.seleniumhq.selenium</groupId>
-                <artifactId>selenium-devtools-v85</artifactId>
+                <artifactId>selenium-devtools-v118</artifactId>
                 <version>${selenium.version}</version>
             </dependency>
 
