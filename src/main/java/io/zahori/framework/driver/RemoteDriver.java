@@ -36,7 +36,7 @@ public class RemoteDriver implements Driver {
     @Override
     public WebDriver getDriver(Browsers browsers) {
         AbstractDriverOptions<?> options = getOptions(browsers);
-        final int timeoutSecondsForDriverCreation = 1200; // 1200seconds = 20 minutes
+        final int timeoutSecondsForDriverCreation = 3600; // 3600 seconds = 60 minutes
         WebDriver webDriver = WebDriverManager.getInstance(browsers.getName().toUpperCase()).browserVersion(browsers.getVersion()).remoteAddress(browsers.getRemoteUrl()).capabilities(options).timeout(timeoutSecondsForDriverCreation).disableTracing().create();
 
         ((RemoteWebDriver) webDriver).setFileDetector(new LocalFileDetector());
