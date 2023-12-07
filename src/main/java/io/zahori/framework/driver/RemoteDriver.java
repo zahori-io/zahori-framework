@@ -31,23 +31,30 @@ import org.openqa.selenium.remote.AbstractDriverOptions;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
-public class RemoteDriver implements Driver {
+public class RemoteDriver extends AbstractDriver {
 
     @Override
-    public WebDriver getDriver(Browsers browsers) {
+    protected WebDriver createWebDriver(Browsers browsers) {
         AbstractDriverOptions<?> options = getOptions(browsers);
-        final int timeoutSecondsForDriverCreation = 3600; // 3600 seconds = 60 minutes
-        WebDriver webDriver = WebDriverManager.getInstance(browsers.getName().toUpperCase()).browserVersion(browsers.getVersion()).remoteAddress(browsers.getRemoteUrl()).capabilities(options).timeout(timeoutSecondsForDriverCreation).disableTracing().create();
-
-        ((RemoteWebDriver) webDriver).setFileDetector(new LocalFileDetector());
-        webDriver.manage().window().maximize();
-
-        return webDriver;
+        final int timeoutSecondsForDriverCreation = 3600; // 60 minutos
+        return WebDriverManager.getInstance(browsers.getName().toUpperCase())
+                .browserVersion(browsers.getVersion())
+                .remoteAddress(browsers.getRemoteUrl())
+                .capabilities(options)
+                .timeout(timeoutSecondsForDriverCreation)
+                .disableTracing()
+                .create();
     }
 
+    @Override
+    protected void configureWebDriver(WebDriver webDriver, Browsers browsers) {
+        // Cualquier otra configuracion especifica de RemoteDriver
+        webDriver.manage().window().maximize();
+    }
+
+    @Override
     public AbstractDriverOptions<?> getOptions(Browsers browsers) {
-        AbstractDriverOptions<?> options = OptionsFactory.valueOf(browsers.name()).getOptions();
-        options.setAcceptInsecureCerts(true);
+        AbstractDriverOptions<?> options = super.getOptions(browsers);
         options.setBrowserVersion(browsers.getVersion());
 
         Map<String, Object> selenoidOptions = new HashMap<>();

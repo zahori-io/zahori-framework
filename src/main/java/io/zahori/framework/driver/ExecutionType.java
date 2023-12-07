@@ -23,13 +23,17 @@ package io.zahori.framework.driver;
  * #L%
  */
 
-public enum TypExecution {
+public enum ExecutionType {
     REMOTE("YES"),
     LOCAL("NO");
 
     private String name;
 
-    TypExecution(final String name) {
+    public String getName() {
+        return name;
+    }
+
+    ExecutionType(final String name) {
         this.name = name;
     }
 }

@@ -32,29 +32,24 @@ import org.openqa.selenium.remote.AbstractDriverOptions;
 
 import java.time.Duration;
 
-public class LocalDriver implements Driver{
-    public  WebDriver getDriver(Browsers browsers){
-        WebDriver webDriver = WebDriverManager.getInstance(browsers.getName()).capabilities(getOptions(browsers)).create();
-
-        resizeWindow(webDriver, browsers);
-
-        return webDriver;
-    }
-
-    public AbstractDriverOptions<?> getOptions(Browsers browsers) {
-        AbstractDriverOptions<?> options = OptionsFactory.valueOf(browsers.name()).getOptions();
-        options.setAcceptInsecureCerts(true);
-        options.setImplicitWaitTimeout(Duration.ofSeconds(100));
-
-        options.setCapability("name", browsers.getCaseExecutionId());
-        options.setCapability("testName", browsers.getTestName());
-
-        options.setCapability("screenResolution", browsers.getScreenResolution());
-        return options;
-    }
+public class LocalDriver extends AbstractDriver {
 
     private void resizeWindow(WebDriver driver, Browsers browsers) {
         String resolution = browsers.getScreenResolution();
         driver.manage().window().setSize(new Dimension(Integer.valueOf(resolution.split("x")[0]).intValue(), Integer.valueOf(resolution.split("x")[1]).intValue()));
+    }
+
+    @Override
+    protected WebDriver createWebDriver(Browsers browsers) {
+        return WebDriverManager.getInstance(browsers.getName().toUpperCase())
+                .capabilities(getOptions(browsers))
+                .create();
+    }
+
+    // Si hay configuraciones específicas para LocalDriver, puedes sobrescribir `configureWebDriver` aquí
+
+    @Override
+    protected void configureWebDriver(WebDriver webDriver, Browsers browsers) {
+        resizeWindow(webDriver, browsers);
     }
 }
