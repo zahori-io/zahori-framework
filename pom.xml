@@ -44,7 +44,7 @@
         <skip.unit.tests>true</skip.unit.tests>
         <selenium.version>4.16.1</selenium.version>
         <poi.version>5.2.5</poi.version>
-        <jackson.version>2.15.1</jackson.version>
+        <jackson.version>2.16.0</jackson.version>
         <log4j.version>2.22.0</log4j.version>
 
         <sonar.projectKey>zahori-io_zahori-framework</sonar.projectKey>
