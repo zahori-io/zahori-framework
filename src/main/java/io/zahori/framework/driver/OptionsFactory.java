@@ -40,6 +40,9 @@ public enum OptionsFactory {
             chromeOptions.addArguments("--disable-infobars");
             chromeOptions.addArguments("--disable-notifications");
             chromeOptions.addArguments("--remote-allow-origins=*");
+            chromeOptions.addArguments("--no-sandbox");
+            chromeOptions.addArguments("--disable-dev-shm-usage");
+
             //chromeOptions.addArguments("--headless=new");
             chromeOptions.setHeadless(false);
             chromeOptions.setAcceptInsecureCerts(true);
