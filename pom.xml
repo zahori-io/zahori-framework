@@ -589,7 +589,7 @@
             <dependency>
                 <groupId>net.java.dev.jna</groupId>
                 <artifactId>jna</artifactId>
-                <version>5.13.0</version>
+                <version>5.14.0</version>
             </dependency>
             <dependency>
                 <groupId>io.netty</groupId>
@@ -1230,7 +1230,7 @@
                                 <id>enforce</id>
                                 <configuration>
                                     <rules>
-                                        <DependencyConvergence />
+                                        <DependencyConvergence/>
                                         <requireMavenVersion>
                                             <version>3.6.3</version>
                                         </requireMavenVersion>
