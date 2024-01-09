@@ -1,4 +1,4 @@
-package io.zahori.framework.tms.xray;
+package io.zahori.framework.tms.xray.server;
 
 /*-
  * #%L
@@ -12,21 +12,19 @@ package io.zahori.framework.tms.xray;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import io.zahori.framework.core.TestContext;
 import io.zahori.framework.rest.NetClient;
 import io.zahori.framework.rest.ServiceInfo;
-import io.zahori.framework.security.ZahoriCipher;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,7 +34,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
 
 import java.io.File;
 import java.io.IOException;
@@ -51,9 +48,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class XrayRestClient {
+public class XrayServerClient {
 
-    private static final Logger LOG = LogManager.getLogger(XrayRestClient.class);
+    private static final Logger LOG = LogManager.getLogger(XrayServerClient.class);
 
     private static final String TAG_TESTEXEC_ID = "{{testExecId}}";
     private static final String TAG_TESTPLAN_ID = "{{testPlanId}}";
@@ -74,10 +71,10 @@ public class XrayRestClient {
     private Map<String, String> params = new HashMap<>();
     private Map<String, String> headers = new HashMap<>();
 
-    public XrayRestClient(String jiraURL, String jiraUser, String jiraPassword) {
+    public XrayServerClient(String jiraURL, String jiraUser, String jiraPassword) {
         this.jiraURL = jiraURL;
         this.jiraUser = jiraUser;
-        this.jiraPassword = new ZahoriCipher().decode(jiraPassword);
+        this.jiraPassword = jiraPassword;
         params = null;
         headers = null;
     }
@@ -277,11 +274,11 @@ public class XrayRestClient {
     private void initRestObjects() {
         params = new HashMap<>();
         headers = new HashMap<>();
-        // Basic authentication: 
+        // Basic authentication:
         // String auth = Base64.encodeBase64String((jiraUser + ":" + jiraPassword).getBytes());
         // headers.put("Authorization", "Basic " + auth);
 
-        // Personal token authentication: 
+        // Personal token authentication:
         headers.put("Authorization", "Bearer " + jiraPassword);
 
         headers.put("Content-Type", "application/json");
