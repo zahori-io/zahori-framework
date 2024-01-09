@@ -28,9 +28,13 @@ import io.zahori.framework.files.properties.ZahoriProperties;
 import io.zahori.framework.i18n.Messages;
 import io.zahori.framework.security.MyTrustManager;
 import io.zahori.framework.tms.testLink.TestLink;
-import io.zahori.framework.tms.xray.XrayRestClient;
+import io.zahori.framework.tms.xray.cloud.XrayCloudClient;
+import io.zahori.framework.tms.xray.cloud.ZahoriXrayReportBuilder;
+import io.zahori.framework.tms.xray.cloud.model.XrayCloudReport;
+import io.zahori.framework.tms.xray.server.XrayServerClient;
 import io.zahori.model.Run;
 import io.zahori.model.Step;
+import io.zahori.model.process.CaseExecution;
 import io.zahori.tms.alm.restclient.ALMRestClient;
 import io.zahori.tms.alm.restclient.ALMRestClient.EntityType;
 import java.io.File;
@@ -39,28 +43,29 @@ import java.net.InetAddress;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class TMS {
+public class TmsService {
 
     // Supported repositories
     private static final String ALM = "ALM";
     private static final String TEST_LINK = "TestLink";
-    private static final String JIRA_XRAY = "Jira Xray";
+    private static final String JIRA_XRAY_SERVER = "Xray Server";
+    private static final String JIRA_XRAY_CLOUD = "Xray Cloud";
 
-    private static final Logger LOG = LogManager.getLogger(TMS.class);
+    private static final Logger LOG = LogManager.getLogger(TmsService.class);
 
     // TMS
     private String tms;
     private TestLink testLink;
     private ALMRestClient alm;
-    private XrayRestClient xray;
+    private XrayServerClient xrayServer;
+    private XrayCloudClient xrayCloud;
     private String executionNotes;
     private String date;
+    private CaseExecution caseExecution;
 
     // Zahorí options
     private ZahoriProperties zahoriProperties;
@@ -71,7 +76,7 @@ public class TMS {
     // i18n Messages
     private Messages messages;
 
-    public TMS(ZahoriProperties zahoriProperties, Evidences evidences, Messages messages) {
+    public TmsService(ZahoriProperties zahoriProperties, Evidences evidences, Messages messages) {
         tms = zahoriProperties.getTMS();
         this.zahoriProperties = zahoriProperties;
         this.evidences = evidences;
@@ -80,7 +85,7 @@ public class TMS {
         date = null;
     }
 
-    public TMS(ZahoriProperties zahoriProperties, Evidences evidences, Messages messages, String startDate) {
+    public TmsService(ZahoriProperties zahoriProperties, Evidences evidences, Messages messages, String startDate) {
         this(zahoriProperties, evidences, messages);
         date = startDate;
     }
@@ -89,8 +94,15 @@ public class TMS {
         return tms;
     }
 
-    public void updateTestResult(String testCaseName, boolean passed, List<List<Step>> testSteps, int testDuration, String tmsTestSetId, String tmsTestCaseId,
-            String tmsTestExecId, String browserName, String platformName) {
+    public void updateTestResult(
+            CaseExecution caseExecution,
+            boolean passed,
+            List<List<Step>> testSteps,
+            int testDuration,
+            String browserName,
+            String platformName
+    ) {
+        this.caseExecution = caseExecution;
 
         // TMS is disabled
         if (!zahoriProperties.isTMSEnabled()) {
@@ -98,7 +110,7 @@ public class TMS {
         }
 
         // TMS not supported
-        if (!TEST_LINK.equalsIgnoreCase(tms) && !ALM.equalsIgnoreCase(tms) && !JIRA_XRAY.equalsIgnoreCase(tms)) {
+        if (!TEST_LINK.equalsIgnoreCase(tms) && !ALM.equalsIgnoreCase(tms) && !JIRA_XRAY_SERVER.equalsIgnoreCase(tms) && !JIRA_XRAY_CLOUD.equalsIgnoreCase(tms)) {
             throw new RuntimeException("TMS " + tms + " not supported");
         }
 
@@ -113,15 +125,24 @@ public class TMS {
             testLink = getTestLinkInstance(browserName, platformName);
         }
 
-        // Create XRAY instance
-        if (JIRA_XRAY.equalsIgnoreCase(tms)) {
+        // Create XRAY SERVER instance
+        if (JIRA_XRAY_SERVER.equalsIgnoreCase(tms)) {
             String jiraUrl = zahoriProperties.getXrayUrl();
             checkParameter(tms, "jiraUrl", jiraUrl);
             String jiraUser = zahoriProperties.getXrayUser();
-            checkParameter(tms, "jiraUser", jiraUser);
+            // checkParameter(tms, "jiraUser", jiraUser);
             String jiraPassword = zahoriProperties.getXrayPassword();
             checkParameter(tms, "jiraPassword", jiraPassword);
-            xray = new XrayRestClient(jiraUrl, jiraUser, jiraPassword);
+            xrayServer = new XrayServerClient(jiraUrl, jiraUser, jiraPassword);
+        }
+
+        // Create XRAY CLOUD instance
+        if (JIRA_XRAY_CLOUD.equalsIgnoreCase(tms)) {
+            String jiraUser = zahoriProperties.getXrayUser();
+            checkParameter(tms, "xray client_id", jiraUser);
+            String jiraPassword = zahoriProperties.getXrayPassword();
+            checkParameter(tms, "xray client_secret", jiraPassword);
+            xrayCloud = new XrayCloudClient(jiraUser, jiraPassword);
         }
 
         // Create ALM instance
@@ -134,14 +155,21 @@ public class TMS {
 
         // 1. CREATE NEW TEST RUN
         // 1.a) TestLink
-        int executionId = updateResultTestLink(tmsTestCaseId, passed);
+        int executionId = updateResultTestLink(caseExecution.getConfiguration().getTms().getTestCaseId(), passed);
 
         // 1.b) ALM
-        Run runALM = updateResultALM(tmsTestSetId, tmsTestCaseId, testCaseName, passed, testDuration);
+        Run runALM = updateResultALM(
+                caseExecution.getConfiguration().getTms().getTestPlanId(),
+                caseExecution.getConfiguration().getTms().getTestCaseId(),
+                caseExecution.getCas().getName(), passed, testDuration);
 
         // 1.c) XRAY
         List<String> evidencesFiles = getEvidencesFilesToUpload(passed);
-        if (updateResultXray(zahoriProperties.getXrayTestPlanId(), tmsTestExecId, tmsTestCaseId, passed, evidencesFiles) < 0) {
+        if (updateResultXray(
+                caseExecution.getConfiguration().getTms().getTestExecutionId(),
+                caseExecution.getConfiguration().getTms().getTestExecutionSummary(),
+                caseExecution.getConfiguration().getTms().getTestPlanId(),
+                caseExecution.getConfiguration().getTms().getTestCaseId(), passed, evidencesFiles) < 0) {
             logInfo("Cannot update test result on JIRA XRAY");
         }
 
@@ -151,26 +179,26 @@ public class TMS {
             // Doc
             if (zahoriProperties.isDocGenerationEnabled() && zahoriProperties.uploadEvidenceDocWhenPassed()) {
                 for (String docFileName : evidences.getDocFileNames()) {
-                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + docFileName, testCaseName);
+                    uploadAttachmentTestLink(executionId, evidences.getEvidencesPath() + docFileName, caseExecution.getCas().getName());
                     uploadAttachmentALM(runALM, evidences.getEvidencesPath() + docFileName);
                 }
             }
             // Video
             if (zahoriProperties.isVideoGenerationEnabledWhenPassed() && zahoriProperties.uploadEvidenceVideoWhenPassed()) {
-                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + evidences.getVideoFileName(), testCaseName);
+                uploadAttachmentTestLink(executionId, evidences.getEvidencesPath() + evidences.getVideoFileName(), caseExecution.getCas().getName());
                 uploadAttachmentALM(runALM, evidences.getEvidencesPath() + evidences.getVideoFileName());
             }
             // Log file (is the last attachment to be uploaded in order to
             // register logs with TMS)
             if (zahoriProperties.isLogFileGenerationEnabled() && zahoriProperties.uploadEvidenceLogFileWhenPassed()) {
                 for (String logFileName : evidences.getLogFileNames()) {
-                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + logFileName, testCaseName);
+                    uploadAttachmentTestLink(executionId, evidences.getEvidencesPath() + logFileName, caseExecution.getCas().getName());
                     uploadAttachmentALM(runALM, evidences.getEvidencesPath() + logFileName);
                 }
             }
             // HarLog
             if (zahoriProperties.isHarLogFileEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenPassed()) {
-                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + evidences.getHarLogFileName(), testCaseName);
+                uploadAttachmentTestLink(executionId, evidences.getEvidencesPath() + evidences.getHarLogFileName(), caseExecution.getCas().getName());
                 uploadAttachmentALM(runALM, evidences.getEvidencesPath() + evidences.getHarLogFileName());
             }
         }
@@ -180,26 +208,26 @@ public class TMS {
             // Doc
             if (zahoriProperties.isDocGenerationEnabled() && zahoriProperties.uploadEvidenceDocWhenFailed()) {
                 for (String docFileName : evidences.getDocFileNames()) {
-                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + docFileName, testCaseName);
+                    uploadAttachmentTestLink(executionId, evidences.getEvidencesPath() + docFileName, caseExecution.getCas().getName());
                     uploadAttachmentALM(runALM, evidences.getEvidencesPath() + docFileName);
                 }
             }
             // Video
             if (zahoriProperties.isVideoGenerationEnabledWhenFailed() && zahoriProperties.uploadEvidenceVideoWhenFailed()) {
-                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + evidences.getVideoFileName(), testCaseName);
+                uploadAttachmentTestLink(executionId, evidences.getEvidencesPath() + evidences.getVideoFileName(), caseExecution.getCas().getName());
                 uploadAttachmentALM(runALM, evidences.getEvidencesPath() + evidences.getVideoFileName());
             }
             // Log file (is the last attachment to be uploaded in order to
             // register logs with TMS)
             if (zahoriProperties.isLogFileGenerationEnabled() && zahoriProperties.uploadEvidenceLogFileWhenFailed()) {
                 for (String logFileName : evidences.getLogFileNames()) {
-                    uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + logFileName, testCaseName);
+                    uploadAttachmentTestLink(executionId, evidences.getEvidencesPath() + logFileName, caseExecution.getCas().getName());
                     uploadAttachmentALM(runALM, evidences.getEvidencesPath() + logFileName);
                 }
             }
             // HarLog
             if (zahoriProperties.isHarLogFileEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenFailed()) {
-                uploadAttachmentTestLink(Integer.valueOf(executionId), evidences.getEvidencesPath() + evidences.getHarLogFileName(), testCaseName);
+                uploadAttachmentTestLink(executionId, evidences.getEvidencesPath() + evidences.getHarLogFileName(), caseExecution.getCas().getName());
                 uploadAttachmentALM(runALM, evidences.getEvidencesPath() + evidences.getHarLogFileName());
             }
         }
@@ -207,7 +235,6 @@ public class TMS {
         // 3. CREATE TEST RUN STEPS
         if (!testSteps.isEmpty()) {
 
-            logInfo("Creating run steps");
             for (List<Step> steps : testSteps) {
 
                 // ALM
@@ -237,7 +264,7 @@ public class TMS {
 
     // TestLink - upload attachment to run
     private void uploadAttachmentTestLink(Integer executionId, String filePath, String title) {
-        if ((testLink != null) && (executionId.intValue() > 0)) {
+        if ((testLink != null) && (executionId > 0)) {
             logInfo("Uploading attachment: " + filePath);
             testLink.uploadExecutionAttachment(executionId, filePath, title);
         }
@@ -277,6 +304,7 @@ public class TMS {
 
     private void createRunStepALM(Run run, List<Step> steps) {
         if ((alm != null) && (run != null) && (steps != null)) {
+            logInfo("Creating run steps in ALM");
 
             StringBuilder stepDescription = new StringBuilder();
             List<File> attachments = new ArrayList<>();
@@ -336,45 +364,61 @@ public class TMS {
     }
 
     // JIRA XRAY - update test run result
-    private int updateResultXray(String testPlanId, String testExecutionId, String testCaseId, boolean passed, List<String> evidencesFiles) {
-        if (xray != null) {
-            checkParameter(JIRA_XRAY, "testPlanId", testPlanId);
-            checkParameter(JIRA_XRAY, "testCaseId", testCaseId);
-            String newTExec = testExecutionId;
-            if (StringUtils.isEmpty(newTExec) || !xray.existsTEOnJira(newTExec)) {
-                newTExec = processTestExecutionOnXray();
+    private int updateResultXray(String tmsTestExecutionId, String tmsTestExecutionSummary, String tmsTestPlanId, String testCaseId, boolean passed, List<String> evidencesFiles) {
+        if (xrayServer != null) {
+            if (StringUtils.isBlank(tmsTestPlanId)) {
+                tmsTestPlanId = zahoriProperties.getXrayTestPlanId();
+            }
+            if (StringUtils.isBlank(tmsTestExecutionSummary)) {
+                tmsTestExecutionSummary = zahoriProperties.getXrayTestExecSummary();
             }
 
-            if (!StringUtils.isEmpty(newTExec)) {
-                xray.associateTC2TE(newTExec, testCaseId);
-                logInfo("Associated Test Case " + testCaseId + " with Test Execution " + newTExec);
+            checkParameter(JIRA_XRAY_SERVER, "testPlanId", tmsTestPlanId);
+            checkParameter(JIRA_XRAY_SERVER, "testCaseId", testCaseId);
 
-                xray.associateTE2TP(newTExec, testPlanId);
-                logInfo("Associated Test Execution " + newTExec + " with Test Plan " + testPlanId);
+            if (StringUtils.isBlank(tmsTestExecutionId) || !xrayServer.existsTEOnJira(tmsTestExecutionId)) {
+                tmsTestExecutionId = createTestExecutionOnXray(tmsTestExecutionSummary);
+            }
 
-                xray.associateTC2TP(testCaseId, testPlanId);
-                logInfo("Associated Test Case " + testCaseId + " with Test Plan " + testPlanId);
+            if (!StringUtils.isBlank(tmsTestExecutionId)) {
+                xrayServer.associateTC2TE(tmsTestExecutionId, testCaseId);
+                logInfo("Associated Test Case " + testCaseId + " with Test Execution " + tmsTestExecutionId);
+
+                xrayServer.associateTE2TP(tmsTestExecutionId, tmsTestPlanId);
+                logInfo("Associated Test Execution " + tmsTestExecutionId + " with Test Plan " + tmsTestPlanId);
+
+                xrayServer.associateTC2TP(testCaseId, tmsTestPlanId);
+                logInfo("Associated Test Case " + testCaseId + " with Test Plan " + tmsTestPlanId);
 
                 logInfo("Updating test result: " + (passed ? "PASSED" : "FAILED"));
-                return xray.updateTestResult(newTExec, testCaseId, (passed ? "PASS" : "FAIL"), executionNotes, date, evidencesFiles);
+                return xrayServer.updateTestResult(tmsTestExecutionId, testCaseId, (passed ? "PASS" : "FAIL"), executionNotes, date, evidencesFiles);
             } else {
                 return -1;
+            }
+        }
+
+        if (xrayCloud != null) {
+            if (StringUtils.isBlank(tmsTestExecutionId)) {
+                if (TmsBulkService.isExecutionCompleted(caseExecution.getExecutionId())) {
+                    List<CaseExecution> caseExecutions = TmsBulkService.getCaseExecutions(caseExecution.getExecutionId());
+                    XrayCloudReport xrayCloudReport = ZahoriXrayReportBuilder.build(caseExecutions, zahoriProperties.getResultsDir());
+                    xrayCloud.uploadTestResult(xrayCloudReport);
+                }
+            } else {
+                XrayCloudReport xrayCloudReport = ZahoriXrayReportBuilder.build(caseExecution, zahoriProperties.getResultsDir());
+                xrayCloud.uploadTestResult(xrayCloudReport);
             }
         }
         return 0;
     }
 
-    private String processTestExecutionOnXray() {
-        String summary = getTESummary(zahoriProperties.getXrayTestExecSummary());
-        String environment = System.getProperty("entorno");
-        environment = StringUtils.isEmpty(environment) ? "UNDEFINED ENV" : environment;
-        summary = StringUtils.replace(summary, "{environment}", environment);
-        String testExecutionId = xray.look4TE(zahoriProperties.getXrayProjectKey(), summary);
-        if (StringUtils.isEmpty(testExecutionId)) {
-            testExecutionId = xray.createTestExecution(zahoriProperties.getXrayProjectKey(), summary, zahoriProperties.getXrayTestExecDescription(),
+    private String createTestExecutionOnXray(String testExecutionSummary) {
+        String testExecutionId = xrayServer.look4TE(zahoriProperties.getXrayProjectKey(), testExecutionSummary);
+        if (StringUtils.isBlank(testExecutionId)) {
+            testExecutionId = xrayServer.createTestExecution(zahoriProperties.getXrayProjectKey(), testExecutionSummary, zahoriProperties.getXrayTestExecDescription(),
                     zahoriProperties.getXrayTestExecPriorityId(), zahoriProperties.getXrayTestExecLabels(), zahoriProperties.getXrayTestExecComponents(),
                     zahoriProperties.getXrayTestExecAssignee());
-            if (StringUtils.isEmpty(testExecutionId)) {
+            if (StringUtils.isBlank(testExecutionId)) {
                 logInfo("An error has ocurred when trying to create new Test Execution on JIRA");
             } else {
                 logInfo("Created new Test Execution on JIRA: " + testExecutionId);
@@ -383,27 +427,6 @@ public class TMS {
             logInfo("Recovered Test Execution from JIRA: " + testExecutionId);
         }
         return testExecutionId;
-    }
-
-    public static String getTESummary(String base) {
-        String result = base;
-        List<String> propertiesToSearch = new ArrayList<>();
-        Pattern pattern = Pattern.compile("\\{[\\w\\d]+\\}");
-        Matcher matcher = pattern.matcher(base);
-        while (matcher.find()) {
-            String match = matcher.group();
-            match = StringUtils.replace(match, "{", StringUtils.EMPTY);
-            match = StringUtils.replace(match, "}", StringUtils.EMPTY);
-            propertiesToSearch.add(match);
-        }
-
-        for (String currentProperty : propertiesToSearch) {
-            String propValue = System.getProperty(currentProperty);
-            propValue = StringUtils.isEmpty(propValue) ? "UNDEFINED" : propValue;
-            result = StringUtils.replace(result, "{" + currentProperty + "}", propValue);
-        }
-
-        return result;
     }
 
     // JIRA XRAY - upload attachment to run

@@ -22,7 +22,6 @@ package io.zahori.framework.evidences;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import io.zahori.framework.driver.browserfactory.BrowserMobProxy;
 import io.zahori.framework.files.doc.Word;
 import io.zahori.framework.files.log.LogFile;
@@ -33,6 +32,7 @@ import io.zahori.framework.utils.video.EnterpriseScreenRecorder;
 import io.zahori.framework.utils.video.VideoRecorder;
 import io.zahori.model.Status;
 import io.zahori.model.Step;
+import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
@@ -101,12 +101,12 @@ public class Evidences {
 
     private boolean remoteBrowser;
 
-    public Evidences(ZahoriProperties zahoriProperties, Messages messages, String testCaseName, String platform, String browser, String resolution,
+    public Evidences(CaseExecution caseExecution, ZahoriProperties zahoriProperties, Messages messages, String platform, String browser, String resolution,
             String testId, String templatePath, boolean remoteBrowser, ProcessRegistration processRegistration) {
         this.remoteBrowser = remoteBrowser;
         this.zahoriProperties = zahoriProperties;
         this.messages = messages;
-        evidenceFileNamePattern = testCaseName + UNDERSCORE + (!StringUtils.isBlank(platform) ? platform + UNDERSCORE : "")
+        evidenceFileNamePattern = caseExecution.getCas().getName() + UNDERSCORE + (!StringUtils.isBlank(platform) ? platform + UNDERSCORE : "")
                 + (!StringUtils.isBlank(browser) ? browser + UNDERSCORE : "") + testId;
 
         String processPath = "";
@@ -114,10 +114,12 @@ public class Evidences {
             processPath = processRegistration.getClientId() + File.separator + processRegistration.getTeamId() + File.separator + processRegistration.getName()
                     + File.separator;
         }
-        path = zahoriProperties.getResultsDir() + processPath + testCaseName + File.separator
+        path = zahoriProperties.getResultsDir() + processPath + caseExecution.getCas().getName() + File.separator
                 + (!StringUtils.isBlank(platform) ? platform + File.separator : "") + (!StringUtils.isBlank(browser) ? browser + File.separator : "")
                 + (!StringUtils.isBlank(resolution) ? resolution + File.separator : "") + testId + File.separator;
         prepareDirectory(new File(path));
+
+        caseExecution.setEvidencesPath(path);
 
         // Get languages defined in zahori.properties
         String[] langs = messages.getLanguages();
@@ -137,9 +139,9 @@ public class Evidences {
                 String docFile = evidenceFileNamePattern + "_" + lang + ".docx";
                 docFileNames.add(docFile);
                 if ((templatePath == null) || templatePath.isEmpty()) {
-                    docs.put(lang, new Word(path, docFile, "Test: " + testCaseName));
+                    docs.put(lang, new Word(path, docFile, "Test: " + caseExecution.getCas().getName()));
                 } else {
-                    docs.put(lang, new Word(path, docFile, "Test: " + testCaseName, templatePath));
+                    docs.put(lang, new Word(path, docFile, "Test: " + caseExecution.getCas().getName(), templatePath));
                 }
             }
         }

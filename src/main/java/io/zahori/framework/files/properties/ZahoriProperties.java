@@ -12,31 +12,29 @@ package io.zahori.framework.files.properties;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import io.zahori.framework.evidences.Evidences.ZahoriLogLevel;
 import io.zahori.framework.exception.ZahoriException;
 import io.zahori.framework.security.ZahoriCipher;
 import io.zahori.framework.utils.BooleanUtils;
 import io.zahori.model.process.Configuration;
-import org.apache.commons.lang3.EnumUtils;
-import org.apache.commons.lang3.StringUtils;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import org.apache.commons.lang3.EnumUtils;
+import org.apache.commons.lang3.StringUtils;
 
 public class ZahoriProperties {
 
@@ -75,7 +73,6 @@ public class ZahoriProperties {
              * e.nextElement().toString(); LOG.debug("- " + key + "=" +
              * prop.getProperty(key)); } }
              */
-
         } catch (Exception e) {
             throw new RuntimeException("ERROR loading zahorí properties file: " + e.getMessage());
         } finally {
@@ -122,12 +119,11 @@ public class ZahoriProperties {
     }
 
     // ***** Evidences *****
-
     // Languages
     public String[] getLanguages() {
         String languages = getProperty("zahori.test.results.evidence.languages");
 
-        String[] defaultLang = { "EN" };
+        String[] defaultLang = {"EN"};
 
         // if no languages found in zahori.properties
         if (StringUtils.isBlank(languages)) {
@@ -238,23 +234,23 @@ public class ZahoriProperties {
     }
 
     // ***** TMS *****
-
+    
     public boolean isTMSEnabled() {
-        if (configuration != null) {
-            return configuration.isUploadResults();
+        if (configuration != null && configuration.getTms() != null) {
+            return configuration.getTms().isUploadResults();
         }
         return BooleanUtils.getBoolean(getProperty("zahori.test.results.tms.enabled"));
     }
 
     public String getTMS() {
-        if (configuration != null && configuration.isUploadResults()) {
-            return configuration.getUploadRepositoryName();
+        if (configuration != null && configuration.getTms() != null) {
+            return configuration.getTms().getName();
         }
         return getProperty("zahori.test.results.tms");
     }
 
     // TMS Options
-
+    
     // LogFile
     public boolean uploadEvidenceLogFileWhenPassed() {
         return BooleanUtils.getBoolean(getProperty("zahori.test.results.tms.uploadEvidence.logFile.passed"));
@@ -292,12 +288,19 @@ public class ZahoriProperties {
     }
 
     // TEST LINK
-
+    
     public String getTestLinkUrl() {
+        if (configuration != null) {
+            return configuration.getTms().getUrl();
+        }
         return getProperty("zahori.test.results.tms.testLink.url");
     }
 
     public String getTestLinkApiKey() {
+        ZahoriCipher cipher = new ZahoriCipher();
+        if (configuration != null) {
+            return cipher.decode(configuration.getTms().getPassword());
+        }
         return getProperty("zahori.test.results.tms.testLink.apiKey");
     }
 
@@ -318,23 +321,31 @@ public class ZahoriProperties {
     }
 
     // HOST 3270 EMULATION
-
     public String getHostEmulatorURL() {
         return getProperty("zahori.test.host.emulator.url");
     }
 
     // ALM
-
+    
     public String getALMUrl() {
+        if (configuration != null) {
+            return configuration.getTms().getUrl();
+        }
         return getProperty("zahori.test.results.tms.alm.url");
     }
 
     public String getALMUsername() {
+        if (configuration != null) {
+            return configuration.getTms().getUser();
+        }
         return getProperty("zahori.test.results.tms.alm.username");
     }
 
     public String getALMPassword() {
         ZahoriCipher cipher = new ZahoriCipher();
+        if (configuration != null) {
+            return cipher.decode(configuration.getTms().getPassword());
+        }
         return cipher.decode(getProperty("zahori.test.results.tms.alm.password"));
     }
 
@@ -420,21 +431,22 @@ public class ZahoriProperties {
 
     public String getXrayUrl() {
         if (configuration != null) {
-            return configuration.getUploadRepositoryUrl();
+            return configuration.getTms().getUrl();
         }
         return getProperty("zahori.test.results.tms.xray.url");
     }
 
     public String getXrayUser() {
         if (configuration != null) {
-            return configuration.getUploadRepositoryUser();
+            return configuration.getTms().getUser();
         }
         return getProperty("zahori.test.results.tms.xray.username");
     }
 
     public String getXrayPassword() {
+        ZahoriCipher cipher = new ZahoriCipher();
         if (configuration != null) {
-            return configuration.getUploadRepositoryPass();
+            return cipher.decode(configuration.getTms().getPassword());
         }
         return getProperty("zahori.test.results.tms.xray.password");
     }

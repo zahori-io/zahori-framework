@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.exception.ZahoriException;
 import io.zahori.framework.exception.ZahoriPassedException;
+import io.zahori.framework.tms.TmsBulkService;
 import io.zahori.framework.utils.Pause;
 import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
@@ -47,9 +48,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Random;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -97,32 +98,17 @@ public abstract class BaseProcess {
     private TestContext setup(CaseExecution caseExecution, ProcessRegistration processRegistration, String remote, String remoteUrl) {
         LOG.info("==== Setup {}", getCaseExcutionDetails(caseExecution));
 
-        TestContext testContext = null;
         try {
-            testContext = new TestContext();
-            testContext.processRegistration = processRegistration;
-            testContext.testCaseName = caseExecution.getCas().getName();
-            testContext.caseExecutionId = String.valueOf(caseExecution.getCaseExecutionId());
-            testContext.platform = "LINUX"; // TODO
-            testContext.bits = "32"; // TODO
-            testContext.browserName = caseExecution.getBrowser().getBrowserName().toUpperCase();
-            testContext.version = StringUtils.isBlank(caseExecution.getBrowser().getVersion()) ? caseExecution.getBrowser().getDefaultVersion()
-                    : caseExecution.getBrowser().getVersion();
-            testContext.resolution = StringUtils.isBlank(caseExecution.getScreenResolution()) ? DEFAULT_SCREEN_RESOLUTION
-                    : caseExecution.getScreenResolution() + DEFAULT_BIT_DEPTH;
+            TestContext testContext = new TestContext(caseExecution, processRegistration);
+
             testContext.remote = remote;
             testContext.remoteUrl = remoteUrl;
-
-            // Read TMS variables
-            Map<String, String> caseData = caseExecution.getCas().getDataMap();
-            testContext.tmsTestCaseId = caseData.get("TMS_TC_ID");
-            testContext.tmsTestExecId = caseData.get("TMS_TE_ID");
 
             // TODO investigate: This random pause fixes screenshots in several screen resolutions in parallel executions
             int millis = randomNumber();
             Pause.pauseMillis(millis);
 
-            testContext.constructor(caseExecution.getConfiguration());
+            testContext.constructor();
             testContext.startChronometer();
             // testContext.moveMouseToUpperLeftCorner();
             testContext.startVideo();
@@ -200,8 +186,14 @@ public abstract class BaseProcess {
             if (testContext != null) {
                 // do asynchronously:
                 new Thread(() -> {
+                    TmsBulkService.addCaseExecution(caseExecution);
                     uploadResultsToTms(testContext);
-                    deleteEvidenceDirectory(testContext);
+
+                    if (TmsBulkService.isExecutionCompleted(caseExecution.getExecutionId())) {
+                        List<CaseExecution> caseExecutions = TmsBulkService.getCaseExecutions(caseExecution.getExecutionId());
+                        deleteEvidenceDirectory(caseExecutions);
+                        TmsBulkService.removeExecution(caseExecution.getExecutionId());
+                    }
                 }).start();
             }
         }
@@ -212,14 +204,21 @@ public abstract class BaseProcess {
             testContext.uploadResultsToTms();
         } catch (Exception ex) {
             LOG.error("Error uploading case results to {}: {}", testContext.getTmsName(), ex.getMessage());
+            // ex.printStackTrace();
         }
     }
 
-    private void deleteEvidenceDirectory(TestContext testContext) {
-        try {
-            testContext.deleteEvidenceDirectory();
-        } catch (Exception ex) {
-            LOG.error("Error deleting evidence directory: {}", ex.getMessage());
+    private void deleteEvidenceDirectory(List<CaseExecution> caseExecutions) {
+        if (caseExecutions.isEmpty()) {
+            return;
+        }
+
+        for (CaseExecution caseExecution : caseExecutions) {
+            try {
+                FileUtils.deleteDirectory(new File(caseExecution.getEvidencesPath()));
+            } catch (Exception ex) {
+                LOG.error("Error deleting evidence directory: {}", ex.getMessage());
+            }
         }
     }
 

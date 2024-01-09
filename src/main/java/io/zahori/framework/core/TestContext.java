@@ -26,6 +26,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import static io.zahori.framework.core.BaseProcess.DEFAULT_BIT_DEPTH;
+import static io.zahori.framework.core.BaseProcess.DEFAULT_SCREEN_RESOLUTION;
 import io.zahori.framework.driver.browserfactory.BrowserMobProxy;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.evidences.Evidences;
@@ -37,12 +39,12 @@ import io.zahori.framework.files.properties.SystemPropertiesUtils;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import io.zahori.framework.i18n.Messages;
 import io.zahori.framework.robot.UtilsRobot;
-import io.zahori.framework.tms.TMS;
+import io.zahori.framework.tms.TmsService;
 import io.zahori.framework.utils.Notification;
 import io.zahori.framework.utils.WebdriverUtils;
 import io.zahori.model.Status;
 import io.zahori.model.Step;
-import io.zahori.model.process.Configuration;
+import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import java.io.File;
 import java.io.IOException;
@@ -56,7 +58,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.openqa.selenium.Proxy;
@@ -76,8 +77,6 @@ public class TestContext {
     private int testDuration = 0;
     private long testStartupTime;
     private long stepStartupTime;
-
-    public ProcessRegistration processRegistration;
 
     // TestNG parameters defined in xml file
     public String testCaseName;
@@ -110,12 +109,7 @@ public class TestContext {
     private List<String> attachments = new ArrayList<>();
 
     // TMS (Test Management Systems)
-    private TMS tms;
-    public String tmsTestSetId;
-    public String tmsTestCaseId;
-    public String tmsTestExecId;
-    public String tmsTestPlanId;
-
+    private TmsService tmsService;
     public String caseExecutionId;
 
     // i18n messages
@@ -127,61 +121,55 @@ public class TestContext {
     private boolean retriesDisabled;
     private boolean updateTestResultDisabled;
 
-    public TestContext() {
+    public CaseExecution caseExecution;
+    public ProcessRegistration processRegistration;
+
+    public TestContext(CaseExecution caseExecution, ProcessRegistration processRegistration) {
+        this.caseExecution = caseExecution;
+        this.processRegistration = processRegistration;
+
+        testCaseName = caseExecution.getCas().getName();
+        caseExecutionId = String.valueOf(caseExecution.getCaseExecutionId());
+        platform = "LINUX"; // TODO
+        bits = "32"; // TODO
+        browserName = caseExecution.getBrowser().getBrowserName().toUpperCase();
+        version = StringUtils.isBlank(caseExecution.getBrowser().getVersion()) ? caseExecution.getBrowser().getDefaultVersion()
+                : caseExecution.getBrowser().getVersion();
+        resolution = StringUtils.isBlank(caseExecution.getScreenResolution()) ? DEFAULT_SCREEN_RESOLUTION
+                : caseExecution.getScreenResolution() + DEFAULT_BIT_DEPTH;
     }
 
     public void constructor() {
+
         // Load configuration.properties into system properties
         // For IE is mandatory to load property: webdriver.ie.driver.path
         SystemPropertiesUtils.loadSystemProperties();
 
         // Load properties files: zahorí and project specific
-        zahoriProperties = new ZahoriProperties();
+        zahoriProperties = new ZahoriProperties(caseExecution.getConfiguration());
         projectProperties = new ProjectProperties();
 
-        // Load systemPropertyVariables from pom files
-        url = System.getProperty("url.web");
-        if (StringUtils.isBlank(url)) {
-            url = zahoriProperties.getTestUrl();
-        }
+        // Read url from configuration
+        url = caseExecution.getConfiguration().getEnvironmentUrl();
 
         // Initialize messages readers with languages defined in
         // zahori.properties
         messages = new Messages(zahoriProperties.getLanguages());
 
         // Prepare evidences from configuration.properties // TODO refactor
-        evidences = new Evidences(zahoriProperties, messages, testCaseName, platform, browserName, resolution, testId,
+        evidences = new Evidences(caseExecution, zahoriProperties, messages, platform, browserName, resolution, testId,
                 getProjectProperty("evidences.template.file.path"), StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote), processRegistration);
 
-        // Test execution parameters from configuration.properties
-        timeoutFindElement = zahoriProperties.getTimeoutFindElement();
+        // Timeout
+        timeoutFindElement = (int) caseExecution.getConfiguration().getTimeout();
 
         // Create TMS object to update test results and upload evidences to
         // TestLink, ALM...;
-        tms = new TMS(zahoriProperties, evidences, messages, testId);
+        tmsService = new TmsService(zahoriProperties, evidences, messages, testId);
 
-        evidences.insertTextInDocs("zahori.testInfo.execution.date", testId);
-        evidences.insertTextInDocs("zahori.testInfo.execution.platform", platform);
-        evidences.insertTextInDocs("zahori.testInfo.execution.browser.name", browserName);
-        evidences.insertTextInDocs("zahori.testInfo.execution.browser.version", version);
-        evidences.insertTextInDocs("zahori.testInfo.execution.bits", bits);
-        evidences.insertTextInDocs("zahori.testInfo.execution.evidences.path", evidences.getPath());
-
-        logInfo("zahori.testInfo.title");
-        logInfo("- Case: " + testCaseName);
-        logInfo("zahori.testInfo.execution.date", testId);
-        logInfo("zahori.testInfo.execution.platform", platform);
-        logInfo("zahori.testInfo.execution.browser.name", browserName);
-        logInfo("zahori.testInfo.execution.browser.version", version);
-        logInfo("zahori.testInfo.execution.bits", bits);
-        String txtEvidencesPathProperty = "zahori.testInfo.execution.evidences.path";
-        String evidencesPath = getMessage(txtEvidencesPathProperty);
-        if (!evidencesPath.isEmpty() && !evidencesPath.equals(txtEvidencesPathProperty)) {
-            logInfo(txtEvidencesPathProperty, evidences.getPath());
-        }
-        if ((url != null) && !url.isEmpty()) {
-            logInfo("- Url: " + url);
-        }
+        // Log context info
+        logTestInfo(evidences);
+        logTmsInfo(evidences);
 
         // Driver and browser // TODO hacer factoría única para desktop, mobile,
         // host...
@@ -192,45 +180,16 @@ public class TestContext {
         }
 
         hostDriver = null;
-        retriesDisabled = false;
-        updateTestResultDisabled = false;
 
         logInfo("Test context initialized!");
     }
 
-    public void constructor(Configuration configuration) {
-        // Load configuration.properties into system properties
-        // For IE is mandatory to load property: webdriver.ie.driver.path
-        SystemPropertiesUtils.loadSystemProperties();
-
-        // Load properties files: zahorí and project specific
-        zahoriProperties = new ZahoriProperties(configuration);
-        projectProperties = new ProjectProperties();
-
-        // Read url from configuration
-        url = configuration.getEnvironmentUrl();
-
-        // Initialize messages readers with languages defined in
-        // zahori.properties
-        messages = new Messages(zahoriProperties.getLanguages());
-
-        // Prepare evidences from configuration.properties // TODO refactor
-        evidences = new Evidences(zahoriProperties, messages, testCaseName, platform, browserName, resolution, testId,
-                getProjectProperty("evidences.template.file.path"), StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote), processRegistration);
-
-        // Timeout
-        timeoutFindElement = (int) configuration.getTimeout();
-
-        // Create TMS object to update test results and upload evidences to
-        // TestLink, ALM...;
-        tms = new TMS(zahoriProperties, evidences, messages, testId);
-
+    private void logTestInfo(Evidences evidences) {
         evidences.insertTextInDocs("zahori.testInfo.execution.date", testId);
         evidences.insertTextInDocs("zahori.testInfo.execution.platform", platform);
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.name", browserName);
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.version", version);
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.resolution", resolution);
-        evidences.insertTextInDocs("zahori.testInfo.execution.bits", bits);
         evidences.insertTextInDocs("zahori.testInfo.execution.evidences.path", evidences.getPath());
 
         logInfo("zahori.testInfo.title");
@@ -240,27 +199,38 @@ public class TestContext {
         logInfo("zahori.testInfo.execution.browser.name", browserName);
         logInfo("zahori.testInfo.execution.browser.version", version);
         logInfo("zahori.testInfo.execution.browser.resolution", resolution);
-        logInfo("zahori.testInfo.execution.bits", bits);
         String txtEvidencesPathProperty = "zahori.testInfo.execution.evidences.path";
         String evidencesPath = getMessage(txtEvidencesPathProperty);
         if (!evidencesPath.isEmpty() && !evidencesPath.equals(txtEvidencesPathProperty)) {
             logInfo(txtEvidencesPathProperty, evidences.getPath());
         }
-        if ((url != null) && !url.isEmpty()) {
+        if (StringUtils.isNotBlank(url)) {
             logInfo("- Url: " + url);
         }
+    }
 
-        // Driver and browser // TODO hacer factoría única para desktop, mobile,
-        // host...
-        if (StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
-            browser = null;
-        } else {
-            browser = new Browser(this);
+    private void logTmsInfo(Evidences evidences) {
+        if (caseExecution.getConfiguration() == null || caseExecution.getConfiguration().getTms() == null) {
+            return;
         }
 
-        hostDriver = null;
+        if (!caseExecution.getConfiguration().getTms().isUploadResults()) {
+            return;
+        }
 
-        logInfo("Test context initialized!");
+        evidences.insertTextInDocs("- TMS-Name: {}", zahoriProperties.getTMS());
+        evidences.insertTextInDocs("- TMS-Upload results: {}", String.valueOf(caseExecution.getConfiguration().getTms().isUploadResults()));
+        evidences.insertTextInDocs("- TMS-Test Case Id: {}", caseExecution.getConfiguration().getTms().getTestCaseId());
+        evidences.insertTextInDocs("- TMS-Test Execution Id: {}", caseExecution.getConfiguration().getTms().getTestExecutionId());
+        evidences.insertTextInDocs("- TMS-Test Execution Summary: {}", caseExecution.getConfiguration().getTms().getTestExecutionSummary());
+        evidences.insertTextInDocs("- TMS-Test Plan Id: {}", caseExecution.getConfiguration().getTms().getTestPlanId());
+
+        logInfo("- TMS-Upload results: {}", String.valueOf(caseExecution.getConfiguration().getTms().isUploadResults()));
+        logInfo("- TMS-Name: {}", zahoriProperties.getTMS());
+        logInfo("- TMS-Test Case Id: {}", caseExecution.getConfiguration().getTms().getTestCaseId());
+        logInfo("- TMS-Test Execution Id: {}", caseExecution.getConfiguration().getTms().getTestExecutionId());
+        logInfo("- TMS-Test Execution Summary: {}", caseExecution.getConfiguration().getTms().getTestExecutionSummary());
+        logInfo("- TMS-Test Plan Id: {}", caseExecution.getConfiguration().getTms().getTestPlanId());
     }
 
     public void passTest(String messageKey, String... messageArgs) {
@@ -346,12 +316,8 @@ public class TestContext {
     // Update test result on Test Link, ALM,...
     public void uploadResultsToTms() {
         if (!updateTestResultDisabled) {
-            tms.updateTestResult(testCaseName, testPassed, testSteps, testDuration, tmsTestSetId, tmsTestCaseId, tmsTestExecId, browserName, platform);
+            tmsService.updateTestResult(caseExecution, testPassed, testSteps, testDuration, browserName, platform);
         }
-    }
-
-    public void deleteEvidenceDirectory() throws IOException {
-        FileUtils.deleteDirectory(new File(evidences.getPath()));
     }
 
     public void logDebug(String text, String... textArgs) {
@@ -620,7 +586,7 @@ public class TestContext {
 
     public void setExecutionNotes(String notes) {
         executionNotes = StringUtils.isEmpty(executionNotes) ? notes : executionNotes + "\n" + notes;
-        tms.setExecutionNotes(notes);
+        tmsService.setExecutionNotes(notes);
     }
 
     public void resetExecutionNotes() {
@@ -682,7 +648,7 @@ public class TestContext {
     }
 
     public String getTmsName() {
-        return tms.getTms();
+        return caseExecution.getConfiguration().getTms().getName();
     }
 
     public boolean isAppiumLocalService() {

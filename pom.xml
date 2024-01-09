@@ -368,7 +368,7 @@
             <dependency>
                 <groupId>io.zahori</groupId>
                 <artifactId>zahori-model</artifactId>
-                <version>0.1.7</version>
+                <version>0.1.8</version>
             </dependency>
 
             <!-- Merge .mp4 video files [AndroidScreenRecorder.java] -->
@@ -1054,7 +1054,7 @@
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-starter-loadbalancer</artifactId>
-            </dependency>
+            </dependency>  
             
     </dependencies>
 
