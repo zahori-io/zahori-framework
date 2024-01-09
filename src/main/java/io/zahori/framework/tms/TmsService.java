@@ -365,6 +365,8 @@ public class TmsService {
 
     // JIRA XRAY - update test run result
     private int updateResultXray(String tmsTestExecutionId, String tmsTestExecutionSummary, String tmsTestPlanId, String testCaseId, boolean passed, List<String> evidencesFiles) {
+        checkParameter(JIRA_XRAY_SERVER, "testCaseId (TMS_TC_ID)", testCaseId);
+
         if (xrayServer != null) {
             if (StringUtils.isBlank(tmsTestPlanId)) {
                 tmsTestPlanId = zahoriProperties.getXrayTestPlanId();
@@ -374,7 +376,6 @@ public class TmsService {
             }
 
             checkParameter(JIRA_XRAY_SERVER, "testPlanId", tmsTestPlanId);
-            checkParameter(JIRA_XRAY_SERVER, "testCaseId", testCaseId);
 
             if (StringUtils.isBlank(tmsTestExecutionId) || !xrayServer.existsTEOnJira(tmsTestExecutionId)) {
                 tmsTestExecutionId = createTestExecutionOnXray(tmsTestExecutionSummary);
