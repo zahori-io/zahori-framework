@@ -26,6 +26,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.ios.IOSDriver;
 import static io.zahori.framework.core.BaseProcess.DEFAULT_BIT_DEPTH;
 import static io.zahori.framework.core.BaseProcess.DEFAULT_SCREEN_RESOLUTION;
 import io.zahori.framework.driver.browserfactory.BrowserMobProxy;
@@ -726,4 +728,47 @@ public class TestContext {
         }
     }
 
+    public void switchToNativeContext() {
+        if (driver instanceof AndroidDriver) {
+            AndroidDriver androidDriver = (AndroidDriver) driver;
+            androidDriver.context("NATIVE_APP");
+        }
+        if (driver instanceof IOSDriver) {
+            IOSDriver iosDriver = (IOSDriver) driver;
+            iosDriver.context("NATIVE_APP");
+        }
+    }
+
+    public void switchToWebContext() {
+        if (driver instanceof AndroidDriver) {
+            AndroidDriver androidDriver = (AndroidDriver) driver;
+            switchToWebContextAndroid(androidDriver);
+        }
+        if (driver instanceof IOSDriver) {
+            IOSDriver iosDriver = (IOSDriver) driver;
+            switchToWebContextIOS(iosDriver);
+        }
+    }
+
+    private void switchToWebContextAndroid(AndroidDriver androidDriver) {
+        ArrayList<String> contexts = new ArrayList<>(androidDriver.getContextHandles());
+        System.out.println("getContextHandles: ");
+        for (String context : contexts) {
+            System.out.println("- context: " + context);
+            if (context.contains("WEBVIEW")) {
+                androidDriver.context(context);
+            }
+        }
+    }
+
+    private void switchToWebContextIOS(IOSDriver iOSDriver) {
+        ArrayList<String> contexts = new ArrayList(iOSDriver.getContextHandles());
+        System.out.println("getContextHandles: ");
+        for (String context : contexts) {
+            System.out.println("- context: " + context);
+            if (context.contains("WEBVIEW")) {
+                iOSDriver.context(context);
+            }
+        }
+    }
 }

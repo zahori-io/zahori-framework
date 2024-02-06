@@ -3,7 +3,7 @@
 	
     <groupId>io.zahori</groupId>
     <artifactId>zahori-framework</artifactId>
-    <version>0.2.16-SNAPSHOT</version>
+    <version>0.2.15_appium</version>
     <packaging>jar</packaging>
     <name>zahori-framework</name>
 
@@ -197,6 +197,12 @@
                 <groupId>org.apache.httpcomponents.client5</groupId>
                 <artifactId>httpclient5</artifactId>
                 <version>5.3</version>
+            </dependency>
+            
+            <dependency>
+                <groupId>io.appium</groupId>
+                <artifactId>java-client</artifactId>
+                <version>8.6.0</version>
             </dependency>
             <!-- FIN Selenium -->
             <dependency>
@@ -732,6 +738,11 @@
             <artifactId>httpclient5</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>io.appium</groupId>
+            <artifactId>java-client</artifactId>
+        </dependency>
+        
         <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>

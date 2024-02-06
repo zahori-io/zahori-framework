@@ -12,17 +12,18 @@ package io.zahori.framework.core;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
+import io.appium.java_client.android.AndroidDriver;
+import io.appium.java_client.ios.IOSDriver;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.driver.browserfactory.WebDriverBrowserSelenium;
 import io.zahori.framework.utils.Chronometer;
@@ -46,7 +47,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 public class Browser {
 
@@ -67,7 +67,11 @@ public class Browser {
     public Browser(TestContext testContext) {
         this.testContext = testContext;
         createDriver();
-        mainDriverHandle = driver.getWindowHandle();
+        if (driver instanceof AndroidDriver || driver instanceof IOSDriver) {
+
+        } else {
+            mainDriverHandle = driver.getWindowHandle();
+        }
         activeDriverHandle = mainDriverHandle;
         this.allDrivers = new HashMap<>();
         allDrivers.put(mainDriverHandle, driver);
@@ -93,12 +97,14 @@ public class Browser {
 
         try {
             if (allDrivers.keySet().isEmpty()) {
-                if (driver != null)
+                if (driver != null) {
                     driver.quit();
+                }
             } else {
                 for (String currentKey : allDrivers.keySet()) {
-                    if (allDrivers.get(currentKey) != null)
+                    if (allDrivers.get(currentKey) != null) {
                         allDrivers.get(currentKey).quit();
+                    }
                 }
                 allDrivers = new HashMap<>();
             }
@@ -139,7 +145,6 @@ public class Browser {
         createDriver();
         driver.manage().timeouts().pageLoadTimeout(Duration.ofMillis(100L));
 
-
         try {
             driver.get(url);
         } catch (TimeoutException e) {
@@ -168,7 +173,6 @@ public class Browser {
         selectCertificate(numCertificate);
         setBrowserZoomTo100();
     }
-
 
     private void createDriver() {
         if (driver == null) {
@@ -229,7 +233,6 @@ public class Browser {
 
             // String browserWindow = driver.getTitle();//Return a string of
             // alphanumeric window handle
-
             final Robot robot = new Robot();
             robot.keyPress(KeyEvent.VK_F12);
             robot.keyRelease(KeyEvent.VK_F12);
@@ -240,7 +243,6 @@ public class Browser {
             testContext.logInfo("Enabling IE compatibility mode");
 
             // driver.switchTo().window(browserWindow);
-
             robot.keyPress(KeyEvent.VK_ALT);
             robot.keyPress(KeyEvent.VK_TAB);
             robot.keyRelease(KeyEvent.VK_TAB);
@@ -273,7 +275,7 @@ public class Browser {
     }
 
     public void setLoadingPageTimeoutInSeconds(int timeoutInSeconds) {
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds((long)timeoutInSeconds));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds((long) timeoutInSeconds));
     }
 
     private void selectCertificate(int numCertificado) {
@@ -362,15 +364,15 @@ public class Browser {
         while (!found && (i < windowHandles.size())) {
             driver.switchTo().window(windowHandles.get(i));
             switch (parm) {
-            case TXT_TITLE:
-                found = driver.getTitle().contains(option);
-                break;
-            case TXT_URL:
-                found = driver.getCurrentUrl().contains(option);
-                break;
-            default:
-                found = false;
-                break;
+                case TXT_TITLE:
+                    found = driver.getTitle().contains(option);
+                    break;
+                case TXT_URL:
+                    found = driver.getCurrentUrl().contains(option);
+                    break;
+                default:
+                    found = false;
+                    break;
             }
             i++;
         }
