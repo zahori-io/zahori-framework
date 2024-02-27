@@ -22,18 +22,23 @@ package io.zahori.framework.core;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import com.google.common.collect.ImmutableMap;
+import io.appium.java_client.AppiumDriver;
 import io.zahori.framework.robot.UtilsRobot;
 import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
 import io.zahori.framework.utils.WebdriverUtils;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Action;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.interactions.PointerInput;
+import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -196,7 +201,7 @@ public class PageElement {
     }
 
     public void clickAtWebElementPosition() {
-        webElement = findElement();
+        webElement = findElementPresent();
         final Actions action = new Actions(driver);
         action.moveToElement(webElement).click(webElement).perform();
     }
@@ -751,7 +756,10 @@ public class PageElement {
     }
 
     public Point getElementPosition() {
-        webElement = findElementPresent();
+        initWebElement();
+        if (webElement == null) {
+            return new Point(0, 0);
+        }
         try {
             return webElement.getLocation();
         } catch (final Exception e) {
@@ -772,6 +780,73 @@ public class PageElement {
         } catch (final Exception e) {
             throw new RuntimeException("Unable to slide: " + this + getErrorMessage(e));
         }
+    }
+
+    public void swipeDownUntilVisible() {
+        int retry = 1;
+        while (retry < 50 && !isVisibleWithoutWait()) { // TODO cuando parar?
+            retry++;
+            swipeFromCoordinates(100, 200, 420);
+            //Pause.pauseMillis(100);
+        }
+    }
+
+    public void swipeUpUntilVisible() {
+        int retry = 1;
+        while (retry < 50 && !isVisibleWithoutWait()) { // TODO cuando parar?
+            retry++;
+            swipeFromCoordinates(100, 420, 200);
+            //Pause.pauseMillis(100);
+        }
+    }
+
+    public void swipeFromCoordinates(int centerX, int startY, int endY) {
+        try {
+            PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+            Sequence seqSwipe = new Sequence(finger, 1);
+
+            seqSwipe.addAction(finger.createPointerMove(Duration.ofSeconds(0), PointerInput.Origin.viewport(), centerX, startY));
+            seqSwipe.addAction(finger.createPointerDown(0));
+
+            seqSwipe.addAction(finger.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), centerX, endY));
+            seqSwipe.addAction(finger.createPointerUp(0));
+            ((AppiumDriver) driver).perform(Arrays.asList(seqSwipe));
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to swipe: " + this + getErrorMessage(e));
+        }
+    }
+
+    public void scrollUp() {
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("mobile:scroll", ImmutableMap.of("direction", "up"));
+    }
+
+    public void scrollDown() {
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+        js.executeScript("mobile:scroll", ImmutableMap.of("direction", "down"));
+    }
+
+    public void moveToElement() {
+        try {
+            initWebElement();
+            if (webElement != null && !isVisibleWithoutWait()) {
+                Actions action = new Actions(driver);
+                action.moveToElement(webElement).perform();
+            }
+        } catch (final Exception e) {
+            throw new RuntimeException("Cannot perform move action");
+        }
+    }
+
+    public void printElementPosition() {
+        Point point = getElementPosition();
+        System.out.println("Element position: x=" + point.x + " y=" + point.y);
+        System.out.println("Element position: x=" + driver.manage().window().getPosition().x + " y=" + driver.manage().window().getPosition().y);
+    }
+
+    public void printWindowPosition() {
+        Point point = driver.manage().window().getPosition();
+        System.out.println("Window position: x=" + point.x + " y=" + point.y);
     }
 
     private String getErrorMessage(Exception exception) {

@@ -728,23 +728,35 @@ public class TestContext {
         }
     }
 
+    public boolean isMobileDriver() {
+        return isAndroidDriver() || isIOSDriver();
+    }
+
+    public boolean isAndroidDriver() {
+        return driver instanceof AndroidDriver;
+    }
+
+    public boolean isIOSDriver() {
+        return driver instanceof IOSDriver;
+    }
+
     public void switchToNativeContext() {
-        if (driver instanceof AndroidDriver) {
+        if (isAndroidDriver()) {
             AndroidDriver androidDriver = (AndroidDriver) driver;
             androidDriver.context("NATIVE_APP");
         }
-        if (driver instanceof IOSDriver) {
+        if (isIOSDriver()) {
             IOSDriver iosDriver = (IOSDriver) driver;
             iosDriver.context("NATIVE_APP");
         }
     }
 
     public void switchToWebContext() {
-        if (driver instanceof AndroidDriver) {
+        if (isAndroidDriver()) {
             AndroidDriver androidDriver = (AndroidDriver) driver;
             switchToWebContextAndroid(androidDriver);
         }
-        if (driver instanceof IOSDriver) {
+        if (isIOSDriver()) {
             IOSDriver iosDriver = (IOSDriver) driver;
             switchToWebContextIOS(iosDriver);
         }
@@ -762,7 +774,7 @@ public class TestContext {
     }
 
     private void switchToWebContextIOS(IOSDriver iOSDriver) {
-        ArrayList<String> contexts = new ArrayList(iOSDriver.getContextHandles());
+        ArrayList<String> contexts = new ArrayList<>(iOSDriver.getContextHandles());
         System.out.println("getContextHandles: ");
         for (String context : contexts) {
             System.out.println("- context: " + context);

@@ -40,7 +40,8 @@ public class RemoteDriver extends AbstractDriver {
 
     @Override
     protected WebDriver createWebDriver(Browsers browsers) {
-        if (StringUtils.contains(browsers.getRemoteUrl(), ":4723")) {
+        // TODO Temporal workaround for Appium driver creation: 1x1x24 for AndroidDriver, 2x2x24 for IOSDriver
+        if ("1x1x24".equals(browsers.getScreenResolution()) || "2x2x24".equals(browsers.getScreenResolution())) {
             return getAppiumDriver(browsers);
         } else {
             AbstractDriverOptions<?> options = getOptions(browsers);
@@ -83,37 +84,43 @@ public class RemoteDriver extends AbstractDriver {
     }
 
     private WebDriver getAppiumDriver(Browsers browsers) {
-        DesiredCapabilities capabilities = getAppiumCapabilities(browsers);
-
-        String platformName = capabilities.getCapability("platformName").toString();
-        if ("android".equalsIgnoreCase(platformName)) {
-            return new AndroidDriver(getUrl(browsers.getRemoteUrl()), capabilities);
+        if ("1x1x24".equals(browsers.getScreenResolution())) {
+            DesiredCapabilities capabilities = getAppiumCapabilities("android.");
+            String remoteUrl = (String) capabilities.getCapability("remoteUrl");
+            return new AndroidDriver(getUrl(remoteUrl), capabilities);
         }
-        if ("iOS".equalsIgnoreCase(platformName)) {
-            return new IOSDriver(getUrl(browsers.getRemoteUrl()), capabilities);
+        if ("2x2x24".equals(browsers.getScreenResolution())) {
+            DesiredCapabilities capabilities = getAppiumCapabilities("ios.");
+            String remoteUrl = (String) capabilities.getCapability("remoteUrl");
+            return new IOSDriver(getUrl(remoteUrl), capabilities);
         }
-        throw new RuntimeException("No supported value for capability 'platformName': '" + platformName + "'. Valid values: 'android' or 'iOS'");
+        throw new RuntimeException("No supported AppiumDriver: Set screenResolution to 1x1 for Android or set screenResolution to 2x2 for iOS");
     }
 
     private boolean isBoolean(String input) {
         return StringUtils.equalsIgnoreCase("true", input) || StringUtils.equalsIgnoreCase("false", input);
     }
 
-    private DesiredCapabilities getAppiumCapabilities(Browsers browsers) {
+    private DesiredCapabilities getAppiumCapabilities(String prefix) {
         Map<String, String> extraCapabilities = new ZahoriProperties().getExtraCapabilities();
 
         System.out.println("extraCapabilities: " + extraCapabilities.toString());
 
         DesiredCapabilities capabilities = new DesiredCapabilities();
+
         extraCapabilities.forEach((extraCap, value) -> {
-            if (isBoolean(value)) {
-                capabilities.setCapability(extraCap, Boolean.valueOf(value));
-            } else {
-                capabilities.setCapability(extraCap, value);
+            if (extraCap.startsWith(prefix)) {
+                String capabilityKey = extraCap.replaceFirst(prefix, StringUtils.EMPTY);
+
+                if (isBoolean(value)) {
+                    capabilities.setCapability(capabilityKey, Boolean.valueOf(value));
+                } else {
+                    capabilities.setCapability(capabilityKey, value);
+                }
             }
         });
 
-        System.out.println("Capabilities: " + capabilities.toString());
+        System.out.println("Appium capabilities: " + capabilities.toString());
 
         /*
         // platformName: android iOS
