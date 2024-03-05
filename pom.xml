@@ -216,7 +216,7 @@
             <dependency>
                 <groupId>org.docx4j</groupId>
                 <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
-                <version>11.4.9</version>
+                <version>11.4.11</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>
@@ -1230,7 +1230,7 @@
                                 <id>enforce</id>
                                 <configuration>
                                     <rules>
-                                        <DependencyConvergence />
+                                        <DependencyConvergence/>
                                         <requireMavenVersion>
                                             <version>3.6.3</version>
                                         </requireMavenVersion>
