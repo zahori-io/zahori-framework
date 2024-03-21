@@ -276,8 +276,22 @@ public class PageElement {
         testContext.logInfo("Write text \"********\" on " + this);
     }
 
+    public void clear() {
+        webElement = findElement();
+        try {
+            webElement.clear();
+        } catch (final InvalidElementStateException e) {
+            throw new RuntimeException(ELEMENT_IS_NOT_EDITABLE + this);
+        }
+    }
+
+    /**
+     * Use clear() method instead of clearInput(). clearInput will be removed in
+     * future versions
+     */
+    @Deprecated()
     public void clearInput() {
-        final WebElement webElement = findElement();
+        webElement = findElement();
         try {
             webElement.clear();
         } catch (final InvalidElementStateException e) {
