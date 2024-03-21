@@ -697,26 +697,15 @@ public class PageElement {
     }
 
     private void writeNoLog(String text, boolean retry) {
-        Chronometer chrono = new Chronometer();
-        final WebElement webElement = findElement();
+        webElement = findElement();
         try {
-            while (!StringUtils.equals(webElement.getAttribute(VALUE), text) && (chrono.getElapsedSeconds() < testContext.timeoutFindElement)) {
-                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds()).longValue()));
-                wait.until(ExpectedConditions.elementToBeClickable(webElement));
-                while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement)) {
-                    Pause.pause();
-                    initWebElement();
-                }
-                webElement.clear();
-                webElement.sendKeys(text);
-            }
+            webElement.sendKeys(text);
         } catch (final InvalidElementStateException e) {
             if (retry) {
                 throw new RuntimeException(ELEMENT_IS_NOT_EDITABLE + this);
             } else {
                 writeNoLog(text, true);
             }
-
         }
     }
 
@@ -784,7 +773,7 @@ public class PageElement {
 
     public void swipeDownUntilVisible() {
         int retry = 1;
-        while (retry < 50 && !isVisibleWithoutWait()) { // TODO cuando parar?
+        while (retry < 20 && !isVisibleWithoutWait()) { // TODO cuando parar?
             retry++;
             swipeFromCoordinates(100, 200, 420);
             //Pause.pauseMillis(100);
@@ -793,7 +782,7 @@ public class PageElement {
 
     public void swipeUpUntilVisible() {
         int retry = 1;
-        while (retry < 50 && !isVisibleWithoutWait()) { // TODO cuando parar?
+        while (retry < 20 && !isVisibleWithoutWait()) { // TODO cuando parar?
             retry++;
             swipeFromCoordinates(100, 420, 200);
             //Pause.pauseMillis(100);
