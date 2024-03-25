@@ -51,7 +51,7 @@
         <sonar.organization>zahoriio</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
 
-        <netty.version>4.1.101.Final</netty.version>
+        <netty.version>4.1.108.Final</netty.version>
         <asm.version>9.6</asm.version>
 
         <spring-boot-version>3.0.6</spring-boot-version>
