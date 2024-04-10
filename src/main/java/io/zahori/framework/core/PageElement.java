@@ -789,8 +789,7 @@ public class PageElement {
         int retry = 1;
         while (retry < 20 && !isVisibleWithoutWait()) { // TODO cuando parar?
             retry++;
-            swipeFromCoordinates(100, 200, 420);
-            //Pause.pauseMillis(100);
+            swipeVertical(100, 200, 420);
         }
     }
 
@@ -798,20 +797,51 @@ public class PageElement {
         int retry = 1;
         while (retry < 20 && !isVisibleWithoutWait()) { // TODO cuando parar?
             retry++;
-            swipeFromCoordinates(100, 420, 200);
-            //Pause.pauseMillis(100);
+            swipeVertical(100, 420, 200);
         }
     }
 
-    public void swipeFromCoordinates(int centerX, int startY, int endY) {
+    public void swipeVertical(int x, int startY, int endY) {
         try {
             PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
             Sequence seqSwipe = new Sequence(finger, 1);
 
-            seqSwipe.addAction(finger.createPointerMove(Duration.ofSeconds(0), PointerInput.Origin.viewport(), centerX, startY));
+            seqSwipe.addAction(finger.createPointerMove(Duration.ofSeconds(0), PointerInput.Origin.viewport(), x, startY));
             seqSwipe.addAction(finger.createPointerDown(0));
 
-            seqSwipe.addAction(finger.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), centerX, endY));
+            seqSwipe.addAction(finger.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), x, endY));
+            seqSwipe.addAction(finger.createPointerUp(0));
+            ((AppiumDriver) driver).perform(Arrays.asList(seqSwipe));
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to swipe: " + this + getErrorMessage(e));
+        }
+    }
+
+    public void swipeLeftUntilVisible() {
+        int retry = 1;
+        while (retry < 20 && !isVisibleWithoutWait()) { // TODO cuando parar?
+            retry++;
+            swipeHorizontal(400, 150, 50);
+        }
+    }
+
+    public void swipeRightUntilVisible() {
+        int retry = 1;
+        while (retry < 20 && !isVisibleWithoutWait()) { // TODO cuando parar?
+            retry++;
+            swipeHorizontal(400, 50, 150);
+        }
+    }
+
+    public void swipeHorizontal(int y, int startX, int endX) {
+        try {
+            PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+            Sequence seqSwipe = new Sequence(finger, 1);
+
+            seqSwipe.addAction(finger.createPointerMove(Duration.ofSeconds(0), PointerInput.Origin.viewport(), startX, y));
+            seqSwipe.addAction(finger.createPointerDown(0));
+
+            seqSwipe.addAction(finger.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), endX, y));
             seqSwipe.addAction(finger.createPointerUp(0));
             ((AppiumDriver) driver).perform(Arrays.asList(seqSwipe));
         } catch (Exception e) {
