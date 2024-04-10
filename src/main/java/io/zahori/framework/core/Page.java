@@ -22,6 +22,8 @@ package io.zahori.framework.core;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import io.appium.java_client.AppiumDriver;
+import static io.zahori.framework.core.PageElement.ERROR;
 import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
 import java.io.IOException;
@@ -30,9 +32,13 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.*;
+import org.openqa.selenium.interactions.PointerInput;
+import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -266,6 +272,50 @@ public class Page implements Serializable {
                         "Static wait duration isn't defined properly: " + waitSeconds, e);
             }
         }
+    }
+
+    public void swipeVertical(int x, int startY, int endY) {
+        try {
+            PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+            Sequence seqSwipe = new Sequence(finger, 1);
+
+            seqSwipe.addAction(finger.createPointerMove(Duration.ofSeconds(0), PointerInput.Origin.viewport(), x, startY));
+            seqSwipe.addAction(finger.createPointerDown(0));
+
+            seqSwipe.addAction(finger.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), x, endY));
+            seqSwipe.addAction(finger.createPointerUp(0));
+            ((AppiumDriver) driver).perform(Arrays.asList(seqSwipe));
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to swipe: " + this + getErrorMessage(e));
+        }
+    }
+
+    public void swipeHorizontal(int y, int startX, int endX) {
+        try {
+            PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
+            Sequence seqSwipe = new Sequence(finger, 1);
+
+            seqSwipe.addAction(finger.createPointerMove(Duration.ofSeconds(0), PointerInput.Origin.viewport(), startX, y));
+            seqSwipe.addAction(finger.createPointerDown(0));
+
+            seqSwipe.addAction(finger.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), endX, y));
+            seqSwipe.addAction(finger.createPointerUp(0));
+            ((AppiumDriver) driver).perform(Arrays.asList(seqSwipe));
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to swipe: " + this + getErrorMessage(e));
+        }
+    }
+
+    private String getErrorMessage(Exception exception) {
+        return ERROR + removeSeleniumBuildInfo(removeSeleniumSessionInfo(exception.getMessage()));
+    }
+
+    private String removeSeleniumSessionInfo(String error) {
+        return StringUtils.substringBefore(error, "(Session info:");
+    }
+
+    private String removeSeleniumBuildInfo(String error) {
+        return StringUtils.substringBefore(error, "Build info:");
     }
 
 }
