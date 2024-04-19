@@ -801,6 +801,14 @@ public class PageElement {
         }
     }
 
+    public void swipeVerticalUntilVisible(int x, int startY, int endY) {
+        int retry = 1;
+        while (retry < 20 && !isVisibleWithoutWait()) { // TODO cuando parar?
+            retry++;
+            swipeVertical(x, startY, endY);
+        }
+    }
+
     public void swipeVertical(int x, int startY, int endY) {
         try {
             PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
@@ -821,7 +829,7 @@ public class PageElement {
         int retry = 1;
         while (retry < 20 && !isVisibleWithoutWait()) { // TODO cuando parar?
             retry++;
-            swipeHorizontal(400, 150, 50);
+            swipeHorizontal(400, 200, 50);
         }
     }
 
@@ -829,7 +837,15 @@ public class PageElement {
         int retry = 1;
         while (retry < 20 && !isVisibleWithoutWait()) { // TODO cuando parar?
             retry++;
-            swipeHorizontal(400, 50, 150);
+            swipeHorizontal(400, 50, 200);
+        }
+    }
+
+    public void swipeHorizontalUntilVisible(int y, int startX, int endX) {
+        int retry = 1;
+        while (retry < 20 && !isVisibleWithoutWait()) { // TODO cuando parar?
+            retry++;
+            swipeHorizontal(y, startX, endX);
         }
     }
 
