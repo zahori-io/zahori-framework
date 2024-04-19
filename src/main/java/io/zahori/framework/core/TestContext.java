@@ -43,6 +43,7 @@ import io.zahori.framework.i18n.Messages;
 import io.zahori.framework.robot.UtilsRobot;
 import io.zahori.framework.tms.TmsService;
 import io.zahori.framework.utils.Notification;
+import io.zahori.framework.utils.Pause;
 import io.zahori.framework.utils.WebdriverUtils;
 import io.zahori.model.Status;
 import io.zahori.model.Step;
@@ -740,6 +741,50 @@ public class TestContext {
         return driver instanceof IOSDriver;
     }
 
+    public void switchToWindowWithUrl(String url) {
+        if (isIOSDriver()) {
+            logWarn("switchToWindowWithUrl not implemented for iOSDriver: driver.getWindowHandles() not supported");
+            return;
+        }
+
+        int secondsWaiting = 1;
+        while (secondsWaiting <= this.timeoutFindElement) {
+            for (String winHandle : this.driver.getWindowHandles()) {
+                this.driver.switchTo().window(winHandle);
+
+                if (StringUtils.contains(this.driver.getCurrentUrl().trim().toLowerCase(), url.trim().toLowerCase())) {
+                    return;
+                }
+            }
+            Pause.pause(1);
+            secondsWaiting++;
+        }
+
+        throw new RuntimeException("Window containing url '" + url + "' not found");
+    }
+
+    public void switchToWindowWithTitle(String title) {
+        if (isIOSDriver()) {
+            logWarn("switchToWindowWithTitle not implemented for iOSDriver: driver.getWindowHandles() not supported");
+            return;
+        }
+
+        int secondsWaiting = 1;
+        while (secondsWaiting <= this.timeoutFindElement) {
+            for (String winHandle : ((IOSDriver) this.driver).getWindowHandles()) {
+                this.driver.switchTo().window(winHandle);
+
+                if (StringUtils.contains(this.driver.getTitle().trim().toLowerCase(), title.trim().toLowerCase())) {
+                    return;
+                }
+            }
+            Pause.pause(1);
+            secondsWaiting++;
+        }
+
+        throw new RuntimeException("Window containing title '" + title + "' not found");
+    }
+
     public void switchToNativeContext() {
         if (isAndroidDriver()) {
             AndroidDriver androidDriver = (AndroidDriver) driver;
@@ -748,6 +793,17 @@ public class TestContext {
         if (isIOSDriver()) {
             IOSDriver iosDriver = (IOSDriver) driver;
             iosDriver.context("NATIVE_APP");
+        }
+    }
+
+    public void switchToWebContext(String name) {
+        if (isAndroidDriver()) {
+            AndroidDriver androidDriver = (AndroidDriver) driver;
+            androidDriver.context(name);
+        }
+        if (isIOSDriver()) {
+            IOSDriver iosDriver = (IOSDriver) driver;
+            iosDriver.context(name);
         }
     }
 
@@ -769,6 +825,7 @@ public class TestContext {
             System.out.println("- context: " + context);
             if (context.contains("WEBVIEW")) {
                 androidDriver.context(context);
+                return;
             }
         }
     }
@@ -780,6 +837,7 @@ public class TestContext {
             System.out.println("- context: " + context);
             if (context.contains("WEBVIEW")) {
                 iOSDriver.context(context);
+                return;
             }
         }
     }
