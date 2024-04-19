@@ -104,48 +104,64 @@ public class RemoteDriver extends AbstractDriver {
     private DesiredCapabilities getAppiumCapabilities(String prefix) {
         Map<String, String> extraCapabilities = new ZahoriProperties().getExtraCapabilities();
 
-        System.out.println("extraCapabilities: " + extraCapabilities.toString());
-
         DesiredCapabilities capabilities = new DesiredCapabilities();
+        HashMap<String, Object> cloudOptions = new HashMap<>();
+        String cloudOptionsKey = "";
 
-        extraCapabilities.forEach((extraCap, value) -> {
-            if (extraCap.startsWith(prefix)) {
-                String capabilityKey = extraCap.replaceFirst(prefix, StringUtils.EMPTY);
+        for (Map.Entry<String, String> entry : extraCapabilities.entrySet()) {
+            String capabilityKey = entry.getKey();
+            String capabilityValue = entry.getValue();
 
-                if (isBoolean(value)) {
-                    capabilities.setCapability(capabilityKey, Boolean.valueOf(value));
+            if (capabilityKey.startsWith(prefix)) {
+                capabilityKey = capabilityKey.replaceFirst(prefix, StringUtils.EMPTY);
+
+                if (StringUtils.startsWith(capabilityKey, "cloud.")) {
+                    String cloudOptionAndCapabilityNameString = capabilityKey.replaceFirst("cloud.", StringUtils.EMPTY);
+                    String[] cloudOptionAndCapabilityName = StringUtils.split(cloudOptionAndCapabilityNameString, ".");
+                    if (cloudOptionAndCapabilityName.length > 1) {
+                        cloudOptionsKey = cloudOptionAndCapabilityName[0];
+                        cloudOptions.put(cloudOptionAndCapabilityName[1], capabilityValue);
+                    }
                 } else {
-                    capabilities.setCapability(capabilityKey, value);
+                    if (isBoolean(capabilityValue)) {
+                        capabilities.setCapability(capabilityKey, Boolean.valueOf(capabilityValue));
+                    } else {
+                        capabilities.setCapability(capabilityKey, capabilityValue);
+                    }
                 }
             }
-        });
+        }
+
+        if (StringUtils.isNotBlank(cloudOptionsKey) && !cloudOptions.isEmpty()) {
+            capabilities.setCapability(cloudOptionsKey, cloudOptions);
+        }
 
         System.out.println("Appium capabilities: " + capabilities.toString());
 
         /*
-        // platformName: android iOS
-        capabilities.setCapability("platformName", "android");
-        // Choose test app or web browser:
-        // - App:
-        // capabilities.setCapability("appium:app", "storage:filename=mda-1.0.16-19.apk");
-        // - Web Browser:
-        capabilities.setCapability("browserName", "chrome");
-        // W3C Protocol is mandatory for Appium 2
-        //capabilities.setCapability("appium:platformVersion", "12");
-        // capabilities.setCapability("appium:deviceName", "Samsung Galaxy S9"); // atributo name en el api
-        // capabilities.setCapability("appium:orientation", "portrait");
-        // capabilities.setCapability("appium:app", "storage:filename=<file-name>");
-        // Mandatory for Appium 2
-        capabilities.setCapability("appium:automationName", "uiautomator2");
+		// platformName: android iOS
+		capabilities.setCapability("platformName", "android");
+		// Choose test app or web browser:
+		// - App:
+		// capabilities.setCapability("appium:app", "storage:filename=mda-1.0.16-19.apk");
+		// - Web Browser:
+		capabilities.setCapability("browserName", "chrome");
+		// W3C Protocol is mandatory for Appium 2
+		//capabilities.setCapability("appium:platformVersion", "12");
+		 capabilities.setCapability("appium:deviceName", "Samsung Galaxy S9");  atributo name en el api
+		// capabilities.setCapability("appium:orientation", "portrait");
+		// capabilities.setCapability("appium:app", "storage:filename=<file-name>");
+		// Mandatory for Appium 2
+		capabilities.setCapability("appium:automationName", "uiautomator2");
          */
  /*
-        HashMap<String, Object> sauceOptions = new HashMap<>();
-        // appiumVersion is mandatory to use Appium 2
+		HashMap<String, Object> sauceOptions = new HashMap<>();
+		// appiumVersion is mandatory to use Appium 2
 //        sauceOptions.put("appiumVersion", "2.0.0-beta56");
-        //sauceOptions.put("username", System.getenv("SAUCE_USERNAME"));
-        //sauceOptions.put("accessKey", System.getenv("SAUCE_ACCESS_KEY"));
-        sauceOptions.put("build", "Build 1"); // <your build id>
-        sauceOptions.put("name", "Test wikipedia on Samsung Galaxy S9"); // <your test name>
+		//sauceOptions.put("username", System.getenv("SAUCE_USERNAME"));
+		//sauceOptions.put("accessKey", System.getenv("SAUCE_ACCESS_KEY"));
+		sauceOptions.put("build", "Build 1"); // <your build id>
+		sauceOptions.put("name", "Test wikipedia on Samsung Galaxy S9"); // <your test name>
 
          */
         ///// capabilities.setCapability("sauce:options", sauceOptions);
