@@ -97,15 +97,17 @@ public class Page implements Serializable {
     }
 
     private void switchToFrameWebElement(Chronometer crono, PageElement frameElement) {
-        try {
-            if (crono.getElapsedSeconds() < this.testContext.timeoutFindElement.intValue()) {
+        if (crono.getElapsedSeconds() < this.testContext.timeoutFindElement) {
+            try {
                 if (frameElement.webElement == null) {
                     frameElement.initWebElement();
                 }
                 this.driver.switchTo().frame(frameElement.webElement);
+            } catch (Exception e) {
+                this.switchToFrameWebElement(crono, frameElement);
             }
-        } catch (Exception e) {
-            this.switchToFrameWebElement(crono, frameElement);
+        } else {
+            throw new RuntimeException("iframe not found: " + frameElement);
         }
     }
 
@@ -159,10 +161,9 @@ public class Page implements Serializable {
     }
 
     public void switchToModalWindow(String title) {
-        int maxWaitSeconds = this.testContext.timeoutFindElement.intValue();
         int secondsWaiting = 1;
         pageHandleId = this.driver.getWindowHandle();
-        while (secondsWaiting <= maxWaitSeconds) {
+        while (secondsWaiting <= this.testContext.timeoutFindElement) {
             for (String winHandle : this.driver.getWindowHandles()) {
                 this.driver.switchTo().window(winHandle);
 
@@ -178,7 +179,7 @@ public class Page implements Serializable {
     }
 
     public void switchToModalWindow(String[] titles) {
-        int maxWaitSeconds = this.testContext.timeoutFindElement.intValue();
+        int maxWaitSeconds = this.testContext.timeoutFindElement;
         int secondsWaiting = 1;
         pageHandleId = this.driver.getWindowHandle();
         StringBuilder string = new StringBuilder();
