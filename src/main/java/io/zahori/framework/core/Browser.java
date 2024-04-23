@@ -28,16 +28,6 @@ import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.driver.browserfactory.WebDriverBrowserSelenium;
 import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.Proxy;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.remote.CapabilityType;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.remote.RemoteWebDriver;
-
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
@@ -47,6 +37,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.Proxy;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 public class Browser {
 
@@ -182,7 +181,11 @@ public class Browser {
 
             Browsers browsers = Browsers.valueOf(testContext.browserName).withBits(testContext.bits).withPlatform(testContext.platform)
                     .withVersion(testContext.version).withScreenResolution(testContext.resolution).withRemote(testContext.remote)
-                    .withTestName(testContext.testCaseName).withRemoteUrl(testContext.remoteUrl).withCaseExecution(testContext.caseExecutionId);
+                    .withTestName(testContext.testCaseName).withRemoteUrl(testContext.remoteUrl).withCaseExecution(testContext.caseExecutionId)
+                    .withExecution(testContext.caseExecution.getExecutionId())
+                    // TODO: remove withEnvironmentUrl. This is a temporal solution for mobile testing.
+                    // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
+                    .withEnvironmentUrl(testContext.caseExecution.getConfiguration().getEnvironmentUrl());
 
             browsers = StringUtils.isEmpty(testContext.getDownloadPath()) ? browsers : browsers.withDownloadPath(testContext.getDownloadPath());
 

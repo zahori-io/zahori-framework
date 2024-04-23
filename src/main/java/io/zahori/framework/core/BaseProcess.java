@@ -130,6 +130,7 @@ public abstract class BaseProcess {
 
         try {
             run(testContext, caseExecution);
+            setRetriesInExecutionNotes(testContext);
         } catch (ZahoriPassedException passedException) {
             LOG.info("==== Process passed {}: {}", getCaseExcutionDetails(caseExecution), passedException.getMessage());
         } catch (final Exception e) {
@@ -148,22 +149,32 @@ public abstract class BaseProcess {
         if (testContext.retries < testContext.getMaxRetries()) {
             testContext.retries++;
             testContext.failCause = StringUtils.EMPTY;
-            testContext.resetExecutionNotes();
-            testContext.setExecutionNotes(testContext.retries + " retries. ");
+            // testContext.resetExecutionNotes();
+            testContext.setExecutionNotes(" --> Retry " + testContext.retries + ": ");
 
             if (!(e instanceof ZahoriException)) {
                 testContext.logPartialStepFailedWithScreenshot(e.getMessage());
             }
 
-            testContext.logStepPassed(
-                    "\nCase failed! but retries are enabled, rerunning case... (Retry " + testContext.retries + " of " + testContext.getMaxRetries() + ")");
+            testContext.logStepPassed("Case failed! but retries are enabled, rerunning case... (Retry " + testContext.retries + " of " + testContext.getMaxRetries() + ")");
 
             if (!StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), testContext.browserName)) {
                 testContext.getBrowser().closeWithoutProcessKill();
             }
+
+            testContext.createDriver();
             process(testContext, caseExecution);
         } else {
+            setRetriesInExecutionNotes(testContext);
             testContext.failTest(e);
+        }
+    }
+
+    private void setRetriesInExecutionNotes(TestContext testContext) {
+        if (testContext.retries > 0) {
+            String executionNotes = testContext.getExecutionNotes();
+            testContext.resetExecutionNotes();
+            testContext.setExecutionNotes(testContext.retries + " retries: " + executionNotes);
         }
     }
 

@@ -12,17 +12,16 @@ package io.zahori.framework.driver.browserfactory;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import org.openqa.selenium.remote.Browser;
 
 /*Clase Browsers.java*/
@@ -58,6 +57,12 @@ public enum Browsers {
 
     private String caseExecutionId;
 
+    private Long executionId;
+
+    // TODO: remove. This is a temporal solution for mobile testing.
+    // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
+    private String environmentUrl;
+
     public static final String BITS_32 = "32";
 
     public static final String BITS_64 = "64";
@@ -78,19 +83,19 @@ public enum Browsers {
 
     public static final String EXPLORER_8_32 = Browser.IE.browserName() + VERSION_8 + BITS_32;
 
-    public static final String EXPLORER_8_64 =Browser.IE.browserName() + VERSION_8 + BITS_64;
+    public static final String EXPLORER_8_64 = Browser.IE.browserName() + VERSION_8 + BITS_64;
 
-    public static final String EXPLORER_9_32 =Browser.IE.browserName() + VERSION_9 + BITS_32;
+    public static final String EXPLORER_9_32 = Browser.IE.browserName() + VERSION_9 + BITS_32;
 
-    public static final String EXPLORER_9_64 =Browser.IE.browserName() + VERSION_9 + BITS_64;
+    public static final String EXPLORER_9_64 = Browser.IE.browserName() + VERSION_9 + BITS_64;
 
-    public static final String EXPLORER_10_32 =Browser.IE.browserName() + VERSION_10 + BITS_32;
+    public static final String EXPLORER_10_32 = Browser.IE.browserName() + VERSION_10 + BITS_32;
 
-    public static final String EXPLORER_10_64 =Browser.IE.browserName() + VERSION_10 + BITS_64;
+    public static final String EXPLORER_10_64 = Browser.IE.browserName() + VERSION_10 + BITS_64;
 
-    public static final String EXPLORER_11_32 =Browser.IE.browserName() + VERSION_11 + BITS_32;
+    public static final String EXPLORER_11_32 = Browser.IE.browserName() + VERSION_11 + BITS_32;
 
-    public static final String EXPLORER_11_64 =Browser.IE.browserName() + VERSION_11 + BITS_64;
+    public static final String EXPLORER_11_64 = Browser.IE.browserName() + VERSION_11 + BITS_64;
 
     public static final String FIREFOX_28_32 = Browser.FIREFOX.browserName() + VERSION_28 + BITS_32;
 
@@ -158,6 +163,16 @@ public enum Browsers {
 
     public Browsers withCaseExecution(final String caseExecutionId) {
         this.caseExecutionId = caseExecutionId;
+        return this;
+    }
+
+    public Browsers withExecution(final Long executionId) {
+        this.executionId = executionId;
+        return this;
+    }
+
+    public Browsers withEnvironmentUrl(final String environmentUrl) {
+        this.environmentUrl = environmentUrl;
         return this;
     }
 
@@ -247,6 +262,22 @@ public enum Browsers {
 
     public void setCaseExecutionId(String caseExecutionId) {
         this.caseExecutionId = caseExecutionId;
+    }
+
+    public Long getExecutionId() {
+        return executionId;
+    }
+
+    public void setExecutionId(Long executionId) {
+        this.executionId = executionId;
+    }
+
+    public String getEnvironmentUrl() {
+        return environmentUrl;
+    }
+
+    public void setEnvironmentUrl(String environmentUrl) {
+        this.environmentUrl = environmentUrl;
     }
 
 }

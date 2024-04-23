@@ -85,12 +85,14 @@ public class RemoteDriver extends AbstractDriver {
 
     private WebDriver getAppiumDriver(Browsers browsers) {
         if ("1x1x24".equals(browsers.getScreenResolution())) {
-            DesiredCapabilities capabilities = getAppiumCapabilities("android.");
+            browsers.setPlatform("android");
+            DesiredCapabilities capabilities = getAppiumCapabilities(browsers);
             String remoteUrl = (String) capabilities.getCapability("remoteUrl");
             return new AndroidDriver(getUrl(remoteUrl), capabilities);
         }
         if ("2x2x24".equals(browsers.getScreenResolution())) {
-            DesiredCapabilities capabilities = getAppiumCapabilities("ios.");
+            browsers.setPlatform("ios");
+            DesiredCapabilities capabilities = getAppiumCapabilities(browsers);
             String remoteUrl = (String) capabilities.getCapability("remoteUrl");
             return new IOSDriver(getUrl(remoteUrl), capabilities);
         }
@@ -101,7 +103,8 @@ public class RemoteDriver extends AbstractDriver {
         return StringUtils.equalsIgnoreCase("true", input) || StringUtils.equalsIgnoreCase("false", input);
     }
 
-    private DesiredCapabilities getAppiumCapabilities(String prefix) {
+    private DesiredCapabilities getAppiumCapabilities(Browsers browsers) {
+        String prefix = browsers.getPlatform() + ".";
         Map<String, String> extraCapabilities = new ZahoriProperties().getExtraCapabilities();
 
         DesiredCapabilities capabilities = new DesiredCapabilities();
@@ -110,10 +113,10 @@ public class RemoteDriver extends AbstractDriver {
 
         for (Map.Entry<String, String> entry : extraCapabilities.entrySet()) {
             String capabilityKey = entry.getKey();
-            String capabilityValue = entry.getValue();
 
             if (capabilityKey.startsWith(prefix)) {
                 capabilityKey = capabilityKey.replaceFirst(prefix, StringUtils.EMPTY);
+                String capabilityValue = getCapabilityValue(browsers, entry.getValue());
 
                 if (StringUtils.startsWith(capabilityKey, "cloud.")) {
                     String cloudOptionAndCapabilityNameString = capabilityKey.replaceFirst("cloud.", StringUtils.EMPTY);
@@ -132,11 +135,19 @@ public class RemoteDriver extends AbstractDriver {
             }
         }
 
+        // TODO: remove. This is a temporal solution for mobile testing.
+        // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
+        if (StringUtils.isNotBlank(browsers.getEnvironmentUrl())) {
+            // overwrite app capability value defined in zahori.properties with environment url from selected configuration
+            capabilities.setCapability("app", browsers.getEnvironmentUrl());
+        }
+
         if (StringUtils.isNotBlank(cloudOptionsKey) && !cloudOptions.isEmpty()) {
             capabilities.setCapability(cloudOptionsKey, cloudOptions);
         }
 
-        System.out.println("Appium capabilities: " + capabilities.toString());
+        System.out.println(
+                "Appium capabilities: " + capabilities.toString());
 
         /*
 		// platformName: android iOS
@@ -157,15 +168,32 @@ public class RemoteDriver extends AbstractDriver {
  /*
 		HashMap<String, Object> sauceOptions = new HashMap<>();
 		// appiumVersion is mandatory to use Appium 2
-//        sauceOptions.put("appiumVersion", "2.0.0-beta56");
-		//sauceOptions.put("username", System.getenv("SAUCE_USERNAME"));
-		//sauceOptions.put("accessKey", System.getenv("SAUCE_ACCESS_KEY"));
+                // sauceOptions.put("appiumVersion", "2.0.0-beta56");
+		// sauceOptions.put("username", System.getenv("SAUCE_USERNAME"));
+		// sauceOptions.put("accessKey", System.getenv("SAUCE_ACCESS_KEY"));
 		sauceOptions.put("build", "Build 1"); // <your build id>
 		sauceOptions.put("name", "Test wikipedia on Samsung Galaxy S9"); // <your test name>
 
+                // capabilities.setCapability("sauce:options", sauceOptions);
          */
-        ///// capabilities.setCapability("sauce:options", sauceOptions);
         return capabilities;
+    }
+
+    private String getCapabilityValue(Browsers browsers, String capabilityValue) {
+        if (StringUtils.contains(capabilityValue, "{platform}")) {
+            capabilityValue = StringUtils.replace(capabilityValue, "{platform}", browsers.getPlatform());
+        }
+        if (StringUtils.contains(capabilityValue, "{executionId}")) {
+            capabilityValue = StringUtils.replace(capabilityValue, "{executionId}", browsers.getExecutionId().toString());
+        }
+        if (StringUtils.contains(capabilityValue, "{caseExecutionId}")) {
+            capabilityValue = StringUtils.replace(capabilityValue, "{caseExecutionId}", browsers.getCaseExecutionId());
+        }
+        if (StringUtils.contains(capabilityValue, "{caseName}")) {
+            capabilityValue = StringUtils.replace(capabilityValue, "{caseName}", browsers.getTestName());
+        }
+
+        return capabilityValue;
     }
 
     private URL getUrl(String url) {

@@ -174,17 +174,21 @@ public class TestContext {
         logTestInfo(evidences);
         logTmsInfo(evidences);
 
-        // Driver and browser // TODO hacer factoría única para desktop, mobile,
-        // host...
-        if (StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
-            browser = null;
-        } else {
-            browser = new Browser(this);
-        }
+        createDriver();
 
         hostDriver = null;
 
         logInfo("Test context initialized!");
+    }
+
+    public void createDriver() {
+        // Driver and browser // TODO hacer factoría única para desktop, mobile,
+        // host...
+        if (StringUtils.isEmpty(browserName) || StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
+            browser = null;
+        } else {
+            browser = new Browser(this);
+        }
     }
 
     private void logTestInfo(Evidences evidences) {
@@ -742,10 +746,10 @@ public class TestContext {
     }
 
     public void switchToWindowWithUrl(String url) {
-        if (isIOSDriver()) {
-            logWarn("switchToWindowWithUrl not implemented for iOSDriver: driver.getWindowHandles() not supported");
-            return;
-        }
+//        if (isIOSDriver()) {
+//            logWarn("switchToWindowWithUrl not implemented for iOSDriver: driver.getWindowHandles() not supported");
+//            return;
+//        }
 
         int secondsWaiting = 1;
         while (secondsWaiting <= this.timeoutFindElement) {
