@@ -40,8 +40,9 @@ public class RemoteDriver extends AbstractDriver {
 
     @Override
     protected WebDriver createWebDriver(Browsers browsers) {
-        // TODO Temporal workaround for Appium driver creation: 1x1x24 for AndroidDriver, 2x2x24 for IOSDriver
-        if ("1x1x24".equals(browsers.getScreenResolution()) || "2x2x24".equals(browsers.getScreenResolution())) {
+        // TODO Temporal workaround for Appium driver creation
+        if ("ANDROID".equalsIgnoreCase(browsers.getPlatform())
+                || "IOS".equalsIgnoreCase(browsers.getPlatform())) {
             return getAppiumDriver(browsers);
         } else {
             AbstractDriverOptions<?> options = getOptions(browsers);
@@ -84,19 +85,16 @@ public class RemoteDriver extends AbstractDriver {
     }
 
     private WebDriver getAppiumDriver(Browsers browsers) {
-        if ("1x1x24".equals(browsers.getScreenResolution())) {
-            browsers.setPlatform("android");
-            DesiredCapabilities capabilities = getAppiumCapabilities(browsers);
-            String remoteUrl = (String) capabilities.getCapability("remoteUrl");
+        DesiredCapabilities capabilities = getAppiumCapabilities(browsers);
+        String remoteUrl = (String) capabilities.getCapability("remoteUrl");
+
+        if ("ANDROID".equalsIgnoreCase(browsers.getPlatform())) {
             return new AndroidDriver(getUrl(remoteUrl), capabilities);
         }
-        if ("2x2x24".equals(browsers.getScreenResolution())) {
-            browsers.setPlatform("ios");
-            DesiredCapabilities capabilities = getAppiumCapabilities(browsers);
-            String remoteUrl = (String) capabilities.getCapability("remoteUrl");
+        if ("IOS".equalsIgnoreCase(browsers.getPlatform())) {
             return new IOSDriver(getUrl(remoteUrl), capabilities);
         }
-        throw new RuntimeException("No supported AppiumDriver: Set screenResolution to 1x1 for Android or set screenResolution to 2x2 for iOS");
+        throw new RuntimeException("No supported AppiumDriver: run an execution with a Configuration containing 'Android' or 'iOS' in the name");
     }
 
     private boolean isBoolean(String input) {
@@ -104,7 +102,7 @@ public class RemoteDriver extends AbstractDriver {
     }
 
     private DesiredCapabilities getAppiumCapabilities(Browsers browsers) {
-        String prefix = browsers.getPlatform() + ".";
+        String prefix = browsers.getPlatform().toLowerCase() + ".";
         Map<String, String> extraCapabilities = new ZahoriProperties().getExtraCapabilities();
 
         DesiredCapabilities capabilities = new DesiredCapabilities();
@@ -138,7 +136,7 @@ public class RemoteDriver extends AbstractDriver {
         // TODO: remove. This is a temporal solution for mobile testing.
         // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
         if (StringUtils.isNotBlank(browsers.getEnvironmentUrl())) {
-            // overwrite app capability value defined in zahori.properties with environment url from selected configuration
+            // overwrite 'app' capability value defined in zahori.properties with environment url from selected configuration
             capabilities.setCapability("app", browsers.getEnvironmentUrl());
         }
 
@@ -181,7 +179,7 @@ public class RemoteDriver extends AbstractDriver {
 
     private String getCapabilityValue(Browsers browsers, String capabilityValue) {
         if (StringUtils.contains(capabilityValue, "{platform}")) {
-            capabilityValue = StringUtils.replace(capabilityValue, "{platform}", browsers.getPlatform());
+            capabilityValue = StringUtils.replace(capabilityValue, "{platform}", browsers.getPlatform().toLowerCase());
         }
         if (StringUtils.contains(capabilityValue, "{executionId}")) {
             capabilityValue = StringUtils.replace(capabilityValue, "{executionId}", browsers.getExecutionId().toString());

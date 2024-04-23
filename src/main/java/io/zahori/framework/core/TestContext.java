@@ -133,13 +133,24 @@ public class TestContext {
 
         testCaseName = caseExecution.getCas().getName();
         caseExecutionId = String.valueOf(caseExecution.getCaseExecutionId());
-        platform = "LINUX"; // TODO
+        platform = getPlatform(); // TODO
         bits = "32"; // TODO
         browserName = caseExecution.getBrowser().getBrowserName().toUpperCase();
         version = StringUtils.isBlank(caseExecution.getBrowser().getVersion()) ? caseExecution.getBrowser().getDefaultVersion()
                 : caseExecution.getBrowser().getVersion();
         resolution = StringUtils.isBlank(caseExecution.getScreenResolution()) ? DEFAULT_SCREEN_RESOLUTION
                 : caseExecution.getScreenResolution() + DEFAULT_BIT_DEPTH;
+    }
+
+    // TODO Temporal workaround for Appium driver creation:
+    private String getPlatform() {
+        if (StringUtils.containsIgnoreCase(caseExecution.getConfiguration().getName(), "android")) {
+            return "ANDROID";
+        }
+        if (StringUtils.containsIgnoreCase(caseExecution.getConfiguration().getName(), "ios")) {
+            return "IOS";
+        }
+        return "LINUX";
     }
 
     public void constructor() {
