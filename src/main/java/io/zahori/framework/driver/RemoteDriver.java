@@ -86,13 +86,12 @@ public class RemoteDriver extends AbstractDriver {
 
     private WebDriver getAppiumDriver(Browsers browsers) {
         DesiredCapabilities capabilities = getAppiumCapabilities(browsers);
-        String remoteUrl = (String) capabilities.getCapability("remoteUrl");
 
         if ("ANDROID".equalsIgnoreCase(browsers.getPlatform())) {
-            return new AndroidDriver(getUrl(remoteUrl), capabilities);
+            return new AndroidDriver(getUrl(browsers.getRemoteUrl()), capabilities);
         }
         if ("IOS".equalsIgnoreCase(browsers.getPlatform())) {
-            return new IOSDriver(getUrl(remoteUrl), capabilities);
+            return new IOSDriver(getUrl(browsers.getRemoteUrl()), capabilities);
         }
         throw new RuntimeException("No supported AppiumDriver: run an execution with a Configuration containing 'Android' or 'iOS' in the name");
     }
@@ -135,7 +134,7 @@ public class RemoteDriver extends AbstractDriver {
 
         // TODO: remove. This is a temporal solution for mobile testing.
         // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
-        if (StringUtils.isNotBlank(browsers.getEnvironmentUrl())) {
+        if (capabilities.getCapability("app") == null && StringUtils.isNotBlank(browsers.getEnvironmentUrl())) {
             // overwrite 'app' capability value defined in zahori.properties with environment url from selected configuration
             capabilities.setCapability("app", browsers.getEnvironmentUrl());
         }

@@ -185,8 +185,6 @@ public class TestContext {
         logTestInfo(evidences);
         logTmsInfo(evidences);
 
-        createDriver();
-
         hostDriver = null;
 
         logInfo("Test context initialized!");
@@ -199,6 +197,7 @@ public class TestContext {
             browser = null;
         } else {
             browser = new Browser(this);
+            logInfo("Driver initialized!");
         }
     }
 

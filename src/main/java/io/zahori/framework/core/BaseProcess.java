@@ -109,6 +109,8 @@ public abstract class BaseProcess {
             Pause.pauseMillis(millis);
 
             testContext.constructor();
+            testContext.createDriver();
+
             testContext.startChronometer();
             // testContext.moveMouseToUpperLeftCorner();
             testContext.startVideo();
