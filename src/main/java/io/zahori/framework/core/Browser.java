@@ -185,7 +185,8 @@ public class Browser {
                     .withExecution(testContext.caseExecution.getExecutionId())
                     // TODO: remove withEnvironmentUrl. This is a temporal solution for mobile testing.
                     // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
-                    .withEnvironmentUrl(testContext.caseExecution.getConfiguration().getEnvironmentUrl());
+                    .withEnvironmentUrl(testContext.caseExecution.getConfiguration().getEnvironmentUrl())
+                    .withEnvironmentName(testContext.caseExecution.getConfiguration().getEnvironmentName());
 
             browsers = StringUtils.isEmpty(testContext.getDownloadPath()) ? browsers : browsers.withDownloadPath(testContext.getDownloadPath());
 

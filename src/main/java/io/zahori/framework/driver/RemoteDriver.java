@@ -140,6 +140,7 @@ public class RemoteDriver extends AbstractDriver {
         }
 
         if (StringUtils.isNotBlank(cloudOptionsKey) && !cloudOptions.isEmpty()) {
+            setIosAppSettingsForBrowserStack(cloudOptions, browsers.getEnvironmentName());
             capabilities.setCapability(cloudOptionsKey, cloudOptions);
         }
 
@@ -199,6 +200,33 @@ public class RemoteDriver extends AbstractDriver {
         } catch (MalformedURLException ex) {
             throw new RuntimeException("Error parsing URL '" + url + "': " + ex.getMessage());
         }
+    }
+
+    /*
+        TODO
+        https://www.browserstack.com/docs/app-automate/appium/advanced-features/ios-app-settings
+        https://www.browserstack.com/docs/app-automate/appium/advanced-features/ios-app-settings#App-specific_permission_settings
+        https://www.browserstack.com/docs/app-automate/appium/advanced-features/ios-app-settings#App_settings_added_via_iOS_Settings_bundle
+     */
+    private void setIosAppSettingsForBrowserStack(HashMap<String, Object> cloudOptions, String environment) {
+        HashMap<String, Object> iosAppSettings = new HashMap<>();
+
+        if (StringUtils.containsIgnoreCase(environment, "STG")) {
+            iosAppSettings.put("Enviroment", "STG");
+        }
+        if (StringUtils.containsIgnoreCase(environment, "PRO")) {
+            iosAppSettings.put("Enviroment", "PRO");
+        }
+
+        if (StringUtils.containsIgnoreCase(environment, "QA")) {
+            iosAppSettings.put("Enviroment", "QA");
+        }
+
+        if (StringUtils.containsIgnoreCase(environment, "PRE")) {
+            iosAppSettings.put("Enviroment", "PRE");
+        }
+        cloudOptions.put("updateAppSettings", iosAppSettings);
+
     }
 
 }

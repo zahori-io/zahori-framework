@@ -62,6 +62,7 @@ public enum Browsers {
     // TODO: remove. This is a temporal solution for mobile testing.
     // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
     private String environmentUrl;
+    private String environmentName;
 
     public static final String BITS_32 = "32";
 
@@ -176,6 +177,11 @@ public enum Browsers {
         return this;
     }
 
+    public Browsers withEnvironmentName(final String environmentName) {
+        this.environmentName = environmentName;
+        return this;
+    }
+
     public String getName() {
         return name;
     }
@@ -278,6 +284,14 @@ public enum Browsers {
 
     public void setEnvironmentUrl(String environmentUrl) {
         this.environmentUrl = environmentUrl;
+    }
+
+    public String getEnvironmentName() {
+        return environmentName;
+    }
+
+    public void setEnvironmentName(String environmentName) {
+        this.environmentName = environmentName;
     }
 
 }
