@@ -810,46 +810,75 @@ public class TestContext {
         }
     }
 
-    public void switchToWebContext(String name) {
-        if (isAndroidDriver()) {
-            AndroidDriver androidDriver = (AndroidDriver) driver;
-            androidDriver.context(name);
-        }
-        if (isIOSDriver()) {
-            IOSDriver iosDriver = (IOSDriver) driver;
-            iosDriver.context(name);
-        }
-    }
-
     public void switchToWebContext() {
-        if (isAndroidDriver()) {
-            AndroidDriver androidDriver = (AndroidDriver) driver;
-            switchToWebContextAndroid(androidDriver);
+        switchToWebContext(null);
+    }
+    
+    public void switchToWebContext(String contextName) {
+        switchToMobileWebContext(contextName);
+
+        String context = getCurrentContext();
+        int switchRetries = 0;
+        while (StringUtils.contains(context, "NATIVE") && switchRetries <= timeoutFindElement) {
+            switchRetries++;
+            Pause.pause(1);
+            System.out.println("Waiting 1 second to find a webview...");
+
+            switchToMobileWebContext(contextName);
+            context = getCurrentContext();
         }
-        if (isIOSDriver()) {
-            IOSDriver iosDriver = (IOSDriver) driver;
-            switchToWebContextIOS(iosDriver);
+        if (StringUtils.contains(context, "NATIVE")) {
+            logStepFailedWithScreenshot("Webview not found");
         }
     }
 
-    private void switchToWebContextAndroid(AndroidDriver androidDriver) {
+    public String getCurrentContext() {
+        if (isAndroidDriver()) {
+            return ((AndroidDriver) driver).getContext();
+        }
+        if (isIOSDriver()) {
+            return ((IOSDriver) driver).getContext();
+        }
+        throw new RuntimeException("Method getCurrentContext() only supported for AndroidDriver and IOSDriver");
+    }
+
+    private void switchToMobileWebContext(String contextName) {
+        if (isAndroidDriver()) {
+            AndroidDriver androidDriver = (AndroidDriver) driver;
+            switchToWebContextAndroid(androidDriver, contextName);
+        }
+        if (isIOSDriver()) {
+            IOSDriver iosDriver = (IOSDriver) driver;
+            switchToWebContextIOS(iosDriver, contextName);
+        }
+    }
+
+    private void switchToWebContextAndroid(AndroidDriver androidDriver, String contextName) {
         ArrayList<String> contexts = new ArrayList<>(androidDriver.getContextHandles());
         System.out.println("getContextHandles: ");
         for (String context : contexts) {
             System.out.println("- context: " + context);
-            if (context.contains("WEBVIEW")) {
+            if (StringUtils.isNotBlank(contextName) && context.equalsIgnoreCase(contextName)){
+                androidDriver.context(context);
+                return;
+            }
+            if (StringUtils.isBlank(contextName) && context.contains("WEBVIEW")) {
                 androidDriver.context(context);
                 return;
             }
         }
     }
 
-    private void switchToWebContextIOS(IOSDriver iOSDriver) {
+    private void switchToWebContextIOS(IOSDriver iOSDriver, String contextName) {
         ArrayList<String> contexts = new ArrayList<>(iOSDriver.getContextHandles());
         System.out.println("getContextHandles: ");
         for (String context : contexts) {
             System.out.println("- context: " + context);
-            if (context.contains("WEBVIEW")) {
+            if (StringUtils.isNotBlank(contextName) && context.equalsIgnoreCase(contextName)){
+                iOSDriver.context(context);
+                return;
+            }
+            if (StringUtils.isBlank(contextName) && context.contains("WEBVIEW")) {
                 iOSDriver.context(context);
                 return;
             }
