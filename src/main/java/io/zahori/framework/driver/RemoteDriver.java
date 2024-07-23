@@ -40,21 +40,79 @@ public class RemoteDriver extends AbstractDriver {
 
     @Override
     protected WebDriver createWebDriver(Browsers browsers) {
-        // TODO Temporal workaround for Appium driver creation
-        if ("ANDROID".equalsIgnoreCase(browsers.getPlatform())
-                || "IOS".equalsIgnoreCase(browsers.getPlatform())) {
-            return getAppiumDriver(browsers);
-        } else {
-            AbstractDriverOptions<?> options = getOptions(browsers);
-            final int timeoutSecondsForDriverCreation = 3600; // 60 minutos
-            return WebDriverManager.getInstance(browsers.getName().toUpperCase())
-                    .browserVersion(browsers.getVersion())
-                    .remoteAddress(browsers.getRemoteUrl())
-                    .capabilities(options)
-                    .timeout(timeoutSecondsForDriverCreation)
-                    .disableTracing()
-                    .create();
+        try {
+            // TODO Temporal workaround for Appium driver creation
+            if ("ANDROID".equalsIgnoreCase(browsers.getPlatform())
+                    || "IOS".equalsIgnoreCase(browsers.getPlatform())) {
+                return getAppiumDriver(browsers);
+            } else {
+
+                AbstractDriverOptions<?> options = getOptions(browsers);
+                final int timeoutSecondsForDriverCreation = 3600; // 3600 = 60 minutos
+                return WebDriverManager.getInstance(browsers.getName().toUpperCase())
+                        .browserVersion(browsers.getVersion())
+                        .remoteAddress(browsers.getRemoteUrl())
+                        .capabilities(options)
+                        .timeout(timeoutSecondsForDriverCreation)
+                        .disableTracing()
+                        .create();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(getExceptionMessage(e, browsers));
         }
+    }
+
+    private String getExceptionMessage(Exception e, Browsers browsers) {
+        String exceptionMessage = getCleanMessage(e.getMessage());
+        
+        Throwable cause = e.getCause();
+        if (cause != null) {
+            exceptionMessage = exceptionMessage + " Causes: ";
+        }
+        
+        while (cause != null) {
+            String causeMessage = getCleanMessage(cause.getMessage());
+            if (StringUtils.containsIgnoreCase(causeMessage, "UnknownHostException")) {
+                return "Unknown host:" + StringUtils.substringAfter(causeMessage, "UnknownHostException:");
+            }
+            if (StringUtils.containsIgnoreCase(causeMessage, "Timeout")) {
+                return causeMessage + "(remote server: " + browsers.getRemoteUrl() + ")";
+            }
+            if (StringUtils.containsIgnoreCase(causeMessage, "Conexión rehusada")
+                    || StringUtils.containsIgnoreCase(causeMessage, "Connection refused")) {
+                return "Connection refused from remote server " + browsers.getRemoteUrl() + ". Check that the remote server is up and there is connectivity with it.";
+            }
+            // BrowserStack errors:
+            if (StringUtils.containsIgnoreCase(browsers.getRemoteUrl(), "browserstack")) {
+                if (StringUtils.containsIgnoreCase(causeMessage, "Authorization required")) {
+                    return "Authorization required: userName and accessKey capabilities are not present";
+                }
+                if (StringUtils.containsIgnoreCase(causeMessage, "Platform and Browser not valid")) {
+                    return "Invalid platformName, deviceName or browserName capabilities.";
+                }
+                if (StringUtils.containsIgnoreCase(causeMessage, "Could not find device")) {
+                    return causeMessage;
+                }
+                if (StringUtils.containsIgnoreCase(causeMessage, "[browserstack.local]")) {
+                    return causeMessage;
+                }
+                if (StringUtils.containsIgnoreCase(causeMessage, "BROWSERSTACK_INVALID_APP_URL")) {
+                    return "Application not present in BrowserStack. Review that the application is uploaded in BrowserStack and the correct url (bs://...) is set in Zahori.";
+                }  
+                if (StringUtils.containsIgnoreCase(causeMessage, "[BROWSERSTACK")) {
+                    return causeMessage;
+                }
+            }
+
+            exceptionMessage = exceptionMessage + ". " + causeMessage;
+            System.out.println(">>> Cause: " + exceptionMessage);
+            cause = cause.getCause();
+        }
+        return exceptionMessage;
+    }
+
+    private String getCleanMessage(String message) {
+        return StringUtils.substringBefore(StringUtils.substringBefore(message, "Host info"), "Build info");
     }
 
     @Override
@@ -134,13 +192,14 @@ public class RemoteDriver extends AbstractDriver {
 
         // TODO: remove. This is a temporal solution for mobile testing.
         // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
-        if (capabilities.getCapability("app") == null && StringUtils.isNotBlank(browsers.getEnvironmentUrl())) {
+        if (StringUtils.startsWithIgnoreCase(browsers.getEnvironmentUrl(), "bs://")
+                && capabilities.getCapability("app") == null) {
             // overwrite 'app' capability value defined in zahori.properties with environment url from selected configuration
             capabilities.setCapability("app", browsers.getEnvironmentUrl());
         }
 
         if (StringUtils.isNotBlank(cloudOptionsKey) && !cloudOptions.isEmpty()) {
-            setIosAppSettingsForBrowserStack(cloudOptions, browsers.getEnvironmentName());
+            setAppSettingsForBrowserStack(cloudOptions, browsers);
             capabilities.setCapability(cloudOptionsKey, cloudOptions);
         }
 
@@ -208,7 +267,12 @@ public class RemoteDriver extends AbstractDriver {
         https://www.browserstack.com/docs/app-automate/appium/advanced-features/ios-app-settings#App-specific_permission_settings
         https://www.browserstack.com/docs/app-automate/appium/advanced-features/ios-app-settings#App_settings_added_via_iOS_Settings_bundle
      */
-    private void setIosAppSettingsForBrowserStack(HashMap<String, Object> cloudOptions, String environment) {
+    private void setAppSettingsForBrowserStack(HashMap<String, Object> cloudOptions, Browsers browsers) {
+        if (!"IOS".equalsIgnoreCase(browsers.getPlatform())) {
+            return;
+        }
+
+        String environment = browsers.getEnvironmentName();
         HashMap<String, Object> iosAppSettings = new HashMap<>();
 
         if (StringUtils.containsIgnoreCase(environment, "STG")) {
@@ -225,8 +289,10 @@ public class RemoteDriver extends AbstractDriver {
         if (StringUtils.containsIgnoreCase(environment, "PRE")) {
             iosAppSettings.put("Enviroment", "PRE");
         }
-        cloudOptions.put("updateAppSettings", iosAppSettings);
 
+        if (!iosAppSettings.isEmpty()) {
+            cloudOptions.put("updateAppSettings", iosAppSettings);
+        }
     }
 
 }
