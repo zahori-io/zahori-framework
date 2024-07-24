@@ -571,7 +571,7 @@
             <dependency>
                 <groupId>dnsjava</groupId>
                 <artifactId>dnsjava</artifactId>
-                <version>3.5.3</version>
+                <version>3.6.0</version>
             </dependency>
 
             <dependency>
@@ -1230,7 +1230,7 @@
                                 <id>enforce</id>
                                 <configuration>
                                     <rules>
-                                        <DependencyConvergence />
+                                        <DependencyConvergence/>
                                         <requireMavenVersion>
                                             <version>3.6.3</version>
                                         </requireMavenVersion>
