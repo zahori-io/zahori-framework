@@ -54,7 +54,7 @@ public enum OptionsFactory {
         @Override
         public FirefoxOptions getOptions() {
             FirefoxOptions firefoxOptions = new FirefoxOptions();
-            firefoxOptions.addArguments("-headless");
+            // firefoxOptions.addArguments("-headless");
             firefoxOptions.setAcceptInsecureCerts(true);
 
             return firefoxOptions;
@@ -72,7 +72,7 @@ public enum OptionsFactory {
         @Override
         public EdgeOptions getOptions() {
             EdgeOptions edgeOptions = new EdgeOptions();
-            edgeOptions.addArguments("--headless");
+            // edgeOptions.addArguments("--headless");
             edgeOptions.setAcceptInsecureCerts(true);
 
             return edgeOptions;
