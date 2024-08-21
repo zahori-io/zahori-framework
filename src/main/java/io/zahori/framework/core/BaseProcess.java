@@ -24,11 +24,9 @@ package io.zahori.framework.core;
  */
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.exception.ZahoriException;
 import io.zahori.framework.exception.ZahoriPassedException;
 import io.zahori.framework.tms.TmsBulkService;
-import io.zahori.framework.utils.Pause;
 import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import io.zahori.model.process.Step;
@@ -104,10 +102,6 @@ public abstract class BaseProcess {
             testContext.remote = remote;
             testContext.remoteUrl = remoteUrl;
 
-            // TODO investigate: This random pause fixes screenshots in several screen resolutions in parallel executions
-            int millis = randomNumber();
-            Pause.pauseMillis(millis);
-
             testContext.constructor();
             testContext.createDriver();
 
@@ -160,7 +154,7 @@ public abstract class BaseProcess {
 
             testContext.logStepPassed("Case failed! but retries are enabled, rerunning case... (Retry " + testContext.retries + " of " + testContext.getMaxRetries() + ")");
 
-            if (!StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), testContext.browserName)) {
+            if (testContext.getBrowser() != null) {
                 testContext.getBrowser().closeWithoutProcessKill();
             }
 

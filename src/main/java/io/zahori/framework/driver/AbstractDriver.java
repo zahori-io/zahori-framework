@@ -25,14 +25,13 @@ package io.zahori.framework.driver;
 
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.files.properties.ZahoriProperties;
+import java.time.Duration;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
-
-import java.time.Duration;
 
 /**
  * Clase abstracta que define la estructura y comportamientos comunes de un driver.
@@ -70,7 +69,7 @@ public abstract class AbstractDriver implements Driver {
      * @return Opciones configuradas para el WebDriver.
      */
     public AbstractDriverOptions<?> getOptions(Browsers browsers) {
-        AbstractDriverOptions<?> options = OptionsFactory.valueOf(browsers.name()).getOptions();
+        AbstractDriverOptions<?> options = OptionsFactory.valueOf(browsers.getName()).getOptions();
         options.setAcceptInsecureCerts(true);
         options.setImplicitWaitTimeout(Duration.ofSeconds(100));
 

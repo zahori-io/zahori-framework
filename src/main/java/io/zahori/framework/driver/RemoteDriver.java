@@ -32,6 +32,8 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
+import org.openqa.selenium.Dimension;
+import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -114,13 +116,26 @@ public class RemoteDriver extends AbstractDriver {
     private String getCleanMessage(String message) {
         return StringUtils.substringBefore(StringUtils.substringBefore(message, "Host info"), "Build info");
     }
-
+    
+    private void resizeWindow(WebDriver driver, Browsers browsers) {
+        driver.manage().window().setPosition(new Point(0, 0));
+        
+        String resolution = browsers.getScreenResolution();
+        Integer width = Integer.valueOf(resolution.split("x")[0]);
+        Integer height = Integer.valueOf(resolution.split("x")[1]);
+        driver.manage().window().setSize(new Dimension(width, height));
+    }    
+    
     @Override
     protected void configureWebDriver(WebDriver webDriver, Browsers browsers) {
         if (webDriver instanceof AndroidDriver || webDriver instanceof IOSDriver) {
 
         } else {
             // Cualquier otra configuracion especifica de RemoteDriver
+            
+            // Browser window size
+            // https://aerokube.com/selenoid/latest/#_custom_screen_resolution_screenresolution
+            resizeWindow(webDriver, browsers);
             webDriver.manage().window().maximize();
         }
     }

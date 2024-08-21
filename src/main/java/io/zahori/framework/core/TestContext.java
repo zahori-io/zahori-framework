@@ -135,7 +135,7 @@ public class TestContext {
         caseExecutionId = String.valueOf(caseExecution.getCaseExecutionId());
         platform = getPlatform(); // TODO
         bits = "32"; // TODO
-        browserName = caseExecution.getBrowser().getBrowserName().toUpperCase();
+        browserName = caseExecution.getBrowser() == null ? "" : caseExecution.getBrowser().getBrowserName().toUpperCase();
         version = StringUtils.isBlank(caseExecution.getBrowser().getVersion()) ? caseExecution.getBrowser().getDefaultVersion()
                 : caseExecution.getBrowser().getVersion();
         resolution = StringUtils.isBlank(caseExecution.getScreenResolution()) ? DEFAULT_SCREEN_RESOLUTION
@@ -193,7 +193,7 @@ public class TestContext {
     public void createDriver() {
         // Driver and browser // TODO hacer factoría única para desktop, mobile,
         // host...
-        if (StringUtils.isEmpty(browserName) || StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
+        if (StringUtils.isEmpty(browserName)) {
             browser = null;
         } else {
             browser = new Browser(this);
@@ -460,7 +460,7 @@ public class TestContext {
     }
 
     private void createScreenshot(Step step) {
-        if (StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
+        if (browser == null) {
             return;
         }
 
@@ -481,20 +481,20 @@ public class TestContext {
     }
 
     public void startVideo() {
-        if (!StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
+        if (browser != null) {
             evidences.startVideo();
         }
     }
 
     public void stopVideo() {
-        if (!StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
+        if (browser != null) {
             evidences.stopVideo(testPassed);
         }
     }
 
     public void moveMouseToUpperLeftCorner() {
         try {
-            if ((driver == null) || StringUtils.equalsIgnoreCase(String.valueOf(Browsers.NULLBROWSER), browserName)) {
+            if ((driver == null) || browser == null) {
                 // move mouse does not apply
                 return;
             }

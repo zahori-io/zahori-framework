@@ -22,18 +22,9 @@ package io.zahori.framework.driver.browserfactory;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import org.openqa.selenium.remote.Browser;
 
 /*Clase Browsers.java*/
-public enum Browsers {
-
-    EXPLORER(Browser.IE.browserName(), Browsers.BITS_32, "org.openqa.selenium.ie.InternetExplorerDriver", Browsers.REMOTE_NO),
-    FIREFOX(Browser.FIREFOX.browserName(), Browsers.BITS_32, "org.openqa.selenium.firefox.FirefoxDriver", Browsers.REMOTE_NO),
-    CHROME(Browser.CHROME.browserName(), Browsers.BITS_32, "org.openqa.selenium.chrome.ChromeDriver", Browsers.REMOTE_NO),
-    SAFARI(Browser.SAFARI.browserName(), Browsers.BITS_32, "org.openqa.selenium.safari.SafariDriver", Browsers.REMOTE_NO),
-    EDGE(Browser.EDGE.browserName(), Browsers.BITS_32, "org.openqa.selenium.edge.EdgeDriver", Browsers.REMOTE_NO),
-    OPERA(Browser.OPERA.browserName(), Browsers.BITS_32, "org.openqa.selenium.opera.OperaDriver", Browsers.REMOTE_NO),
-    NULLBROWSER(null, Browsers.BITS_32, "no browser", Browsers.REMOTE_NO);
+public class Browsers {
 
     private String name;
 
@@ -64,120 +55,74 @@ public enum Browsers {
     private String environmentUrl;
     private String environmentName;
 
-    public static final String BITS_32 = "32";
-
-    public static final String BITS_64 = "64";
-
-    public static final String VERSION_8 = "8";
-
-    public static final String VERSION_9 = "9";
-
-    public static final String VERSION_10 = "10";
-
-    public static final String VERSION_11 = "11";
-
-    public static final String VERSION_28 = "28";
-
-    public static final String VERSION_36 = "36";
-
-    public static final String VERSION_38 = "38";
-
-    public static final String EXPLORER_8_32 = Browser.IE.browserName() + VERSION_8 + BITS_32;
-
-    public static final String EXPLORER_8_64 = Browser.IE.browserName() + VERSION_8 + BITS_64;
-
-    public static final String EXPLORER_9_32 = Browser.IE.browserName() + VERSION_9 + BITS_32;
-
-    public static final String EXPLORER_9_64 = Browser.IE.browserName() + VERSION_9 + BITS_64;
-
-    public static final String EXPLORER_10_32 = Browser.IE.browserName() + VERSION_10 + BITS_32;
-
-    public static final String EXPLORER_10_64 = Browser.IE.browserName() + VERSION_10 + BITS_64;
-
-    public static final String EXPLORER_11_32 = Browser.IE.browserName() + VERSION_11 + BITS_32;
-
-    public static final String EXPLORER_11_64 = Browser.IE.browserName() + VERSION_11 + BITS_64;
-
-    public static final String FIREFOX_28_32 = Browser.FIREFOX.browserName() + VERSION_28 + BITS_32;
-
-    public static final String CHROME_38_32 = Browser.CHROME.browserName() + VERSION_38 + BITS_32;
-
     public static final String REMOTE_YES = "YES";
 
     public static final String REMOTE_NO = "NO";
 
-    Browsers(final String nameWebdriver, final String bits, final String packageWebdrivername, final String remote) {
-        this.name = nameWebdriver;
-        this.bits = bits;
-        this.packageWebdrivername = packageWebdrivername;
-        this.remote = remote;
-        this.remoteUrl = null;
+    public Browsers() {
     }
 
-    Browsers(final String nameWebdriver, final String bits, final String packageWebdrivername, final String remote, final String remoteUrl) {
-        this.name = nameWebdriver;
-        this.bits = bits;
-        this.packageWebdrivername = packageWebdrivername;
-        this.remote = remote;
-        this.remoteUrl = remoteUrl;
+    public Browsers withName(String name) {
+        this.name = name;
+        return this;
     }
-
-    public Browsers withPlatform(final String platform) {
+    
+    public Browsers withPlatform(String platform) {
         this.platform = platform;
         return this;
     }
 
-    public Browsers withVersion(final String version) {
+    public Browsers withVersion(String version) {
         this.version = version;
         return this;
     }
 
-    public Browsers withScreenResolution(final String screenResolution) {
+    public Browsers withScreenResolution(String screenResolution) {
         this.screenResolution = screenResolution;
         return this;
     }
 
-    public Browsers withBits(final String bits) {
+    public Browsers withBits(String bits) {
         this.bits = bits;
         return this;
     }
 
-    public Browsers withRemote(final String remote) {
+    public Browsers withRemote(String remote) {
         this.remote = remote;
         return this;
     }
 
-    public Browsers withRemoteUrl(final String remoteUrl) {
+    public Browsers withRemoteUrl(String remoteUrl) {
         this.remoteUrl = remoteUrl;
         return this;
     }
 
-    public Browsers withDownloadPath(final String downloadPath) {
+    public Browsers withDownloadPath(String downloadPath) {
         this.downloadPath = downloadPath;
         return this;
     }
 
-    public Browsers withTestName(final String testName) {
+    public Browsers withTestName(String testName) {
         this.testName = testName;
         return this;
     }
 
-    public Browsers withCaseExecution(final String caseExecutionId) {
+    public Browsers withCaseExecution(String caseExecutionId) {
         this.caseExecutionId = caseExecutionId;
         return this;
     }
 
-    public Browsers withExecution(final Long executionId) {
+    public Browsers withExecution(Long executionId) {
         this.executionId = executionId;
         return this;
     }
 
-    public Browsers withEnvironmentUrl(final String environmentUrl) {
+    public Browsers withEnvironmentUrl(String environmentUrl) {
         this.environmentUrl = environmentUrl;
         return this;
     }
 
-    public Browsers withEnvironmentName(final String environmentName) {
+    public Browsers withEnvironmentName(String environmentName) {
         this.environmentName = environmentName;
         return this;
     }
@@ -186,7 +131,7 @@ public enum Browsers {
         return name;
     }
 
-    public void setName(final String name) {
+    public void setName(String name) {
         this.name = name;
     }
 
@@ -194,7 +139,7 @@ public enum Browsers {
         return packageWebdrivername;
     }
 
-    public void setPackageWebdrivername(final String packageWebdrivername) {
+    public void setPackageWebdrivername(String packageWebdrivername) {
         this.packageWebdrivername = packageWebdrivername;
     }
 
@@ -202,7 +147,7 @@ public enum Browsers {
         return bits;
     }
 
-    public void setBits(final String bits) {
+    public void setBits(String bits) {
         this.bits = bits;
     }
 
@@ -210,7 +155,7 @@ public enum Browsers {
         return platform;
     }
 
-    public void setPlatform(final String platform) {
+    public void setPlatform(String platform) {
         this.platform = platform;
     }
 
@@ -218,7 +163,7 @@ public enum Browsers {
         return version;
     }
 
-    public void setVersion(final String version) {
+    public void setVersion(String version) {
         this.version = version;
     }
 
@@ -234,7 +179,7 @@ public enum Browsers {
         return remote;
     }
 
-    public void setRemote(final String remote) {
+    public void setRemote(String remote) {
         this.remote = remote;
     }
 
@@ -242,7 +187,7 @@ public enum Browsers {
         return remoteUrl;
     }
 
-    public void setRemoteUrl(final String remoteUrl) {
+    public void setRemoteUrl(String remoteUrl) {
         this.remoteUrl = remoteUrl;
     }
 
@@ -250,7 +195,7 @@ public enum Browsers {
         return downloadPath;
     }
 
-    public void setDownloadPath(final String downloadPath) {
+    public void setDownloadPath(String downloadPath) {
         this.downloadPath = downloadPath;
     }
 

@@ -179,7 +179,7 @@ public class Browser {
                 matarProceso("WerFault.exe");
             }
 
-            Browsers browsers = Browsers.valueOf(testContext.browserName).withBits(testContext.bits).withPlatform(testContext.platform)
+            Browsers browsers = new Browsers().withName(testContext.browserName).withBits(testContext.bits).withPlatform(testContext.platform)
                     .withVersion(testContext.version).withScreenResolution(testContext.resolution).withRemote(testContext.remote)
                     .withTestName(testContext.testCaseName).withRemoteUrl(testContext.remoteUrl).withCaseExecution(testContext.caseExecutionId)
                     .withExecution(testContext.caseExecution.getExecutionId())
@@ -317,13 +317,11 @@ public class Browser {
 
     private void setBrowserZoomTo100() {
         try {
-            if (StringUtils.equalsIgnoreCase("WINDOWS", testContext.platform)) {
-                final Robot robot = new Robot();
-                robot.keyPress(KeyEvent.VK_CONTROL);
-                robot.keyPress(KeyEvent.VK_0);
-                robot.keyRelease(KeyEvent.VK_CONTROL);
-                robot.keyRelease(KeyEvent.VK_0);
-            }
+            final Robot robot = new Robot();
+            robot.keyPress(KeyEvent.VK_CONTROL);
+            robot.keyPress(KeyEvent.VK_0);
+            robot.keyRelease(KeyEvent.VK_CONTROL);
+            robot.keyRelease(KeyEvent.VK_0);
         } catch (final Exception e) {
             testContext.logWarn("Error setting browser zoom to 100%");
         }
