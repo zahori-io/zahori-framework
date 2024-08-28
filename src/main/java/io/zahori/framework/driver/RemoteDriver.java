@@ -26,7 +26,6 @@ import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.ios.IOSDriver;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.zahori.framework.driver.browserfactory.Browsers;
-import io.zahori.framework.files.properties.ZahoriProperties;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -175,35 +174,7 @@ public class RemoteDriver extends AbstractDriver {
 
     private DesiredCapabilities getAppiumCapabilities(Browsers browsers) {
         String prefix = browsers.getPlatform().toLowerCase() + ".";
-        Map<String, String> extraCapabilities = new ZahoriProperties().getExtraCapabilities();
-
-        DesiredCapabilities capabilities = new DesiredCapabilities();
-        HashMap<String, Object> cloudOptions = new HashMap<>();
-        String cloudOptionsKey = "";
-
-        for (Map.Entry<String, String> entry : extraCapabilities.entrySet()) {
-            String capabilityKey = entry.getKey();
-
-            if (capabilityKey.startsWith(prefix)) {
-                capabilityKey = capabilityKey.replaceFirst(prefix, StringUtils.EMPTY);
-                String capabilityValue = getCapabilityValue(browsers, entry.getValue());
-
-                if (StringUtils.startsWith(capabilityKey, "cloud.")) {
-                    String cloudOptionAndCapabilityNameString = capabilityKey.replaceFirst("cloud.", StringUtils.EMPTY);
-                    String[] cloudOptionAndCapabilityName = StringUtils.split(cloudOptionAndCapabilityNameString, ".");
-                    if (cloudOptionAndCapabilityName.length > 1) {
-                        cloudOptionsKey = cloudOptionAndCapabilityName[0];
-                        cloudOptions.put(cloudOptionAndCapabilityName[1], capabilityValue);
-                    }
-                } else {
-                    if (isBoolean(capabilityValue)) {
-                        capabilities.setCapability(capabilityKey, Boolean.valueOf(capabilityValue));
-                    } else {
-                        capabilities.setCapability(capabilityKey, capabilityValue);
-                    }
-                }
-            }
-        }
+        DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilitiesWithPrefix(prefix, browsers);
 
         // TODO: remove. This is a temporal solution for mobile testing.
         // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
@@ -212,60 +183,15 @@ public class RemoteDriver extends AbstractDriver {
             // overwrite 'app' capability value defined in zahori.properties with environment url from selected configuration
             capabilities.setCapability("app", browsers.getEnvironmentUrl());
         }
-
-        if (StringUtils.isNotBlank(cloudOptionsKey) && !cloudOptions.isEmpty()) {
-            setAppSettingsForBrowserStack(cloudOptions, browsers);
-            capabilities.setCapability(cloudOptionsKey, cloudOptions);
+        
+        if ("IOS".equalsIgnoreCase(browsers.getPlatform()) && capabilities.getCapability("bstack:options") != null) {
+            Map<String, Object> browserStackOptions = (Map<String, Object>) capabilities.getCapability("bstack:options");
+            setIOSAppSettingsForBrowserStack(browserStackOptions, browsers);
         }
 
-        System.out.println(
-                "Appium capabilities: " + capabilities.toString());
+        System.out.println("Appium capabilities: " + capabilities.toString());
 
-        /*
-		// platformName: android iOS
-		capabilities.setCapability("platformName", "android");
-		// Choose test app or web browser:
-		// - App:
-		// capabilities.setCapability("appium:app", "storage:filename=mda-1.0.16-19.apk");
-		// - Web Browser:
-		capabilities.setCapability("browserName", "chrome");
-		// W3C Protocol is mandatory for Appium 2
-		//capabilities.setCapability("appium:platformVersion", "12");
-		 capabilities.setCapability("appium:deviceName", "Samsung Galaxy S9");  atributo name en el api
-		// capabilities.setCapability("appium:orientation", "portrait");
-		// capabilities.setCapability("appium:app", "storage:filename=<file-name>");
-		// Mandatory for Appium 2
-		capabilities.setCapability("appium:automationName", "uiautomator2");
-         */
- /*
-		HashMap<String, Object> sauceOptions = new HashMap<>();
-		// appiumVersion is mandatory to use Appium 2
-                // sauceOptions.put("appiumVersion", "2.0.0-beta56");
-		// sauceOptions.put("username", System.getenv("SAUCE_USERNAME"));
-		// sauceOptions.put("accessKey", System.getenv("SAUCE_ACCESS_KEY"));
-		sauceOptions.put("build", "Build 1"); // <your build id>
-		sauceOptions.put("name", "Test wikipedia on Samsung Galaxy S9"); // <your test name>
-
-                // capabilities.setCapability("sauce:options", sauceOptions);
-         */
         return capabilities;
-    }
-
-    private String getCapabilityValue(Browsers browsers, String capabilityValue) {
-        if (StringUtils.contains(capabilityValue, "{platform}")) {
-            capabilityValue = StringUtils.replace(capabilityValue, "{platform}", browsers.getPlatform().toLowerCase());
-        }
-        if (StringUtils.contains(capabilityValue, "{executionId}")) {
-            capabilityValue = StringUtils.replace(capabilityValue, "{executionId}", browsers.getExecutionId().toString());
-        }
-        if (StringUtils.contains(capabilityValue, "{caseExecutionId}")) {
-            capabilityValue = StringUtils.replace(capabilityValue, "{caseExecutionId}", browsers.getCaseExecutionId());
-        }
-        if (StringUtils.contains(capabilityValue, "{caseName}")) {
-            capabilityValue = StringUtils.replace(capabilityValue, "{caseName}", browsers.getTestName());
-        }
-
-        return capabilityValue;
     }
 
     private URL getUrl(String url) {
@@ -282,11 +208,7 @@ public class RemoteDriver extends AbstractDriver {
         https://www.browserstack.com/docs/app-automate/appium/advanced-features/ios-app-settings#App-specific_permission_settings
         https://www.browserstack.com/docs/app-automate/appium/advanced-features/ios-app-settings#App_settings_added_via_iOS_Settings_bundle
      */
-    private void setAppSettingsForBrowserStack(HashMap<String, Object> cloudOptions, Browsers browsers) {
-        if (!"IOS".equalsIgnoreCase(browsers.getPlatform())) {
-            return;
-        }
-
+    private void setIOSAppSettingsForBrowserStack(Map<String, Object> cloudOptions, Browsers browsers) {
         String environment = browsers.getEnvironmentName();
         HashMap<String, Object> iosAppSettings = new HashMap<>();
 
