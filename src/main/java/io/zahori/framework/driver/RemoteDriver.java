@@ -65,12 +65,12 @@ public class RemoteDriver extends AbstractDriver {
 
     private String getExceptionMessage(Exception e, Browsers browsers) {
         String exceptionMessage = getCleanMessage(e.getMessage());
-        
+
         Throwable cause = e.getCause();
         if (cause != null) {
             exceptionMessage = exceptionMessage + " Causes: ";
         }
-        
+
         while (cause != null) {
             String causeMessage = getCleanMessage(cause.getMessage());
             if (StringUtils.containsIgnoreCase(causeMessage, "UnknownHostException")) {
@@ -99,7 +99,7 @@ public class RemoteDriver extends AbstractDriver {
                 }
                 if (StringUtils.containsIgnoreCase(causeMessage, "BROWSERSTACK_INVALID_APP_URL")) {
                     return "Application not present in BrowserStack. Review that the application is uploaded in BrowserStack and the correct url (bs://...) is set in Zahori.";
-                }  
+                }
                 if (StringUtils.containsIgnoreCase(causeMessage, "[BROWSERSTACK")) {
                     return causeMessage;
                 }
@@ -115,23 +115,23 @@ public class RemoteDriver extends AbstractDriver {
     private String getCleanMessage(String message) {
         return StringUtils.substringBefore(StringUtils.substringBefore(message, "Host info"), "Build info");
     }
-    
+
     private void resizeWindow(WebDriver driver, Browsers browsers) {
         driver.manage().window().setPosition(new Point(0, 0));
-        
+
         String resolution = browsers.getScreenResolution();
         Integer width = Integer.valueOf(resolution.split("x")[0]);
         Integer height = Integer.valueOf(resolution.split("x")[1]);
         driver.manage().window().setSize(new Dimension(width, height));
-    }    
-    
+    }
+
     @Override
     protected void configureWebDriver(WebDriver webDriver, Browsers browsers) {
         if (webDriver instanceof AndroidDriver || webDriver instanceof IOSDriver) {
 
         } else {
             // Cualquier otra configuracion especifica de RemoteDriver
-            
+
             // Browser window size
             // https://aerokube.com/selenoid/latest/#_custom_screen_resolution_screenresolution
             resizeWindow(webDriver, browsers);
@@ -183,7 +183,7 @@ public class RemoteDriver extends AbstractDriver {
             // overwrite 'app' capability value defined in zahori.properties with environment url from selected configuration
             capabilities.setCapability("app", browsers.getEnvironmentUrl());
         }
-        
+
         if ("IOS".equalsIgnoreCase(browsers.getPlatform()) && capabilities.getCapability("bstack:options") != null) {
             Map<String, Object> browserStackOptions = (Map<String, Object>) capabilities.getCapability("bstack:options");
             setIOSAppSettingsForBrowserStack(browserStackOptions, browsers);
@@ -215,8 +215,10 @@ public class RemoteDriver extends AbstractDriver {
         if (StringUtils.containsIgnoreCase(environment, "STG")) {
             iosAppSettings.put("Enviroment", "STG");
         }
+
         if (StringUtils.containsIgnoreCase(environment, "PRO")) {
-            iosAppSettings.put("Enviroment", "PRO");
+            // iosAppSettings.put("Enviroment", "PRO");
+            return;
         }
 
         if (StringUtils.containsIgnoreCase(environment, "QA")) {
