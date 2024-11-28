@@ -621,6 +621,18 @@ public class PageElement {
         }
     }
 
+    public boolean isVisible(int maxSecondsWaiting) {
+        try {
+            Chronometer chrono = new Chronometer();
+            while (!isVisibleWithoutWait() && chrono.getElapsedSeconds() < maxSecondsWaiting) {
+                Pause.pauseMillis(500);
+            }
+            return isVisibleWithoutWait();
+        } catch (final Exception e) {
+            return false;
+        }
+    }
+
     public boolean isVisibleWithoutWait() {
         try {
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
