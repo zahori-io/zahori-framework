@@ -23,7 +23,6 @@ package io.zahori.framework.driver;
  * #L%
  */
 
-import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxOptions;
@@ -42,11 +41,11 @@ public enum OptionsFactory {
             chromeOptions.addArguments("--remote-allow-origins=*");
             chromeOptions.addArguments("--no-sandbox");
             chromeOptions.addArguments("--disable-dev-shm-usage");
+            chromeOptions.addArguments("--disable-search-engine-choice-screen");
 
             //chromeOptions.addArguments("--headless=new");
             chromeOptions.setHeadless(false);
             chromeOptions.setAcceptInsecureCerts(true);
-            chromeOptions.setPageLoadStrategy(PageLoadStrategy.EAGER);
             return chromeOptions;
         }
     },

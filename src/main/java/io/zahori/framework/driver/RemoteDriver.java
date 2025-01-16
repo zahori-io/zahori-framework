@@ -189,7 +189,7 @@ public class RemoteDriver extends AbstractDriver {
             setIOSAppSettingsForBrowserStack(browserStackOptions, browsers);
         }
 
-        System.out.println("Appium capabilities: " + capabilities.toString());
+        System.out.println("- Appium capabilities: " + capabilities.toString());
 
         return capabilities;
     }

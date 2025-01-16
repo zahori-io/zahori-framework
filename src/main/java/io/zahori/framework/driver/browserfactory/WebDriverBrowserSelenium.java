@@ -101,7 +101,8 @@ public class WebDriverBrowserSelenium {
     }
 
     public void setProperties(final WebDriver driver, Browsers browsers) {
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(TIME_WAIT_ELEMENT_NOT_PRESENT_TWENTY_SG));
+        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(browsers.getPageLoadTimeout()));
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(browsers.getImplicitlyWait()));
     }
 
     public WebDriver getDriver(final DesiredCapabilities caps)
@@ -126,7 +127,7 @@ public class WebDriverBrowserSelenium {
 
                 caps.setCapability(ChromeOptions.CAPABILITY, options);
             }
-
+            
             String remoteUrl = StringUtils.isEmpty(System.getenv("ET_EUS_API")) ? navega.getRemoteUrl() : System.getenv("ET_EUS_API");
             LOG.debug("Valor que llega del Plugin de Jenkins de Elastest [ET_EUS_API]:  " + remoteUrl);
             caps.setPlatform(Platform.ANY);

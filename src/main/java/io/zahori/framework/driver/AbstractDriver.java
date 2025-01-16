@@ -25,10 +25,14 @@ package io.zahori.framework.driver;
 
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.files.properties.ZahoriProperties;
-import java.time.Duration;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.MutableCapabilities;
+import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.edge.EdgeOptions;
+import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -68,19 +72,28 @@ public abstract class AbstractDriver implements Driver {
      * @param browsers La configuracion del navegador.
      * @return Opciones configuradas para el WebDriver.
      */
+    @Override
     public AbstractDriverOptions<?> getOptions(Browsers browsers) {
         AbstractDriverOptions<?> options = OptionsFactory.valueOf(browsers.getName()).getOptions();
         options.setAcceptInsecureCerts(true);
-        options.setImplicitWaitTimeout(Duration.ofSeconds(100));
+        /*
+            PageLoadStrategy:
+            - normal	Ready State=complete --> Used by default, waits for all resources to download
+            - eager	Ready State=interactive	--> DOM access is ready, but other resources like images may still be loading
+            - none	Ready State=Any	--> Does not block WebDriver at all
+        */
+        options.setPageLoadStrategy(PageLoadStrategy.EAGER);
+        setZahoriPropertiesBrowserOptions(options);
 
         MutableCapabilities capabilities = new MutableCapabilities();
         capabilities.setCapability("name", browsers.getCaseExecutionId());
         capabilities.setCapability("testName", browsers.getTestName());
         capabilities.setCapability("screenResolution", browsers.getScreenResolution());
         setZahoriPropertiesExtraCaps(capabilities);
-
+        
         options.merge(capabilities);
 
+        System.out.println(browsers.getName() + " browser options and capabilities: " + options.toString());
         return options;
     }
 
@@ -101,6 +114,46 @@ public abstract class AbstractDriver implements Driver {
     }
 
     /**
+     * Configura opciones adicionales del navegador basadas en las propiedades de Zahori.
+     *
+     * @param options Objeto AbstractDriverOptions para agregar opciones del navegador.
+     */
+    private void setZahoriPropertiesBrowserOptions (AbstractDriverOptions<?> options) {
+        
+        if (options instanceof ChromeOptions chromeOptions) {
+            Map<String, String> extraPreferences = new ZahoriProperties().getBrowserPreferencesToBeAdded("chrome");
+            for (String extraPrefKey : extraPreferences.keySet()) {
+                String extraPrefValue = extraPreferences.get(extraPrefKey);
+                String argument = StringUtils.isEmpty(extraPrefValue) ? extraPrefKey : extraPrefKey + "=" + extraPrefValue;
+                chromeOptions.addArguments(argument);
+            }
+        }
+        
+        if (options instanceof EdgeOptions edgeOptions) {
+            Map<String, String> extraPreferences = new ZahoriProperties().getBrowserPreferencesToBeAdded("edge");
+            for (String extraPrefKey : extraPreferences.keySet()) {
+                String extraPrefValue = extraPreferences.get(extraPrefKey);
+                String argument = StringUtils.isEmpty(extraPrefValue) ? extraPrefKey : extraPrefKey + "=" + extraPrefValue;
+                edgeOptions.addArguments(argument);
+            }
+        }
+        
+        if (options instanceof FirefoxOptions firefoxOptions) {
+            Map<String, String> extraPreferences = new ZahoriProperties().getBrowserPreferencesToBeAdded("firefox");
+            for (String extraPrefKey : extraPreferences.keySet()) {
+                String extraPrefValue = extraPreferences.get(extraPrefKey);
+                if (isBoolean(extraPreferences.get(extraPrefKey))) {
+                    firefoxOptions.addPreference(extraPrefKey, Boolean.valueOf(extraPrefValue));
+                } else if (isDigit(extraPrefValue)) {
+                    firefoxOptions.addPreference(extraPrefKey, Integer.valueOf(extraPrefValue));
+                } else {
+                    firefoxOptions.addPreference(extraPrefKey, extraPrefValue);
+                }
+            }
+        }
+    }
+    
+    /**
      * Metodo para configurar el WebDriver despues de su creacion.
      * Puede ser sobrescrito por clases derivadas para añadir configuraciones especificas.
      *
@@ -119,5 +172,12 @@ public abstract class AbstractDriver implements Driver {
      */
     private boolean isBoolean(String input) {
         return StringUtils.equalsIgnoreCase("true", input) || StringUtils.equalsIgnoreCase("false", input);
+    }
+    
+    private boolean isDigit(String input) {
+        return StringUtils.equalsIgnoreCase("0", input) || StringUtils.equalsIgnoreCase("1", input) || StringUtils.equalsIgnoreCase("2", input)
+                || StringUtils.equalsIgnoreCase("3", input) || StringUtils.equalsIgnoreCase("4", input) || StringUtils.equalsIgnoreCase("5", input)
+                || StringUtils.equalsIgnoreCase("6", input) || StringUtils.equalsIgnoreCase("7", input) || StringUtils.equalsIgnoreCase("8", input)
+                || StringUtils.equalsIgnoreCase("9", input);
     }
 }

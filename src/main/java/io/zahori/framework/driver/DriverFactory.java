@@ -49,7 +49,7 @@ public class DriverFactory implements AbstractFactory<WebDriver> {
      * @return true if execution is remote, false otherwise.
      */
     private boolean isRemoteExecution(Browsers browsers) {
-        return ExecutionType.REMOTE.getName().equals(browsers.getRemote());
+        return ExecutionType.REMOTE.getName().equalsIgnoreCase(browsers.getRemote());
     }
 
     /**

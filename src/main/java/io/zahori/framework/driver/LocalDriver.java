@@ -25,18 +25,14 @@ package io.zahori.framework.driver;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
 import io.zahori.framework.driver.browserfactory.Browsers;
-import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.remote.AbstractDriverOptions;
-
-import java.time.Duration;
 
 public class LocalDriver extends AbstractDriver {
 
     private void resizeWindow(WebDriver driver, Browsers browsers) {
         String resolution = browsers.getScreenResolution();
-        driver.manage().window().setSize(new Dimension(Integer.valueOf(resolution.split("x")[0]).intValue(), Integer.valueOf(resolution.split("x")[1]).intValue()));
+        driver.manage().window().setSize(new Dimension(Integer.parseInt(resolution.split("x")[0]), Integer.parseInt(resolution.split("x")[1])));
     }
 
     @Override
@@ -46,7 +42,7 @@ public class LocalDriver extends AbstractDriver {
                 .create();
     }
 
-    // Si hay configuraciones específicas para LocalDriver, puedes sobrescribir `configureWebDriver` aquí
+    // Si hay configuraciones específicas para LocalDriver, puedes sobrescribir 'configureWebDriver' aquí
 
     @Override
     protected void configureWebDriver(WebDriver webDriver, Browsers browsers) {

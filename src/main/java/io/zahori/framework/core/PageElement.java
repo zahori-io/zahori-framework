@@ -101,7 +101,7 @@ public class PageElement {
         try {
             scroll();
 
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds()).longValue()));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds())));
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
             return true;
         } catch (final Exception e) {
@@ -113,7 +113,7 @@ public class PageElement {
         Chronometer chrono = new Chronometer();
         webElement = findElement();
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds()).longValue()));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds())));
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
             webElement.click();
             testContext.logInfo("Click on " + this);
@@ -153,7 +153,7 @@ public class PageElement {
                 scroll();
             }
 
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds()).longValue()));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds())));
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
 
             webElement.click();
@@ -210,7 +210,7 @@ public class PageElement {
         Chronometer chrono = new Chronometer();
         webElement = findElement();
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds()).longValue()));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds())));
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
             while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement)) {
                 Pause.pause();
@@ -366,8 +366,8 @@ public class PageElement {
             testContext.logInfo("Select option by text '" + text + "' " + this);
         } catch (final Exception e) {
             StringBuilder stringBuffer = new StringBuilder();
-            for (WebElement webElement : select.getOptions()) {
-                stringBuffer.append("{").append(webElement.getText()).append("}");
+            for (WebElement selectOption : select.getOptions()) {
+                stringBuffer.append("{").append(selectOption.getText()).append("}");
             }
             throw new RuntimeException("Select option not found: option :" + text + " elemnt :" + this + " with values :" + stringBuffer.toString());
         }
@@ -411,8 +411,8 @@ public class PageElement {
         try {
             final Select select = forceVisibility ? new Select(findElement()) : new Select(findElementPresent());
             final List<String> list = new ArrayList<>();
-            for (final WebElement webElement : select.getOptions()) {
-                list.add(webElement.getText());
+            for (final WebElement selectOption : select.getOptions()) {
+                list.add(selectOption.getText());
             }
             return list;
         } catch (final Exception e) {
@@ -425,8 +425,8 @@ public class PageElement {
         try {
             final Select select = forceVisibility ? new Select(findElement()) : new Select(findElementPresent());
             final List<String> list = new ArrayList<>();
-            for (final WebElement webElement : select.getOptions()) {
-                list.add(webElement.getAttribute("Value"));
+            for (final WebElement selectOption : select.getOptions()) {
+                list.add(selectOption.getAttribute("Value"));
             }
             return list;
         } catch (final Exception e) {
@@ -590,7 +590,6 @@ public class PageElement {
     }
 
     public boolean isPresent() {
-
         try {
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
             final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(0L));
@@ -737,7 +736,7 @@ public class PageElement {
 
     public boolean isEnabled() {
         try {
-            final WebElement webElement = findElement();
+            webElement = findElement();
             return webElement.isEnabled();
         } catch (final Exception e) {
             return false;

@@ -50,6 +50,10 @@ public class Browsers {
 
     private Long executionId;
 
+    private Long pageLoadTimeout;
+
+    private Long implicitlyWait;
+    
     // TODO: remove. This is a temporal solution for mobile testing.
     // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
     private String environmentUrl;
@@ -117,6 +121,16 @@ public class Browsers {
         return this;
     }
 
+    public Browsers withPageLoadTimeout(Long pageLoadTimeout) {
+        this.pageLoadTimeout = pageLoadTimeout;
+        return this;
+    }
+
+    public Browsers withImplicitlyWait(Long implicitlyWait) {
+        this.implicitlyWait = implicitlyWait;
+        return this;
+    }
+    
     public Browsers withEnvironmentUrl(String environmentUrl) {
         this.environmentUrl = environmentUrl;
         return this;
@@ -223,6 +237,22 @@ public class Browsers {
         this.executionId = executionId;
     }
 
+    public Long getPageLoadTimeout() {
+        return pageLoadTimeout;
+    }
+
+    public void setPageLoadTimeout(Long pageLoadTimeout) {
+        this.pageLoadTimeout = pageLoadTimeout;
+    }
+
+    public Long getImplicitlyWait() {
+        return implicitlyWait;
+    }
+
+    public void setImplicitlyWait(Long implicitlyWait) {
+        this.implicitlyWait = implicitlyWait;
+    }
+    
     public String getEnvironmentUrl() {
         return environmentUrl;
     }

@@ -42,7 +42,7 @@
 
         <skip.integration.tests>false</skip.integration.tests>
         <skip.unit.tests>true</skip.unit.tests>
-        <selenium.version>4.16.1</selenium.version>
+        <selenium.version>4.27.0</selenium.version>
         <poi.version>5.2.5</poi.version>
         <jackson.version>2.16.0</jackson.version>
         <log4j.version>2.22.0</log4j.version>
@@ -190,7 +190,7 @@
             <dependency>
                 <groupId>io.github.bonigarcia</groupId>
                 <artifactId>webdrivermanager</artifactId>
-                <version>5.6.2</version>
+                <version>5.9.2</version>
             </dependency>
 
             <dependency>
@@ -205,6 +205,7 @@
                 <version>8.6.0</version>
             </dependency>
             <!-- FIN Selenium -->
+            
             <dependency>
                 <groupId>com.github.stephenc.monte</groupId>
                 <artifactId>monte-screen-recorder</artifactId>

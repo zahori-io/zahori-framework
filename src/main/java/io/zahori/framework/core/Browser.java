@@ -32,7 +32,6 @@ import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -142,7 +141,6 @@ public class Browser {
 
     public void loadPageWithProxy(String url, String urlProxy, String user, String password) {
         createDriver();
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofMillis(100L));
 
         try {
             driver.get(url);
@@ -158,7 +156,6 @@ public class Browser {
                 LOG.error("Error al cargar el driver: " + e1.getMessage());
             }
         } finally {
-            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(10L));
             driver.get(url);
         }
 
@@ -183,6 +180,8 @@ public class Browser {
                     .withVersion(testContext.version).withScreenResolution(testContext.resolution).withRemote(testContext.remote)
                     .withTestName(testContext.testCaseName).withRemoteUrl(testContext.remoteUrl).withCaseExecution(testContext.caseExecutionId)
                     .withExecution(testContext.caseExecution.getExecutionId())
+                    .withPageLoadTimeout(testContext.timeoutFindElement.longValue()) // TODO
+                    .withImplicitlyWait(testContext.timeoutFindElement.longValue())
                     // TODO: remove withEnvironmentUrl. This is a temporal solution for mobile testing.
                     // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
                     .withEnvironmentUrl(testContext.caseExecution.getConfiguration().getEnvironmentUrl())
@@ -278,10 +277,6 @@ public class Browser {
         return windowHandleBefore;
     }
 
-    public void setLoadingPageTimeoutInSeconds(int timeoutInSeconds) {
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds((long) timeoutInSeconds));
-    }
-
     private void selectCertificate(int numCertificado) {
         try {
 
@@ -355,7 +350,7 @@ public class Browser {
         if (newWindow) {
             int actualSize = windowHandles.size();
             Chronometer crono = new Chronometer();
-            while ((windowHandles.size() == actualSize) && (crono.getElapsedSeconds() < testContext.timeoutFindElement.intValue())) {
+            while ((windowHandles.size() == actualSize) && (crono.getElapsedSeconds() < testContext.timeoutFindElement)) {
                 Pause.shortPause();
                 windowHandles = new ArrayList<>(driver.getWindowHandles());
             }
