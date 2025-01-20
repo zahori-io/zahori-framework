@@ -23,6 +23,7 @@ package io.zahori.framework.driver.browserfactory;
  * #L%
  */
 
+import io.appium.java_client.android.AndroidDriver;
 import io.zahori.framework.driver.DriverFactory;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import java.lang.reflect.InvocationTargetException;
@@ -89,10 +90,7 @@ public class WebDriverBrowserSelenium {
 
             //driver = getDriver(caps);
             driver = new DriverFactory().create(browsers);
-
-            if (driver != null) {
-                setProperties(driver, browsers);
-            }
+            setProperties(driver, browsers);
 
         } catch (final IllegalArgumentException | SecurityException e) {
             LOG.error(e.getMessage() + e.getCause());
@@ -101,10 +99,17 @@ public class WebDriverBrowserSelenium {
     }
 
     public void setProperties(final WebDriver driver, Browsers browsers) {
-        driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(browsers.getPageLoadTimeout()));
+        if (driver == null) {
+            return;
+        }
+        
+        if (!(driver instanceof AndroidDriver)) { // pageLoadTimeout is not implemented yet for AndroidDriver
+            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(browsers.getPageLoadTimeout()));
+        }
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(browsers.getImplicitlyWait()));
     }
 
+    
     public WebDriver getDriver(final DesiredCapabilities caps)
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         WebDriver driver;
