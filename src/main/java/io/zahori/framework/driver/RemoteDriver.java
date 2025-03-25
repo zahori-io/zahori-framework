@@ -168,10 +168,6 @@ public class RemoteDriver extends AbstractDriver {
         throw new RuntimeException("No supported AppiumDriver: run an execution with a Configuration containing 'Android' or 'iOS' in the name");
     }
 
-    private boolean isBoolean(String input) {
-        return StringUtils.equalsIgnoreCase("true", input) || StringUtils.equalsIgnoreCase("false", input);
-    }
-
     private DesiredCapabilities getAppiumCapabilities(Browsers browsers) {
         String prefix = browsers.getPlatform().toLowerCase() + ".";
         DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilitiesWithPrefix(prefix, browsers);
@@ -184,11 +180,6 @@ public class RemoteDriver extends AbstractDriver {
             capabilities.setCapability("app", browsers.getEnvironmentUrl());
         }
 
-        if ("IOS".equalsIgnoreCase(browsers.getPlatform()) && capabilities.getCapability("bstack:options") != null) {
-            Map<String, Object> browserStackOptions = (Map<String, Object>) capabilities.getCapability("bstack:options");
-            setIOSAppSettingsForBrowserStack(browserStackOptions, browsers);
-        }
-
         System.out.println("- Appium capabilities: " + capabilities.toString());
 
         return capabilities;
@@ -199,38 +190,6 @@ public class RemoteDriver extends AbstractDriver {
             return new URL(url);
         } catch (MalformedURLException ex) {
             throw new RuntimeException("Error parsing URL '" + url + "': " + ex.getMessage());
-        }
-    }
-
-    /*
-        TODO
-        https://www.browserstack.com/docs/app-automate/appium/advanced-features/ios-app-settings
-        https://www.browserstack.com/docs/app-automate/appium/advanced-features/ios-app-settings#App-specific_permission_settings
-        https://www.browserstack.com/docs/app-automate/appium/advanced-features/ios-app-settings#App_settings_added_via_iOS_Settings_bundle
-     */
-    private void setIOSAppSettingsForBrowserStack(Map<String, Object> cloudOptions, Browsers browsers) {
-        String environment = browsers.getEnvironmentName();
-        HashMap<String, Object> iosAppSettings = new HashMap<>();
-
-        if (StringUtils.containsIgnoreCase(environment, "STG")) {
-            iosAppSettings.put("Enviroment", "STG");
-        }
-
-        if (StringUtils.containsIgnoreCase(environment, "PRO")) {
-            // iosAppSettings.put("Enviroment", "PRO");
-            return;
-        }
-
-        if (StringUtils.containsIgnoreCase(environment, "QA")) {
-            iosAppSettings.put("Enviroment", "QA");
-        }
-
-        if (StringUtils.containsIgnoreCase(environment, "PRE")) {
-            iosAppSettings.put("Enviroment", "PRE");
-        }
-
-        if (!iosAppSettings.isEmpty()) {
-            cloudOptions.put("updateAppSettings", iosAppSettings);
         }
     }
 
