@@ -82,7 +82,7 @@ public abstract class AbstractDriver implements Driver {
             - eager	Ready State=interactive	--> DOM access is ready, but other resources like images may still be loading
             - none	Ready State=Any	--> Does not block WebDriver at all
         */
-        options.setPageLoadStrategy(PageLoadStrategy.EAGER);
+        options.setPageLoadStrategy(PageLoadStrategy.NONE);
         setZahoriPropertiesBrowserOptions(options);
 
         MutableCapabilities capabilities = new MutableCapabilities();
