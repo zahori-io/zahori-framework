@@ -86,7 +86,7 @@ public class ZahoriProperties {
         }
     }
 
-    private String getProperty(String propertyName) {
+    public String getProperty(String propertyName) {
         return StringUtils.trim(prop.getProperty(propertyName));
     }
 

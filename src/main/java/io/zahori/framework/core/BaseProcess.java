@@ -96,13 +96,15 @@ public abstract class BaseProcess {
     private TestContext setup(CaseExecution caseExecution, ProcessRegistration processRegistration, String remote, String remoteUrl) {
         LOG.info("==== Setup {}", getCaseExcutionDetails(caseExecution));
 
+        TestContext testContext = null;
         try {
-            TestContext testContext = new TestContext(caseExecution, processRegistration);
+            testContext = new TestContext(caseExecution, processRegistration);
 
             testContext.remote = remote;
             testContext.remoteUrl = remoteUrl;
 
             testContext.constructor();
+            testContext.startRemoteTunnel();
             testContext.createDriver();
 
             testContext.startChronometer();
@@ -111,6 +113,9 @@ public abstract class BaseProcess {
 
             return testContext;
         } catch (Exception e) {
+            if (testContext != null) {
+                testContext.stopRemoteTunnel();
+            }
             e.printStackTrace();
             throw new ZahoriException("", "Error initializing case: " + e.getMessage());
         }
@@ -132,6 +137,7 @@ public abstract class BaseProcess {
         } catch (final Exception e) {
             manageException(testContext, caseExecution, e);
         } finally {
+            testContext.stopRemoteTunnel();
             testContext.stopChronometer();
             testContext.writeSteps2Json();
             testContext.logInfo("Test Finished: " + testContext.testCaseName);

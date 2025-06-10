@@ -22,6 +22,7 @@ package io.zahori.framework.core;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import com.browserstack.local.Local;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -59,6 +60,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
@@ -126,6 +128,8 @@ public class TestContext {
 
     public CaseExecution caseExecution;
     public ProcessRegistration processRegistration;
+
+    private Local browserStackLocal;
 
     public TestContext(CaseExecution caseExecution, ProcessRegistration processRegistration) {
         this.caseExecution = caseExecution;
@@ -198,6 +202,71 @@ public class TestContext {
         } else {
             browser = new Browser(this);
             logInfo("Driver initialized!");
+        }
+    }
+
+    /* Starts a local connection with BrowserStack if the following capabilities are set in zahori.properties:
+        zahori.test.capabilities.add.android.bstack\:options.local=true
+        zahori.test.capabilities.add.android.bstack\:options.localIdentifier={executionId}-{caseExecutionId}
+        or 
+        zahori.test.capabilities.add.ios.bstack\:options.local=true
+        zahori.test.capabilities.add.ios.bstack\:options.localIdentifier={executionId}-{caseExecutionId}
+     */
+    public void startRemoteTunnel() {
+        String browserStackLocalConnection = zahoriProperties.getProperty("zahori.test.capabilities.add." + platform.toLowerCase() + ".bstack:options.local");
+        if (StringUtils.isBlank(browserStackLocalConnection) || !Boolean.parseBoolean(browserStackLocalConnection)) {
+            return;
+        }
+
+        String accessKey = zahoriProperties.getProperty("zahori.test.capabilities.add." + platform.toLowerCase() + ".bstack:options.accessKey");
+        if (StringUtils.isBlank(accessKey)) {
+            logStepFailed("BrowserStack local connection is enable in zahori.properties but the access key is not defined");
+        }
+
+        String localIdentifier = caseExecution.getExecutionId() + "-" + caseExecution.getCaseExecutionId();
+
+        boolean isRunning;
+        long start = System.currentTimeMillis();
+        try {
+            HashMap<String, String> browserStackLocalArgs = new HashMap<>();
+            
+            browserStackLocalArgs.put("key", accessKey);
+            // Route all traffic via this local machine:
+            browserStackLocalArgs.put("forcelocal", "true");
+            // Disable local testing for Live and Screenshots, and enable only Automate:
+            browserStackLocalArgs.put("onlyAutomate", "true");
+            // For doing simultaneous multiple local testing connections, set this uniquely for different processes:
+            browserStackLocalArgs.put("localIdentifier", localIdentifier);
+            
+            // Enable verbose logging:
+            //// bsLocalArgs.put("v", "true");
+            // Log file:
+            //// browserStackLocalArgs.put("logFile", "./browserstack-agent.log");
+            // Binary Path (downloads):
+            //// bsLocalArgs.put("binarypath", "./BrowserStackLocal");
+            
+            browserStackLocal = new Local();
+            browserStackLocal.start(browserStackLocalArgs);
+
+            isRunning = browserStackLocal.isRunning();
+            if (!isRunning) {
+                logStepFailed("Connection is not running");
+            }
+            logInfo("BrowserStack local connection started with id " + localIdentifier + " (" + String.valueOf(System.currentTimeMillis() - start) + " ms)");
+
+        } catch (Exception e) {
+            failTest("BrowserStack local connection failed (id " + localIdentifier + "): " + e.getMessage());
+        }
+    }
+
+    public void stopRemoteTunnel() {
+        try {
+            if (browserStackLocal != null) {
+                browserStackLocal.stop();
+                logInfo("BrowserStack local connection stopped");
+            }
+        } catch (Exception e) {
+            logInfo("BrowserStack local connection failed to stop: {}", e.getMessage());
         }
     }
 
@@ -813,7 +882,7 @@ public class TestContext {
     public void switchToWebContext() {
         switchToWebContext(null);
     }
-    
+
     public void switchToWebContext(String contextName) {
         switchToMobileWebContext(contextName);
 

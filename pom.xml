@@ -42,7 +42,7 @@
 
         <skip.integration.tests>false</skip.integration.tests>
         <skip.unit.tests>true</skip.unit.tests>
-        <selenium.version>4.27.0</selenium.version>
+        <selenium.version>4.28.0</selenium.version>
         <poi.version>5.2.5</poi.version>
         <jackson.version>2.16.0</jackson.version>
         <log4j.version>2.22.0</log4j.version>
@@ -190,7 +190,7 @@
             <dependency>
                 <groupId>io.github.bonigarcia</groupId>
                 <artifactId>webdrivermanager</artifactId>
-                <version>5.9.2</version>
+                <version>6.0.0</version>
             </dependency>
 
             <dependency>
@@ -674,6 +674,12 @@
                 <version>${netty.version}</version>
             </dependency>
 
+            <dependency>
+                    <groupId>com.browserstack</groupId>
+                    <artifactId>browserstack-local-java</artifactId>
+                    <version>1.1.5</version>
+            </dependency>
+        
         </dependencies>
     </dependencyManagement>
 
@@ -1068,6 +1074,10 @@
                 <artifactId>spring-cloud-starter-loadbalancer</artifactId>
             </dependency>  
             
+            <dependency>
+                <groupId>com.browserstack</groupId>
+                <artifactId>browserstack-local-java</artifactId>
+            </dependency>
     </dependencies>
 
     <profiles>
