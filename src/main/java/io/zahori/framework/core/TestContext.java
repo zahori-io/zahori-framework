@@ -130,6 +130,8 @@ public class TestContext {
     public ProcessRegistration processRegistration;
 
     private Local browserStackLocal;
+    private int browserStackLocalRetry = 0;
+    private final int browserStackLocalMaxRetries = 5;
 
     public TestContext(CaseExecution caseExecution, ProcessRegistration processRegistration) {
         this.caseExecution = caseExecution;
@@ -213,6 +215,8 @@ public class TestContext {
         zahori.test.capabilities.add.ios.bstack\:options.localIdentifier={executionId}-{caseExecutionId}
      */
     public void startRemoteTunnel() {
+        browserStackLocalRetry++;
+
         String browserStackLocalConnection = zahoriProperties.getProperty("zahori.test.capabilities.add." + platform.toLowerCase() + ".bstack:options.local");
         if (StringUtils.isBlank(browserStackLocalConnection) || !Boolean.parseBoolean(browserStackLocalConnection)) {
             return;
@@ -229,7 +233,7 @@ public class TestContext {
         long start = System.currentTimeMillis();
         try {
             HashMap<String, String> browserStackLocalArgs = new HashMap<>();
-            
+
             browserStackLocalArgs.put("key", accessKey);
             // Route all traffic via this local machine:
             browserStackLocalArgs.put("forcelocal", "true");
@@ -237,25 +241,33 @@ public class TestContext {
             browserStackLocalArgs.put("onlyAutomate", "true");
             // For doing simultaneous multiple local testing connections, set this uniquely for different processes:
             browserStackLocalArgs.put("localIdentifier", localIdentifier);
-            
+
             // Enable verbose logging:
             //// bsLocalArgs.put("v", "true");
             // Log file:
             //// browserStackLocalArgs.put("logFile", "./browserstack-agent.log");
             // Binary Path (downloads):
-            //// bsLocalArgs.put("binarypath", "./BrowserStackLocal");
+            //// browserStackLocalArgs.put("binarypath", "./BrowserStackLocal");
             
             browserStackLocal = new Local();
             browserStackLocal.start(browserStackLocalArgs);
 
             isRunning = browserStackLocal.isRunning();
             if (!isRunning) {
-                logStepFailed("Connection is not running");
+                throw new Exception("Connection is not running");
             }
             logInfo("BrowserStack local connection started with id " + localIdentifier + " (" + String.valueOf(System.currentTimeMillis() - start) + " ms)");
 
         } catch (Exception e) {
-            failTest("BrowserStack local connection failed (id " + localIdentifier + "): " + e.getMessage());
+            String errorMessage = "BrowserStack local connection failed (id " + localIdentifier + ") [retry: " + browserStackLocalRetry + "]: " + e.getMessage();
+            if (browserStackLocalRetry >= browserStackLocalMaxRetries) {
+                failTest(errorMessage);
+            } else {
+                logWarn(errorMessage);
+                Pause.pause(1);
+                stopRemoteTunnel();
+                startRemoteTunnel();
+            }
         }
     }
 
@@ -266,7 +278,7 @@ public class TestContext {
                 logInfo("BrowserStack local connection stopped");
             }
         } catch (Exception e) {
-            logInfo("BrowserStack local connection failed to stop: {}", e.getMessage());
+            logError("BrowserStack local connection failed to stop: {}", e.getMessage());
         }
     }
 
