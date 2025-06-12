@@ -285,6 +285,9 @@ public class TestContext {
     private void logTestInfo(Evidences evidences) {
         evidences.insertTextInDocs("zahori.testInfo.execution.date", testId);
         evidences.insertTextInDocs("zahori.testInfo.execution.platform", platform);
+        evidences.insertTextInDocs("zahori.testInfo.execution.configuration", caseExecution.getConfiguration().getName());
+        evidences.insertTextInDocs("zahori.testInfo.execution.environment", caseExecution.getConfiguration().getEnvironmentName());
+        evidences.insertTextInDocs("zahori.testInfo.execution.url", caseExecution.getConfiguration().getEnvironmentUrl());
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.name", browserName);
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.version", version);
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.resolution", resolution);
@@ -294,6 +297,9 @@ public class TestContext {
         logInfo("- Case: " + testCaseName);
         logInfo("zahori.testInfo.execution.date", testId);
         logInfo("zahori.testInfo.execution.platform", platform);
+        logInfo("zahori.testInfo.execution.configuration", caseExecution.getConfiguration().getName());
+        logInfo("zahori.testInfo.execution.environment", caseExecution.getConfiguration().getEnvironmentName());
+        logInfo("zahori.testInfo.execution.url", caseExecution.getConfiguration().getEnvironmentUrl());
         logInfo("zahori.testInfo.execution.browser.name", browserName);
         logInfo("zahori.testInfo.execution.browser.version", version);
         logInfo("zahori.testInfo.execution.browser.resolution", resolution);
