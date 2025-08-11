@@ -36,6 +36,8 @@ import org.openqa.selenium.Point;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.LocalFileDetector;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 public class RemoteDriver extends AbstractDriver {
 
@@ -131,6 +133,9 @@ public class RemoteDriver extends AbstractDriver {
 
         } else {
             // Cualquier otra configuracion especifica de RemoteDriver
+
+            // Enable file uploads in Selenoid: https://www.selenium.dev/documentation/webdriver/drivers/remote_webdriver/#uploads
+            ((RemoteWebDriver) webDriver).setFileDetector(new LocalFileDetector());
 
             // Browser window size
             // https://aerokube.com/selenoid/latest/#_custom_screen_resolution_screenresolution
