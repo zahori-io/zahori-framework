@@ -248,7 +248,6 @@ public class TestContext {
             //// browserStackLocalArgs.put("logFile", "./browserstack-agent.log");
             // Binary Path (downloads):
             //// browserStackLocalArgs.put("binarypath", "./BrowserStackLocal");
-            
             browserStackLocal = new Local();
             browserStackLocal.start(browserStackLocalArgs);
 
@@ -942,33 +941,76 @@ public class TestContext {
 
     private void switchToWebContextAndroid(AndroidDriver androidDriver, String contextName) {
         ArrayList<String> contexts = new ArrayList<>(androidDriver.getContextHandles());
-        System.out.println("getContextHandles: ");
+        logInfo("getContextHandles: {}", contexts.toString());
+
         for (String context : contexts) {
-            System.out.println("- context: " + context);
-            if (StringUtils.isNotBlank(contextName) && context.equalsIgnoreCase(contextName)){
+            if (StringUtils.isNotBlank(contextName) && context.equalsIgnoreCase(contextName)) {
+                logInfo("switching to context: {}", context);
                 androidDriver.context(context);
                 return;
             }
             if (StringUtils.isBlank(contextName) && context.contains("WEBVIEW")) {
+                logInfo("switching to context: {}", context);
                 androidDriver.context(context);
                 return;
             }
         }
+        logInfo("Webview not found: {}", contextName);
     }
 
     private void switchToWebContextIOS(IOSDriver iOSDriver, String contextName) {
         ArrayList<String> contexts = new ArrayList<>(iOSDriver.getContextHandles());
-        System.out.println("getContextHandles: ");
+        logInfo("getContextHandles: {}", contexts.toString());
+
         for (String context : contexts) {
-            System.out.println("- context: " + context);
-            if (StringUtils.isNotBlank(contextName) && context.equalsIgnoreCase(contextName)){
+            if (StringUtils.isNotBlank(contextName) && context.equalsIgnoreCase(contextName)) {
+                logInfo("switching to context: {}", context);
                 iOSDriver.context(context);
                 return;
             }
             if (StringUtils.isBlank(contextName) && context.contains("WEBVIEW")) {
+                logInfo("switching to context: {}", context);
                 iOSDriver.context(context);
                 return;
             }
         }
+        logInfo("Webview not found: {}", contextName);
+    }
+
+    public List<String> getWebContexts() {
+        List<String> webContexts = new ArrayList<>();
+        if (isAndroidDriver()) {
+            AndroidDriver androidDriver = (AndroidDriver) driver;
+            webContexts = getWebContextsAndroid(androidDriver);
+        }
+        if (isIOSDriver()) {
+            IOSDriver iosDriver = (IOSDriver) driver;
+            webContexts = getWebContextsIOS(iosDriver);
+        }
+        logInfo("getWebContexts -> {} ", webContexts.toString());
+        return webContexts;
+    }
+
+    private List<String> getWebContextsAndroid(AndroidDriver androidDriver) {
+        List<String> webContexts = new ArrayList<>();
+        ArrayList<String> contexts = new ArrayList<>(androidDriver.getContextHandles());
+        for (String context : contexts) {
+            if (context.contains("WEBVIEW")) {
+                webContexts.add(context);
+            }
+        }
+        logInfo("getWebContexts -> {} ", webContexts.toString());
+        return webContexts;
+    }
+    
+    private List<String> getWebContextsIOS(IOSDriver iOSDriver) {
+        List<String> webContexts = new ArrayList<>();
+        ArrayList<String> contexts = new ArrayList<>(iOSDriver.getContextHandles());
+        for (String context : contexts) {
+            if (context.contains("WEBVIEW")) {
+                webContexts.add(context);
+            }
+        }
+        return webContexts;
     }
 }
