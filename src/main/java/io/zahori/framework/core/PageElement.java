@@ -654,8 +654,7 @@ public class PageElement {
 
     public void initWebElement() {
         try {
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
-            this.webElement = driver.findElement(locator.getBy());
+            this.webElement = findElementPresent();
         } catch (final NullPointerException | NoSuchElementException e) {
             this.webElement = null;
         } catch (final StaleElementReferenceException e) {
