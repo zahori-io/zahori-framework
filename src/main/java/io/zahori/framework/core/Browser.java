@@ -39,6 +39,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -114,9 +115,9 @@ public class Browser {
         driver = null;
 
         if (StringUtils.equalsIgnoreCase(PLATFORM_WINDOWS, testContext.platform) && killProcess) {
-            matarProceso("IEDriverServer*");
-            matarProceso("chromedriver*");
-            matarProceso("WerFault.exe");
+            killProcess("IEDriverServer*");
+            killProcess("chromedriver*");
+            killProcess("WerFault.exe");
         }
     }
 
@@ -124,7 +125,7 @@ public class Browser {
         createDriver();
         driver.get(url);
         testContext.logInfo(LOADING_PAGE + url);
-        setBrowserZoomTo100();
+        setZoomTo100();
     }
 
     public void reloadPage() {
@@ -160,20 +161,20 @@ public class Browser {
         }
 
         testContext.logInfo(LOADING_PAGE + url);
-        setBrowserZoomTo100();
+        setZoomTo100();
     }
 
     public void loadPageWithCertificate(String url, int numCertificate) {
         driver.get(url);
         testContext.logInfo(LOADING_PAGE + url);
         selectCertificate(numCertificate);
-        setBrowserZoomTo100();
+        setZoomTo100();
     }
 
     private void createDriver() {
         if (driver == null) {
             if (StringUtils.equalsIgnoreCase(PLATFORM_WINDOWS, testContext.platform)) {
-                matarProceso("WerFault.exe");
+                killProcess("WerFault.exe");
             }
 
             Browsers browsers = new Browsers().withName(testContext.browserName).withBits(testContext.bits).withPlatform(testContext.platform)
@@ -310,19 +311,20 @@ public class Browser {
         }
     }
 
-    private void setBrowserZoomTo100() {
+    public void setZoom(int zoomPercent) {
         try {
-            final Robot robot = new Robot();
-            robot.keyPress(KeyEvent.VK_CONTROL);
-            robot.keyPress(KeyEvent.VK_0);
-            robot.keyRelease(KeyEvent.VK_CONTROL);
-            robot.keyRelease(KeyEvent.VK_0);
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript("document.body.style.zoom='" + zoomPercent + "%'");
         } catch (final Exception e) {
             testContext.logWarn("Error setting browser zoom to 100%");
         }
     }
+    
+    public void setZoomTo100() {
+        setZoom(100);
+    }
 
-    private void matarProceso(String nombreProceso) {
+    private void killProcess(String nombreProceso) {
         if (StringUtils.equalsIgnoreCase(PLATFORM_WINDOWS, testContext.platform)) {
             // Se mata el proceso IEDriverServer.exe
             String cmd = "taskkill /f /im  " + nombreProceso;
