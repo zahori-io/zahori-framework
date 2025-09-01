@@ -3,7 +3,7 @@
 	
     <groupId>io.zahori</groupId>
     <artifactId>zahori-framework</artifactId>
-    <version>0.2.21_appium-SNAPSHOT</version>
+    <version>0.2.21_appium</version>
     <packaging>jar</packaging>
     <name>zahori-framework</name>
 
@@ -63,7 +63,7 @@
         <connection>scm:git:git://github.com/zahori-io/zahori-framework.git</connection>
         <developerConnection>scm:git:git@github.com:zahori-io/zahori-framework.git</developerConnection>
         <url>https://github.com/zahori-io/zahori-framework.git</url>
-        <tag>v${project.version}</tag>
+        <tag>v0.2.21_appium</tag>
     </scm>
 
     <build>
