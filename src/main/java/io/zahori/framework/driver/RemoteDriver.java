@@ -177,12 +177,38 @@ public class RemoteDriver extends AbstractDriver {
         String prefix = browsers.getPlatform().toLowerCase() + ".";
         DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilitiesWithPrefix(prefix, browsers);
 
-        // TODO: remove. This is a temporal solution for mobile testing.
-        // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
-        if (StringUtils.startsWithIgnoreCase(browsers.getEnvironmentUrl(), "bs://")
-                && capabilities.getCapability("app") == null) {
-            // overwrite 'app' capability value defined in zahori.properties with environment url from selected configuration
-            capabilities.setCapability("app", browsers.getEnvironmentUrl());
+        // TODO: remove below code. This is a temporal solution for mobile testing until mobile functionalities are fully implememted in server and framework
+        Object rawBrowserStackOptions = capabilities.getCapability("bstack:options");
+        Map<String, Object> browserStackOptions = new HashMap<>();
+        if (rawBrowserStackOptions instanceof Map<?, ?>) {
+            browserStackOptions = (Map<String, Object>) rawBrowserStackOptions;
+        }
+        
+        // NATIVE APP
+        if (StringUtils.startsWithIgnoreCase(browsers.getEnvironmentUrl(), "bs://") 
+                || capabilities.getCapability("app") != null 
+                || capabilities.getCapability("appium:app") != null ) {
+            
+            // bs:// url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
+            if (StringUtils.startsWithIgnoreCase(browsers.getEnvironmentUrl(), "bs://")) {
+                // overwrite 'app' capability value defined in zahori.properties with environment url from selected configuration
+                capabilities.setCapability("app", browsers.getEnvironmentUrl());    
+            }
+            
+            // Remove specific capabilities for Web apps if present
+            if (capabilities.getCapability("browserName") != null) {
+                capabilities.setCapability("browserName", (String) null);
+            }
+        
+        } else { // WEB APP
+            // Remove specific capabilities for Native apps if present
+            if (capabilities.getCapability("app") != null) {
+                capabilities.setCapability("app", (String) null);
+            }
+            
+            // For Web apps in BrowserStack, the capabilities deviceName and platformVersion must be set at bstack:options level
+            browserStackOptions.put("deviceName", capabilities.getCapability("deviceName"));
+            browserStackOptions.put("platformVersion", capabilities.getCapability("platformVersion"));
         }
 
         System.out.println("- Appium capabilities: " + capabilities.toString());
