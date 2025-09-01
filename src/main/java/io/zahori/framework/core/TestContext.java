@@ -65,8 +65,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 public class TestContext {
 
@@ -829,6 +831,15 @@ public class TestContext {
         }
     }
 
+    public void hideKeyboard() {
+        if (isAndroidDriver()) {
+            ((AndroidDriver) driver).hideKeyboard();
+        }
+        if (isIOSDriver()) {
+            ((IOSDriver) driver).hideKeyboard();
+        }
+    }
+    
     public boolean isMobileDriver() {
         return isAndroidDriver() || isIOSDriver();
     }
@@ -839,6 +850,24 @@ public class TestContext {
 
     public boolean isIOSDriver() {
         return driver instanceof IOSDriver;
+    }
+
+    public boolean isWebApp() {
+        Capabilities capabilities = ((RemoteWebDriver) driver).getCapabilities();
+        String browserNameCapability = (String) capabilities.getCapability("browserName");
+        String appiumBrowserNameCapability = (String) capabilities.getCapability("appium:browserName");
+        // Note: For native Apps, the "app" and "appium:app" capabilities are removed and replaced with appPackage, appActivity or bundleId... when driver is instantiated,
+        // so "app" capability can't be used to distinguise between web and native app, that's why it is used browserName.
+        
+        return StringUtils.isNotBlank(browserNameCapability) || StringUtils.isNotBlank(appiumBrowserNameCapability);  
+    }
+    
+    public boolean isMobileWebApp() {
+        return isMobileDriver() && isWebApp();
+    }
+        
+    public boolean isMobileNativeApp() {
+        return isMobileDriver() && !isMobileWebApp(); 
     }
 
     public void switchToWindowWithUrl(String url) {
@@ -949,7 +978,8 @@ public class TestContext {
                 androidDriver.context(context);
                 return;
             }
-            if (StringUtils.isBlank(contextName) && context.contains("WEBVIEW")) {
+            if (StringUtils.isBlank(contextName) && !context.contains("NATIVE")) {
+                // For Webviews and browser contexts (CHROMIUM, WEBVIEW_org.mozilla.firefox, ...)
                 logInfo("switching to context: {}", context);
                 androidDriver.context(context);
                 return;
@@ -968,7 +998,8 @@ public class TestContext {
                 iOSDriver.context(context);
                 return;
             }
-            if (StringUtils.isBlank(contextName) && context.contains("WEBVIEW")) {
+            if (StringUtils.isBlank(contextName) && !context.contains("NATIVE")) {
+                // For Webviews and Safari contexts
                 logInfo("switching to context: {}", context);
                 iOSDriver.context(context);
                 return;
@@ -999,7 +1030,6 @@ public class TestContext {
                 webContexts.add(context);
             }
         }
-        logInfo("getWebContexts -> {} ", webContexts.toString());
         return webContexts;
     }
     
@@ -1012,5 +1042,9 @@ public class TestContext {
             }
         }
         return webContexts;
+    }
+    
+    public String getPageSource() {
+        return driver.getPageSource();
     }
 }
