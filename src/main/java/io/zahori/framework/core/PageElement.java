@@ -286,6 +286,45 @@ public class PageElement {
     }
 
     /**
+     * Clears an input field by javascript and then triggers the input event
+     */
+    public void clearJavascript() {
+        initWebElement();
+        
+        JavascriptExecutor jsExecutor = (JavascriptExecutor) testContext.driver;
+        jsExecutor.executeScript("arguments[0].value = ''", this.webElement);
+        jsExecutor.executeScript("arguments[0].dispatchEvent(new Event('input'))", this.webElement);
+    }
+    
+    public void triggerInputEvent() {
+        initWebElement();
+        
+        JavascriptExecutor jsExecutor = (JavascriptExecutor) testContext.driver;
+        jsExecutor.executeScript("arguments[0].dispatchEvent(new Event('input'))", this.webElement);
+    }
+    
+    public void triggerChangeEvent() {
+        initWebElement();
+        
+        JavascriptExecutor jsExecutor = (JavascriptExecutor) testContext.driver;
+        jsExecutor.executeScript("arguments[0].dispatchEvent(new Event('change'))", this.webElement);
+    }
+    
+    public void triggerBlurEvent() {
+        initWebElement();
+        
+        JavascriptExecutor jsExecutor = (JavascriptExecutor) testContext.driver;
+        jsExecutor.executeScript("arguments[0].dispatchEvent(new Event('blur'))", this.webElement);
+    }
+    
+    public void triggerFocusEvent() {
+        initWebElement();
+        
+        JavascriptExecutor jsExecutor = (JavascriptExecutor) testContext.driver;
+        jsExecutor.executeScript("arguments[0].dispatchEvent(new Event('focus'))", this.webElement);
+    }
+    
+    /**
      * Use clear() method instead of clearInput(). clearInput will be removed in
      * future versions
      */
@@ -549,14 +588,36 @@ public class PageElement {
     public String getInputValue() {
         webElement = findElement();
         try {
-            final String value = webElement.getAttribute(VALUE).trim();
-            testContext.logInfo("Get input value \"" + value + FROM + this);
+            final String value = webElement.getDomProperty(VALUE);
+            testContext.logInfo("Get DOM property 'value': \"" + value + FROM + this);
             return value;
         } catch (final Exception e) {
-            throw new RuntimeException("Unable to get input value: " + this);
+            throw new RuntimeException("Unable to get input value " + this + ": " + e.getMessage());
         }
     }
 
+    public String getDomProperty(String property) {
+        webElement = findElement();
+        try {
+            final String value = webElement.getDomProperty(property);
+            testContext.logInfo("Get DOM property '" + property + "': \"" + value + FROM + this);
+            return value;
+        } catch (final Exception e) {
+            throw new RuntimeException("Unable to get DOM property '" + property + "' " + this + ": " + e.getMessage());
+        }
+    }
+    
+    public String getDomAttribute(String attribute) {
+        webElement = findElement();
+        try {
+            final String value = webElement.getDomAttribute(attribute);
+            testContext.logInfo("Get DOM attribute '" + attribute + "': \"" + value + FROM + this);
+            return value;
+        } catch (final Exception e) {
+            throw new RuntimeException("Unable to get DOM attribute '" + attribute + "' " + this + ": " + e.getMessage());
+        }
+    }
+    
     public void sendKeys(Keys keys) {
         webElement = findElement();
         webElement.sendKeys(keys);
@@ -582,7 +643,7 @@ public class PageElement {
 
     public void validateIsPresent() {
         try {
-            findElementPresent();
+            webElement = findElementPresent();
             testContext.logInfo("Validated is present in DOM: " + this);
         } catch (final Exception e) {
             throw new RuntimeException("Element is not present in DOM: " + this);
@@ -591,8 +652,16 @@ public class PageElement {
 
     public boolean isPresent() {
         try {
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
-            final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(0L));
+            webElement = findElementPresent();
+            return webElement != null;
+        } catch (final Exception e) {
+            return false;
+        }
+    }
+        
+    public boolean isPresent(int maxSecondsWaiting) {
+        try {
+            final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(maxSecondsWaiting));
             wait.until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
             return driver.findElement(locator.getBy()) != null;
         } catch (final Exception e) {
@@ -600,6 +669,16 @@ public class PageElement {
         }
     }
 
+    public boolean isPresentWithoutWait() {
+        try {
+            final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(0L));
+            wait.until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
+            return driver.findElement(locator.getBy()) != null;
+        } catch (final Exception e) {
+            return false;
+        }
+    }
+    
     public void validateIsVisible() {
         validateIsPresent();
 
@@ -639,12 +718,14 @@ public class PageElement {
             return webElement.isDisplayed();
         } catch (final Exception e) {
             return false;
+        } finally {
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(testContext.timeoutFindElement));
         }
     }
 
     public void validateIsNotPresent() {
         try {
-            findElementPresent();
+            webElement = findElementPresent();
             testContext.logInfo("Validated is not present in DOM: " + this);
             throw new RuntimeException("Element is present but it is not expected: " + this);
         } catch (final Exception e) {
