@@ -177,6 +177,11 @@ public class RemoteDriver extends AbstractDriver {
         String prefix = browsers.getPlatform().toLowerCase() + ".";
         DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilitiesWithPrefix(prefix, browsers);
 
+        // Temporal fix to increase browserstack idle timeout
+        // This capability should be adde in zahori.properties
+        // but as it conains a "." it is interpreted as a map
+        capabilities.setCapability("browserstack.idleTimeout", "240");
+                
         // TODO: remove below code. This is a temporal solution for mobile testing until mobile functionalities are fully implememted in server and framework
         Object rawBrowserStackOptions = capabilities.getCapability("bstack:options");
         Map<String, Object> browserStackOptions = new HashMap<>();
