@@ -58,6 +58,7 @@ public class Browser {
     private Map<String, WebDriver> allDrivers;
     private String mainDriverHandle;
     private String activeDriverHandle;
+    private Proxy proxy;
 
     private static final String TXT_TITLE = "TITLE";
     private static final String TXT_URL = "URL";
@@ -90,10 +91,6 @@ public class Browser {
     }
 
     private void close(boolean killProcess) {
-        if (testContext.isHarEnabled()) {
-            testContext.storeHarLog();
-        }
-
         try {
             if (allDrivers.keySet().isEmpty()) {
                 if (driver != null) {
@@ -190,7 +187,7 @@ public class Browser {
 
             browsers = StringUtils.isEmpty(testContext.getDownloadPath()) ? browsers : browsers.withDownloadPath(testContext.getDownloadPath());
 
-            Proxy proxy = testContext.isHarEnabled() ? testContext.getProxy4Driver() : null;
+            proxy = testContext.createBrowserMobProxy();
             this.wbs = proxy == null ? new WebDriverBrowserSelenium(browsers) : new WebDriverBrowserSelenium(browsers, proxy);
             //				this.wbs = testContext.isHarEnabled() ? new WebDriverBrowserSelenium(browsers, testContext.getProxy4Driver())
             //						: new WebDriverBrowserSelenium(browsers);
@@ -319,7 +316,7 @@ public class Browser {
             testContext.logWarn("Error setting browser zoom to 100%");
         }
     }
-    
+
     public void setZoomTo100() {
         setZoom(100);
     }

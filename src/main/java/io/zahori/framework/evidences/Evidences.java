@@ -22,7 +22,6 @@ package io.zahori.framework.evidences;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import io.zahori.framework.driver.browserfactory.BrowserMobProxy;
 import io.zahori.framework.files.doc.Word;
 import io.zahori.framework.files.log.LogFile;
 import io.zahori.framework.files.properties.ZahoriProperties;
@@ -40,17 +39,13 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import javax.imageio.ImageIO;
-import net.lightbody.bmp.core.har.Har;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.OutputType;
-import org.openqa.selenium.Proxy;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 
@@ -96,8 +91,6 @@ public class Evidences {
 
     // i18n messages
     private Messages messages;
-
-    private BrowserMobProxy proxy;
 
     private boolean remoteBrowser;
 
@@ -431,115 +424,6 @@ public class Evidences {
 
     public List<String> getScreenshots() {
         return screenshots;
-    }
-
-    public Proxy getBMP4HarLog() throws UnknownHostException {
-        proxy = new BrowserMobProxy();
-
-        // Request configuration
-        if (zahoriProperties.isHarRequestBinaryContentEnabled()) {
-            proxy.enableRequestBinaryContent();
-        } else {
-            proxy.disableRequestBinaryContent();
-        }
-
-        if (zahoriProperties.isHarRequestCookiesEnabled()) {
-            proxy.enableRequestCookies();
-        } else {
-            proxy.disableRequestCookies();
-        }
-
-        if (zahoriProperties.isHarRequestHeadersEnabled()) {
-            proxy.enableRequestHeaders();
-        } else {
-            proxy.disableRequestHeaders();
-        }
-
-        if (zahoriProperties.isHarRequestContentEnabled()) {
-            proxy.enableRequestContent();
-        } else {
-            proxy.disableRequestContent();
-        }
-
-        // Response configuration
-        if (zahoriProperties.isHarResponseBinaryContentEnabled()) {
-            proxy.enableResponseBinaryContent();
-        } else {
-            proxy.disableResponseBinaryContent();
-        }
-
-        if (zahoriProperties.isHarResponseCookiesEnabled()) {
-            proxy.enableResponseCookies();
-        } else {
-            proxy.disableResponseCookies();
-        }
-
-        if (zahoriProperties.isHarResponseHeadersEnabled()) {
-            proxy.enableResponseHeaders();
-        } else {
-            proxy.disableResponseHeaders();
-        }
-
-        if (zahoriProperties.isHarResponseContentEnabled()) {
-            proxy.enableResponseContent();
-        } else {
-            proxy.disableResponseContent();
-        }
-
-        Map<String, String> headers = zahoriProperties.getHeadersToBeAdded();
-        if (!headers.isEmpty()) {
-            proxy.addHeaders(headers);
-        }
-
-        Map<String, String> blackListReqs = zahoriProperties.getBlackListPatternsToBeAdded();
-        if (!blackListReqs.isEmpty()) {
-            proxy.addBlackLists(blackListReqs);
-        }
-
-        String proxyIP = zahoriProperties.getProxyIP();
-        int proxyPort = zahoriProperties.getProxyPort();
-        String proxyUser = zahoriProperties.getProxyUser();
-        String proxyPassword = zahoriProperties.getProxyEncodedPassword();
-        if (!StringUtils.isEmpty(proxyIP) && proxyPort > 0) {
-            proxy.configureProxy(proxyIP, proxyPort, proxyUser, proxyPassword);
-        }
-
-        Proxy seleniumProxy = proxy.getConfiguredProxy();
-        if (remoteBrowser) {
-            String bmpIp = zahoriProperties.getBMPIP();
-            bmpIp = StringUtils.isEmpty(bmpIp) ? InetAddress.getLocalHost().getHostAddress() : bmpIp;
-            String proxyString = bmpIp + ":" + proxy.getProxyPort();
-            console("Proxy string set to: " + proxyString);
-            seleniumProxy.setHttpProxy(proxyString);
-            seleniumProxy.setSslProxy(proxyString);
-        }
-
-        return seleniumProxy;
-    }
-
-    public void storeHarLog() throws IOException {
-        String urlPattern = zahoriProperties.getHarFilterByUrlPattern();
-        String requestMethods = zahoriProperties.getHarFilterByRequestMethod();
-        Har harLog;
-        if (StringUtils.isEmpty(urlPattern) && StringUtils.isEmpty(requestMethods)) {
-            harLog = proxy.getUnfilteredHarLog();
-        } else {
-            if (!StringUtils.isEmpty(requestMethods)) {
-                String[] methods = requestMethods.replaceAll(StringUtils.SPACE, StringUtils.EMPTY).split(",");
-                List<String> methodsList = new ArrayList<>();
-                Collections.addAll(methodsList, methods);
-                harLog = StringUtils.isEmpty(urlPattern) ? proxy.getFilteredHarLogByRequestMethod(methodsList)
-                        : proxy.getFilteredHarLogByUrlPatternAndRequestMethod(urlPattern, methodsList);
-            } else {
-                harLog = proxy.getFilteredHarLogByRequestUrl(urlPattern);
-            }
-        }
-
-        harLog.writeTo(new File(getEvidencesPath() + getEvidenceFileNamePattern() + ".har"));
-    }
-
-    public BrowserMobProxy getBrowserMobProxy() {
-        return proxy;
     }
 
     private String getStepPrefix(List<Step> steps) {

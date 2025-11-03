@@ -22,23 +22,26 @@ package io.zahori.framework.driver;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import io.zahori.framework.driver.browserfactory.Browsers;
+import org.openqa.selenium.Proxy;
 
 /**
- * Interfaz generica AbstractFactory que define el contrato para las fabricas en el sistema Zahori.
- * Esta interfaz utiliza un enfoque generico para permitir una amplia variedad de implementaciones concretas.
+ * Interfaz generica AbstractFactory que define el contrato para las fabricas en
+ * el sistema Zahori. Esta interfaz utiliza un enfoque generico para permitir
+ * una amplia variedad de implementaciones concretas.
  *
  * @param <T> El tipo de objeto que esta fabrica producira.
  */
 public interface AbstractFactory<T> {
 
     /**
-     * Metodo para crear una instancia del tipo T.
-     * Este metodo debe ser implementado por las clases concretas para proporcionar la logica de creacion especifica.
+     * Metodo para crear una instancia del tipo T. Este metodo debe ser
+     * implementado por las clases concretas para proporcionar la logica de
+     * creacion especifica.
      *
-     * @param browsers Objeto Browsers que proporciona la configuracion necesaria para la creacion del objeto.
+     * @param browsers Objeto Browsers que proporciona la configuracion
+     * necesaria para la creacion del objeto.
      * @return Una nueva instancia del tipo T.
      */
-    T create(Browsers browsers);
+    T create(Browsers browsers, Proxy proxy);
 }

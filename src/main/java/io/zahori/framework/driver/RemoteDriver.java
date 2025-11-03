@@ -33,6 +33,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
+import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
@@ -42,7 +43,7 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 public class RemoteDriver extends AbstractDriver {
 
     @Override
-    protected WebDriver createWebDriver(Browsers browsers) {
+    protected WebDriver createWebDriver(Browsers browsers, Proxy proxy) {
         try {
             // TODO Temporal workaround for Appium driver creation
             if ("ANDROID".equalsIgnoreCase(browsers.getPlatform())
@@ -50,7 +51,7 @@ public class RemoteDriver extends AbstractDriver {
                 return getAppiumDriver(browsers);
             } else {
 
-                AbstractDriverOptions<?> options = getOptions(browsers);
+                AbstractDriverOptions<?> options = getOptions(browsers, proxy);
                 final int timeoutSecondsForDriverCreation = 3600; // 3600 = 60 minutos
                 return WebDriverManager.getInstance(browsers.getName().toUpperCase())
                         .browserVersion(browsers.getVersion())
@@ -145,8 +146,8 @@ public class RemoteDriver extends AbstractDriver {
     }
 
     @Override
-    public AbstractDriverOptions<?> getOptions(Browsers browsers) {
-        AbstractDriverOptions<?> options = super.getOptions(browsers);
+    public AbstractDriverOptions<?> getOptions(Browsers browsers, Proxy proxy) {
+        AbstractDriverOptions<?> options = super.getOptions(browsers, proxy);
         options.setBrowserVersion(browsers.getVersion());
 
         Map<String, Object> selenoidOptions = new HashMap<>();

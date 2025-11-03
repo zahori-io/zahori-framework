@@ -39,8 +39,6 @@ import org.apache.commons.lang3.StringUtils;
 public class ZahoriProperties {
 
     private static final String RESULTS_DIR = "target/test-results/";
-    private static final String ZAHORI_TEST_HEADERS_ADD = "zahori.test.headers.add";
-    private static final String ZAHORI_TEST_BLACKLIST_ADD = "zahori.test.blacklist.reqpattern.add";
     private static final String ZAHORI_TEST_BROWSERPREFS_ADD = "zahori.test.browser.preferences.add";
     private static final String ZAHORI_TEST_CAPABILITIES_ADD = "zahori.test.capabilities.add";
     private static final String DOT = ".";
@@ -160,55 +158,76 @@ public class ZahoriProperties {
         return EnumUtils.isValidEnum(ZahoriLogLevel.class, propLogLevel) ? ZahoriLogLevel.valueOf(propLogLevel) : null;
     }
 
-    // HarLog File
-    public boolean isHarLogFileEnabled() {
+    // BrowserMob Proxy - Add headers
+    public boolean isAddHeadersEnabled() {
+        return BooleanUtils.getBoolean(getProperty("zahori.test.browserMobProxy.headers.enabled"));
+    }
+
+    public Map<String, String> getHeadersToBeAdded() {
+        return getMapFromProps("zahori.test.browserMobProxy.headers.add");
+    }
+
+    // BrowserMob Proxy - BlackList
+    public boolean isBlackListEnabled() {
+        return BooleanUtils.getBoolean(getProperty("zahori.test.browserMobProxy.blacklist.enabled"));
+    }
+
+    public Map<String, String> getBlackList() {
+        return getMapFromProps("zahori.test.browserMobProxy.blacklist.add");
+    }
+
+    // BrowserMob Proxy - Har
+    public boolean isHarEnabled() {
         if (configuration != null) {
             return configuration.getGenerateEvidencesTypes().stream().anyMatch(Configuration.HAR::equalsIgnoreCase);
         }
-        return BooleanUtils.getBoolean(getProperty("zahori.test.results.evidence.generateHarLogFile"));
+        return false;
     }
 
-    public boolean isHarRequestCookiesEnabled() {
-        return BooleanUtils.getBoolean(getProperty("zahori.test.results.evidence.harlog.include.request.cookies"));
+    public String getHarFilterByUrls() {
+        return getProperty("zahori.test.browserMobProxy.har.filter.urls");
+    }
+
+    public String getHarFilterByRequestMethods() {
+        return getProperty("zahori.test.browserMobProxy.har.filter.requestMethods");
+    }
+
+    public String getHarFilterByResponseContentTypes() {
+        return getProperty("zahori.test.browserMobProxy.har.filter.responseContentTypes");
     }
 
     public boolean isHarRequestHeadersEnabled() {
-        return BooleanUtils.getBoolean(getProperty("zahori.test.results.evidence.harlog.include.request.headers"));
+        return BooleanUtils.getBoolean(getProperty("zahori.test.browserMobProxy.har.include.request.headers"));
+    }
+
+    public boolean isHarRequestCookiesEnabled() {
+        return BooleanUtils.getBoolean(getProperty("zahori.test.browserMobProxy.har.include.request.cookies"));
     }
 
     public boolean isHarRequestContentEnabled() {
-        return BooleanUtils.getBoolean(getProperty("zahori.test.results.evidence.harlog.include.request.content"));
+        return BooleanUtils.getBoolean(getProperty("zahori.test.browserMobProxy.har.include.request.content"));
     }
 
     public boolean isHarRequestBinaryContentEnabled() {
-        return BooleanUtils.getBoolean(getProperty("zahori.test.results.evidence.harlog.include.request.binaryContent"));
-    }
-
-    public boolean isHarResponseCookiesEnabled() {
-        return BooleanUtils.getBoolean(getProperty("zahori.test.results.evidence.harlog.include.response.cookies"));
+        return BooleanUtils.getBoolean(getProperty("zahori.test.browserMobProxy.har.include.request.binaryContent"));
     }
 
     public boolean isHarResponseHeadersEnabled() {
-        return BooleanUtils.getBoolean(getProperty("zahori.test.results.evidence.harlog.include.response.headers"));
+        return BooleanUtils.getBoolean(getProperty("zahori.test.browserMobProxy.har.include.response.headers"));
+    }
+
+    public boolean isHarResponseCookiesEnabled() {
+        return BooleanUtils.getBoolean(getProperty("zahori.test.browserMobProxy.har.include.response.cookies"));
     }
 
     public boolean isHarResponseContentEnabled() {
-        return BooleanUtils.getBoolean(getProperty("zahori.test.results.evidence.harlog.include.response.content"));
+        return BooleanUtils.getBoolean(getProperty("zahori.test.browserMobProxy.har.include.response.content"));
     }
 
     public boolean isHarResponseBinaryContentEnabled() {
-        return BooleanUtils.getBoolean(getProperty("zahori.test.results.evidence.harlog.include.response.binaryContent"));
+        return BooleanUtils.getBoolean(getProperty("zahori.test.browserMobProxy.har.include.response.binaryContent"));
     }
 
-    public String getHarFilterByUrlPattern() {
-        return getProperty("zahori.test.results.evidence.harlog.filterPattern.url");
-    }
-
-    public String getHarFilterByRequestMethod() {
-        return getProperty("zahori.test.results.evidence.harlog.filter.method");
-    }
-
-    // Video
     public boolean isVideoGenerationEnabledWhenPassed() {
         return BooleanUtils.getBoolean(getProperty("zahori.test.results.evidence.generateVideo.passed"));
     }
@@ -234,7 +253,6 @@ public class ZahoriProperties {
     }
 
     // ***** TMS *****
-    
     public boolean isTMSEnabled() {
         if (configuration != null && configuration.getTms() != null) {
             return configuration.getTms().isUploadResults();
@@ -250,7 +268,6 @@ public class ZahoriProperties {
     }
 
     // TMS Options
-    
     // LogFile
     public boolean uploadEvidenceLogFileWhenPassed() {
         return BooleanUtils.getBoolean(getProperty("zahori.test.results.tms.uploadEvidence.logFile.passed"));
@@ -288,7 +305,6 @@ public class ZahoriProperties {
     }
 
     // TEST LINK
-    
     public String getTestLinkUrl() {
         if (configuration != null) {
             return configuration.getTms().getUrl();
@@ -326,7 +342,6 @@ public class ZahoriProperties {
     }
 
     // ALM
-    
     public String getALMUrl() {
         if (configuration != null) {
             return configuration.getTms().getUrl();
@@ -370,14 +385,6 @@ public class ZahoriProperties {
         } catch (NumberFormatException | NullPointerException e) {
             return 0;
         }
-    }
-
-    public Map<String, String> getHeadersToBeAdded() {
-        return getMapFromProps(ZAHORI_TEST_HEADERS_ADD);
-    }
-
-    public Map<String, String> getBlackListPatternsToBeAdded() {
-        return getMapFromProps(ZAHORI_TEST_BLACKLIST_ADD);
     }
 
     public Map<String, String> getBrowserPreferencesToBeAdded(String browserName) {

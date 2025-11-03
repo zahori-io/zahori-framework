@@ -52,7 +52,8 @@ import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import java.io.File;
 import java.io.IOException;
-import java.net.UnknownHostException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
@@ -60,9 +61,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import net.lightbody.bmp.client.ClientUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.openqa.selenium.Capabilities;
@@ -134,6 +137,8 @@ public class TestContext {
     private Local browserStackLocal;
     private int browserStackLocalRetry = 0;
     private final int browserStackLocalMaxRetries = 5;
+
+    private BrowserMobProxy browserMobProxy;
 
     public TestContext(CaseExecution caseExecution, ProcessRegistration processRegistration) {
         this.caseExecution = caseExecution;
@@ -212,7 +217,7 @@ public class TestContext {
     /* Starts a local connection with BrowserStack if the following capabilities are set in zahori.properties:
         zahori.test.capabilities.add.android.bstack\:options.local=true
         zahori.test.capabilities.add.android.bstack\:options.localIdentifier={executionId}-{caseExecutionId}
-        or 
+        or
         zahori.test.capabilities.add.ios.bstack\:options.local=true
         zahori.test.capabilities.add.ios.bstack\:options.localIdentifier={executionId}-{caseExecutionId}
      */
@@ -707,27 +712,112 @@ public class TestContext {
     }
 
     public boolean isHarEnabled() {
-        return zahoriProperties.isHarLogFileEnabled();
+        return zahoriProperties.isHarEnabled();
     }
 
-    public Proxy getProxy4Driver() {
-        try {
-            return evidences.getBMP4HarLog();
-        } catch (UnknownHostException e) {
+    public Proxy createBrowserMobProxy() {
+        if (!zahoriProperties.isAddHeadersEnabled()
+                && !zahoriProperties.isBlackListEnabled()
+                && !zahoriProperties.isHarEnabled()) {
             return null;
         }
+        
+        if (isMobileDriver()) {
+            return null;
+        }
+
+        // BrowserMob proxy
+        browserMobProxy = new BrowserMobProxy(zahoriProperties);
+        browserMobProxy.start();
+        browserMobProxy.startHarCapture(this.caseExecution.getCas().getName());
+
+        // Selenium proxy
+        Proxy seleniumProxy = ClientUtil.createSeleniumProxy(browserMobProxy.getProxy());
+
+        String ip = getProxyIP();
+        int port = browserMobProxy.getPort();
+        String hostAndPort = ip + ":" + port;
+        seleniumProxy.setHttpProxy(hostAndPort);
+        seleniumProxy.setSslProxy(hostAndPort);
+
+        logInfo("Defined selenium proxy at {}", hostAndPort);
+
+        return seleniumProxy;
     }
 
-    public void storeHarLog() {
-        try {
-            evidences.storeHarLog();
-        } catch (IOException e) {
-            logInfo("zahori.testInfo.execution.harlog.error");
+    public void stopBrowserMobProxy() {
+        if (browserMobProxy != null) {
+            try {
+                saveHarLog();
+                browserMobProxy.stop();
+            } catch (Exception e) {
+                logWarn("Error stopping selenium proxy: {}", e.getMessage());
+            }
         }
     }
 
-    public BrowserMobProxy getBrowserMobProxyObject() {
-        return evidences.getBrowserMobProxy();
+    private void saveHarLog() throws IOException {
+        if (browserMobProxy != null) {
+            browserMobProxy.stopHarCapture(new File(evidences.getEvidencesPath() + evidences.getHarLogFileName()));
+        }
+    }
+
+    private boolean isLinuxOS() {
+        String osName = System.getProperty("os.name").toLowerCase();
+        return osName.contains("nux") || osName.contains("nix");
+    }
+
+    private String getProxyIP() {
+        boolean remoteBrowser = StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote);
+        if (!remoteBrowser) {
+            return "localhost";
+        }
+        
+        if (isMobileWebApp()) {
+            return "localhost";
+        }
+        
+        if (isLinuxOS()) {
+            return getLocalIP();
+        }
+        
+        // Para que en Mac y Windows los contenedores de Selenoid tengan conexión con el proxy que no está en el deben usar "host.docker.internal"
+        return "host.docker.internal";
+    }
+    
+    private String getLocalIP() {
+        String ip = "";
+        try {
+            // A. Alternativa rápida (menos precisa), puede devolver 127.0.0.1 en muchos entornos, especialmente en contenedores o configuraciones sin DNS apropiado.
+            //ip = Inet4Address.getLocalHost().getHostAddress();
+
+            // B. Alternativa más precisa:
+            // Iterar sobre todas las interfaces de red
+            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+            while (interfaces.hasMoreElements()) {
+                NetworkInterface iface = interfaces.nextElement();
+
+                // Ignorar interfaces no activas o loopback
+                if (!iface.isUp() || iface.isLoopback() || iface.isVirtual()) {
+                    continue;
+                }
+
+                Enumeration<InetAddress> addresses = iface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress addr = addresses.nextElement();
+
+                    // Solo IPv4 (si se necesita IPv6, quitar este filtro)
+                    if (addr.getHostAddress().contains(".")) {
+                        ip = addr.getHostAddress();
+                        // System.out.println("IP local: " + ip);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logInfo("Error getting local IP: {}", e.getMessage());
+        } finally {
+            return ip;
+        }
     }
 
     public int getMaxRetries() {
@@ -839,7 +929,7 @@ public class TestContext {
             ((IOSDriver) driver).hideKeyboard();
         }
     }
-    
+
     public boolean isMobileDriver() {
         return isAndroidDriver() || isIOSDriver();
     }
@@ -858,16 +948,16 @@ public class TestContext {
         String appiumBrowserNameCapability = (String) capabilities.getCapability("appium:browserName");
         // Note: For native Apps, the "app" and "appium:app" capabilities are removed and replaced with appPackage, appActivity or bundleId... when driver is instantiated,
         // so "app" capability can't be used to distinguise between web and native app, that's why it is used browserName.
-        
-        return StringUtils.isNotBlank(browserNameCapability) || StringUtils.isNotBlank(appiumBrowserNameCapability);  
+
+        return StringUtils.isNotBlank(browserNameCapability) || StringUtils.isNotBlank(appiumBrowserNameCapability);
     }
-    
+
     public boolean isMobileWebApp() {
         return isMobileDriver() && isWebApp();
     }
-        
+
     public boolean isMobileNativeApp() {
-        return isMobileDriver() && !isMobileWebApp(); 
+        return isMobileDriver() && !isMobileWebApp();
     }
 
     public void switchToWindowWithUrl(String url) {
@@ -1032,7 +1122,7 @@ public class TestContext {
         }
         return webContexts;
     }
-    
+
     private List<String> getWebContextsIOS(IOSDriver iOSDriver) {
         List<String> webContexts = new ArrayList<>();
         ArrayList<String> contexts = new ArrayList<>(iOSDriver.getContextHandles());
@@ -1043,7 +1133,7 @@ public class TestContext {
         }
         return webContexts;
     }
-    
+
     public String getPageSource() {
         return driver.getPageSource();
     }

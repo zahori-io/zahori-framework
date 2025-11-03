@@ -284,6 +284,7 @@ public abstract class BaseProcess {
         caseExecution.setVideo(getPathIfFileExists(testContext, evidencePath + testContext.evidences.getVideoFileName()));
 
         // Set har file path
+        testContext.stopBrowserMobProxy();
         caseExecution.setHar(getPathIfFileExists(testContext, evidencePath + testContext.evidences.getHarLogFileName()));
 
         // Convert step attachments absolut paths to relative paths

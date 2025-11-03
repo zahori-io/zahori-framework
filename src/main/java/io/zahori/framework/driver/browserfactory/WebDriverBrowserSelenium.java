@@ -12,17 +12,16 @@ package io.zahori.framework.driver.browserfactory;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import io.appium.java_client.android.AndroidDriver;
 import io.zahori.framework.driver.DriverFactory;
 import io.zahori.framework.files.properties.ZahoriProperties;
@@ -71,7 +70,6 @@ public class WebDriverBrowserSelenium {
     public WebDriver getWebDriver() {
         WebDriver driver = null;
 
-
         String testName = browsers.getTestName();
 
         try {
@@ -83,13 +81,13 @@ public class WebDriverBrowserSelenium {
             // ElasTest Capabilities
             caps.setCapability("live", true);
             caps.setCapability("testName", testName);
-            
+
             // Zahori Capabilities
             if (!StringUtils.isEmpty(browsers.getCaseExecutionId()))
                 caps.setCapability("name", browsers.getCaseExecutionId());*/
 
             //driver = getDriver(caps);
-            driver = new DriverFactory().create(browsers);
+            driver = new DriverFactory().create(browsers, proxy);
             setProperties(driver, browsers);
 
         } catch (final IllegalArgumentException | SecurityException e) {
@@ -102,14 +100,13 @@ public class WebDriverBrowserSelenium {
         if (driver == null) {
             return;
         }
-        
+
         if (!(driver instanceof AndroidDriver)) { // pageLoadTimeout is not implemented yet for AndroidDriver
             driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(browsers.getPageLoadTimeout()));
         }
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(browsers.getImplicitlyWait()));
     }
 
-    
     public WebDriver getDriver(final DesiredCapabilities caps)
             throws NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
         WebDriver driver;
@@ -132,7 +129,7 @@ public class WebDriverBrowserSelenium {
 
                 caps.setCapability(ChromeOptions.CAPABILITY, options);
             }
-            
+
             String remoteUrl = StringUtils.isEmpty(System.getenv("ET_EUS_API")) ? navega.getRemoteUrl() : System.getenv("ET_EUS_API");
             LOG.debug("Valor que llega del Plugin de Jenkins de Elastest [ET_EUS_API]:  " + remoteUrl);
             caps.setPlatform(Platform.ANY);
@@ -145,7 +142,7 @@ public class WebDriverBrowserSelenium {
 
     public WebDriver getWebDriverRemoteNO(final Browsers navega, final DesiredCapabilities caps)
             throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException, ClassNotFoundException {
-/*        Platform currentPlatform = caps.getPlatform();
+        /*        Platform currentPlatform = caps.getPlatform();
         if (isWindowsPlatform(currentPlatform)) {
             caps.setPlatform(Platform.WINDOWS);
         }*/

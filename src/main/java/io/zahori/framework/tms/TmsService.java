@@ -197,7 +197,7 @@ public class TmsService {
                 }
             }
             // HarLog
-            if (zahoriProperties.isHarLogFileEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenPassed()) {
+            if (zahoriProperties.isHarEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenPassed()) {
                 uploadAttachmentTestLink(executionId, evidences.getEvidencesPath() + evidences.getHarLogFileName(), caseExecution.getCas().getName());
                 uploadAttachmentALM(runALM, evidences.getEvidencesPath() + evidences.getHarLogFileName());
             }
@@ -226,7 +226,7 @@ public class TmsService {
                 }
             }
             // HarLog
-            if (zahoriProperties.isHarLogFileEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenFailed()) {
+            if (zahoriProperties.isHarEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenFailed()) {
                 uploadAttachmentTestLink(executionId, evidences.getEvidencesPath() + evidences.getHarLogFileName(), caseExecution.getCas().getName());
                 uploadAttachmentALM(runALM, evidences.getEvidencesPath() + evidences.getHarLogFileName());
             }
@@ -439,8 +439,8 @@ public class TmsService {
                 : (zahoriProperties.isVideoGenerationEnabledWhenFailed() && zahoriProperties.uploadEvidenceVideoWhenFailed());
         boolean uploadLog = passed ? (zahoriProperties.isLogFileGenerationEnabled() && zahoriProperties.uploadEvidenceLogFileWhenPassed())
                 : (zahoriProperties.isLogFileGenerationEnabled() && zahoriProperties.uploadEvidenceLogFileWhenFailed());
-        boolean uploadHarLog = passed ? (zahoriProperties.isHarLogFileEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenPassed())
-                : (zahoriProperties.isHarLogFileEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenFailed());
+        boolean uploadHarLog = passed ? (zahoriProperties.isHarEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenPassed())
+                : (zahoriProperties.isHarEnabled() && zahoriProperties.uploadEvidenceHarLogFileWhenFailed());
 
         if (uploadDoc) {
             for (String docFileName : evidences.getDocFileNames()) {

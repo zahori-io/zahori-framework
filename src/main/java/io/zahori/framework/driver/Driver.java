@@ -22,32 +22,40 @@ package io.zahori.framework.driver;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import io.zahori.framework.driver.browserfactory.Browsers;
+import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 
 /**
- * Interfaz Driver que define las operaciones esenciales para los drivers en el sistema Zahori.
- * Proporciona metodos para obtener una instancia de WebDriver y configuraciones de opciones del driver.
+ * Interfaz Driver que define las operaciones esenciales para los drivers en el
+ * sistema Zahori. Proporciona metodos para obtener una instancia de WebDriver y
+ * configuraciones de opciones del driver.
  */
 public interface Driver {
 
     /**
-     * Obtiene una instancia de WebDriver configurada y lista para ser utilizada.
-     * Este metodo debe ser implementado para proporcionar la instancia especifica de WebDriver basada en los navegadores y configuraciones proporcionadas.
+     * Obtiene una instancia de WebDriver configurada y lista para ser
+     * utilizada. Este metodo debe ser implementado para proporcionar la
+     * instancia especifica de WebDriver basada en los navegadores y
+     * configuraciones proporcionadas.
      *
-     * @param browsers Objeto Browsers que contiene la configuracion especifica para el driver.
-     * @return Una instancia de WebDriver configurada segun los parametros proporcionados.
+     * @param browsers Objeto Browsers que contiene la configuracion especifica
+     * para el driver.
+     * @return Una instancia de WebDriver configurada segun los parametros
+     * proporcionados.
      */
-    WebDriver getDriver(Browsers browsers);
+    WebDriver getDriver(Browsers browsers, Proxy proxy);
 
     /**
-     * Obtiene las opciones de configuracion especificas para el driver.
-     * Este metodo permite la configuracion personalizada de las opciones del driver, como tiempos de espera, capacidades y mas.
+     * Obtiene las opciones de configuracion especificas para el driver. Este
+     * metodo permite la configuracion personalizada de las opciones del driver,
+     * como tiempos de espera, capacidades y mas.
      *
-     * @param browsers Objeto Browsers que contiene la configuracion especifica para las opciones del driver.
-     * @return Una instancia de AbstractDriverOptions configurada segun los parametros proporcionados.
+     * @param browsers Objeto Browsers que contiene la configuracion especifica
+     * para las opciones del driver.
+     * @return Una instancia de AbstractDriverOptions configurada segun los
+     * parametros proporcionados.
      */
-    AbstractDriverOptions<?> getOptions(Browsers browsers);
+    AbstractDriverOptions<?> getOptions(Browsers browsers, Proxy proxy);
 }

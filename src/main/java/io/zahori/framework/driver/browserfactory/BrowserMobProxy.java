@@ -12,239 +12,250 @@ package io.zahori.framework.driver.browserfactory;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-import io.zahori.framework.security.ZahoriCipher;
+import io.zahori.framework.files.properties.ZahoriProperties;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import net.lightbody.bmp.BrowserMobProxyServer;
-import net.lightbody.bmp.client.ClientUtil;
 import net.lightbody.bmp.core.har.Har;
 import net.lightbody.bmp.core.har.HarEntry;
 import net.lightbody.bmp.core.har.HarLog;
 import net.lightbody.bmp.core.har.HarPage;
 import net.lightbody.bmp.proxy.CaptureType;
-import net.lightbody.bmp.proxy.auth.AuthType;
 import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.Proxy;
-
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class BrowserMobProxy {
 
-    private BrowserMobProxyServer server;
+    private ZahoriProperties zahoriProperties;
+    private BrowserMobProxyServer proxy;
 
-    public BrowserMobProxy() {
-        server = new BrowserMobProxyServer();
+    public BrowserMobProxy(ZahoriProperties zahoriProperties) {
+        this.zahoriProperties = zahoriProperties;
+
+        proxy = new BrowserMobProxyServer();
+        proxy.setTrustAllServers(true);
     }
 
-    public void enableRequestBinaryContent() {
-        server.enableHarCaptureTypes(CaptureType.REQUEST_BINARY_CONTENT);
+    public void start() {
+        // Add headers
+        if (zahoriProperties.isAddHeadersEnabled()) {
+            overwriteHeaders(zahoriProperties.getHeadersToBeAdded());
+        }
+
+        // Black list
+        if (zahoriProperties.isBlackListEnabled()) {
+            addBlackLists(zahoriProperties.getBlackList());
+        }
+
+        // Set HAR capture types
+        if (zahoriProperties.isHarEnabled()) {
+            setHarCaptureTypes();
+        }
+
+        proxy.start(); // random port
     }
 
-    public void disableRequestBinaryContent() {
-        server.disableHarCaptureTypes(CaptureType.REQUEST_BINARY_CONTENT);
-    }
-
-    public void enableRequestCookies() {
-        server.enableHarCaptureTypes(CaptureType.REQUEST_COOKIES);
-    }
-
-    public void disableRequestCookies() {
-        server.disableHarCaptureTypes(CaptureType.REQUEST_COOKIES);
-    }
-
-    public void enableRequestHeaders() {
-        server.enableHarCaptureTypes(CaptureType.REQUEST_HEADERS);
-    }
-
-    public void disableRequestHeaders() {
-        server.disableHarCaptureTypes(CaptureType.REQUEST_HEADERS);
-    }
-
-    public void enableRequestContent() {
-        server.enableHarCaptureTypes(CaptureType.REQUEST_CONTENT);
-    }
-
-    public void disableRequestContent() {
-        server.disableHarCaptureTypes(CaptureType.REQUEST_CONTENT);
-    }
-
-    public void enableResponseBinaryContent() {
-        server.enableHarCaptureTypes(CaptureType.RESPONSE_BINARY_CONTENT);
-    }
-
-    public void disableResponseBinaryContent() {
-        server.disableHarCaptureTypes(CaptureType.RESPONSE_BINARY_CONTENT);
-    }
-
-    public void enableResponseCookies() {
-        server.enableHarCaptureTypes(CaptureType.RESPONSE_COOKIES);
-    }
-
-    public void disableResponseCookies() {
-        server.disableHarCaptureTypes(CaptureType.RESPONSE_COOKIES);
-    }
-
-    public void enableResponseHeaders() {
-        server.enableHarCaptureTypes(CaptureType.RESPONSE_HEADERS);
-    }
-
-    public void disableResponseHeaders() {
-        server.disableHarCaptureTypes(CaptureType.RESPONSE_HEADERS);
-    }
-
-    public void enableResponseContent() {
-        server.enableHarCaptureTypes(CaptureType.RESPONSE_CONTENT);
-    }
-
-    public void disableResponseContent() {
-        server.disableHarCaptureTypes(CaptureType.RESPONSE_CONTENT);
-    }
-
-    public void configureProxy(String ipAddress, int port, String userProxy, String passProxy) {
-        String password = new ZahoriCipher().decode(passProxy);
-        InetSocketAddress proxy = new InetSocketAddress(ipAddress, port);
-        server.setChainedProxy(proxy);
-        if (!StringUtils.isEmpty(userProxy) && !StringUtils.isEmpty(password)) {
-            server.autoAuthorization("", userProxy, password, AuthType.BASIC);
-            server.chainedProxyAuthorization(userProxy, password, AuthType.BASIC);
+    public void stop() {
+        if (proxy != null) {
+            try {
+                proxy.stop();
+            } catch (Exception e) {
+                // TODO
+            }
         }
     }
 
-    public Proxy getConfiguredProxy() {
-        return getConfiguredProxy(null);
-    }
-    
-    public Proxy getConfiguredProxy(Integer port) {
-    	server.setTrustAllServers(true);
-    	if (port != null) {
-    		server.start(port);
-    	} else {
-    		server.start();
-    	}
+    public void startHarCapture(String tag) {
+        if (!zahoriProperties.isHarEnabled()) {
+            return;
+        }
 
-        server.newHar();
-        return ClientUtil.createSeleniumProxy(server);
+        proxy.newHar(tag);
     }
-    
-    public int getProxyPort() {
-    	return server.getPort();
+
+    public void stopHarCapture(File file) throws IOException {
+        if (!zahoriProperties.isHarEnabled()) {
+            return;
+        }
+
+        String urls = zahoriProperties.getHarFilterByUrls();
+        String requestMethods = zahoriProperties.getHarFilterByRequestMethods();
+        String responseContentTypes = zahoriProperties.getHarFilterByResponseContentTypes();
+
+        Har harFiltered = filterHar(urls, requestMethods, responseContentTypes);
+
+        if (harFiltered != null) {
+            harFiltered.writeTo(file);
+        }
     }
-    
-    public int getRandomPort() {
-    	BrowserMobProxyServer madServer = new BrowserMobProxyServer();
-    	madServer.start();
-    	int port = madServer.getPort();
-    	madServer.stop();
-    	return port;
+
+    public BrowserMobProxyServer getProxy() {
+        return proxy;
+    }
+
+    public int getPort() {
+        return proxy.getPort();
+    }
+
+    public Har getHarLog() {
+        return proxy.getHar();
+    }
+
+    public void overwriteHeaders(Map<String, String> headers) {
+        if (!headers.isEmpty()) {
+            proxy.addRequestFilter((request, contents, messageInfo) -> {
+                for (Map.Entry<String, String> header : headers.entrySet()) {
+                    request.headers().set(header.getKey(), header.getValue());
+                }
+                return null; // importante: devolver null para continuar la cadena de filtros
+            });
+        }
     }
 
     public void addHeaders(Map<String, String> headers) {
-        server.addHeaders(headers);
+        proxy.addHeaders(headers);
     }
 
     public void addHeader(String headerName, String headerValue) {
-        server.addHeader(headerName, headerValue);
-    }
-    
-    public void addBlackLists(Map<String,String> blackLists) {
-    	for (String currentKey: blackLists.keySet()) {
-    		server.blacklistRequests(blackLists.get(currentKey), 200);
-    	}
+        proxy.addHeader(headerName, headerValue);
     }
 
-    public Har getUnfilteredHarLog() {
-        return getHarObject(server.getHar(), null);
-    }
-
-    public Har getFilteredHarLogByRequestUrl(String urlPattern) {
-        Har harObject = server.getHar();
-        List<HarEntry> entries = harObject.getLog().getEntries();
-        HarLog newHarLog = prepareHarLog(harObject);
-
-        for (HarEntry currentEntry : entries) {
-            if (currentEntry.getRequest().getUrl().matches(urlPattern)) {
-                newHarLog.addEntry(currentEntry);
+    public void addBlackLists(Map<String, String> blackList) {
+        if (!blackList.isEmpty()) {
+            for (String url : blackList.values()) {
+                if (StringUtils.isNotBlank(url)) {
+                    proxy.blacklistRequests(".*" + url + ".*", 200);
+                }
             }
         }
-
-        return getHarObject(harObject, newHarLog);
     }
 
-    public Har getFilteredHarLogByRequestMethod(List<String> allowedMethods) {
-        Har harObject = server.getHar();
-        List<HarEntry> entries = harObject.getLog().getEntries();
-        HarLog newHarLog = prepareHarLog(harObject);
-
-        List<String> upperCaseMethods = normalizeAllowedMethods(allowedMethods);
-
-        for (HarEntry currentEntry : entries) {
-            if (upperCaseMethods.contains(currentEntry.getRequest().getMethod())) {
-                newHarLog.addEntry(currentEntry);
-            }
+    public void setHarCaptureTypes() {
+        // Request capture options
+        if (zahoriProperties.isHarRequestHeadersEnabled()) {
+            proxy.enableHarCaptureTypes(CaptureType.REQUEST_HEADERS);
+        } else {
+            proxy.disableHarCaptureTypes(CaptureType.REQUEST_HEADERS);
         }
 
-        return getHarObject(harObject, newHarLog);
-    }
-
-    public Har getFilteredHarLogByUrlPatternAndRequestMethod(String urlPattern, List<String> allowedMethods) {
-        Har harObject = server.getHar();
-        List<HarEntry> entries = harObject.getLog().getEntries();
-        HarLog newHarLog = prepareHarLog(harObject);
-
-        List<String> upperCaseMethods = normalizeAllowedMethods(allowedMethods);
-
-        for (HarEntry currentEntry : entries) {
-            if (currentEntry.getRequest().getUrl().matches(urlPattern) && upperCaseMethods.contains(currentEntry.getRequest().getMethod())) {
-                newHarLog.addEntry(currentEntry);
-            }
+        if (zahoriProperties.isHarRequestCookiesEnabled()) {
+            proxy.enableHarCaptureTypes(CaptureType.REQUEST_COOKIES);
+        } else {
+            proxy.disableHarCaptureTypes(CaptureType.REQUEST_COOKIES);
         }
 
-        return getHarObject(harObject, newHarLog);
-    }
-
-    private List<String> normalizeAllowedMethods(List<String> allowedMethods) {
-        List<String> upperCaseMethods = new ArrayList<>();
-        for (String currentMethod : allowedMethods) {
-            upperCaseMethods.add(StringUtils.upperCase(currentMethod));
+        if (zahoriProperties.isHarRequestContentEnabled()) {
+            proxy.enableHarCaptureTypes(CaptureType.REQUEST_CONTENT);
+        } else {
+            proxy.disableHarCaptureTypes(CaptureType.REQUEST_CONTENT);
         }
 
-        return upperCaseMethods;
+        if (zahoriProperties.isHarRequestBinaryContentEnabled()) {
+            proxy.enableHarCaptureTypes(CaptureType.REQUEST_BINARY_CONTENT);
+        } else {
+            proxy.disableHarCaptureTypes(CaptureType.REQUEST_BINARY_CONTENT);
+        }
+
+        // Response capture options
+        if (zahoriProperties.isHarResponseHeadersEnabled()) {
+            proxy.enableHarCaptureTypes(CaptureType.RESPONSE_HEADERS);
+        } else {
+            proxy.disableHarCaptureTypes(CaptureType.RESPONSE_HEADERS);
+        }
+
+        if (zahoriProperties.isHarResponseCookiesEnabled()) {
+            proxy.enableHarCaptureTypes(CaptureType.RESPONSE_COOKIES);
+        } else {
+            proxy.disableHarCaptureTypes(CaptureType.RESPONSE_COOKIES);
+        }
+
+        if (zahoriProperties.isHarResponseContentEnabled()) {
+            proxy.enableHarCaptureTypes(CaptureType.RESPONSE_CONTENT);
+        } else {
+            proxy.disableHarCaptureTypes(CaptureType.RESPONSE_CONTENT);
+        }
+
+        if (zahoriProperties.isHarResponseBinaryContentEnabled()) {
+            proxy.enableHarCaptureTypes(CaptureType.RESPONSE_BINARY_CONTENT);
+        } else {
+            proxy.disableHarCaptureTypes(CaptureType.RESPONSE_BINARY_CONTENT);
+        }
     }
 
-    private HarLog prepareHarLog(Har harObject) {
+    public Har filterHar(String urlFilter, String methodFilter, String contentTypeFilter) {
+        Set<String> allowedUrls = parseFilterValues(urlFilter);
+        Set<String> allowedMethods = parseFilterValues(methodFilter);
+        Set<String> allowedContentTypes = parseFilterValues(contentTypeFilter);
+
+        boolean filterUrls = !allowedUrls.isEmpty();
+        boolean filterMethods = !allowedMethods.isEmpty();
+        boolean filterContentTypes = !allowedContentTypes.isEmpty();
+
+        Har originalHar = proxy.getHar();
+        if (originalHar == null || originalHar.getLog() == null) {
+            return null;
+        }
+
+        Har newHar = new Har();
+        newHar.setLog(prepareHarLog(originalHar));
+
+        List<HarEntry> filteredEntries = originalHar.getLog().getEntries().stream()
+                .filter(entry -> {
+                    String requestUrl = entry.getRequest().getUrl().toLowerCase();
+                    String requestMethod = entry.getRequest().getMethod().toLowerCase();
+                    String contentType = "";
+                    if (entry.getResponse().getContent() != null && entry.getResponse().getContent().getMimeType() != null) {
+                        contentType = entry.getResponse().getContent().getMimeType().toLowerCase();
+                    }
+
+                    boolean urlMatch = !filterUrls || allowedUrls.stream().anyMatch(requestUrl::contains);
+                    boolean methodMatch = !filterMethods || allowedMethods.contains(requestMethod);
+                    boolean contentTypeMatch = !filterContentTypes || allowedContentTypes.stream().anyMatch(contentType::contains);
+
+                    return urlMatch && methodMatch && contentTypeMatch;
+                })
+                .collect(Collectors.toList());
+
+        newHar.getLog().getEntries().addAll(filteredEntries);
+        return newHar;
+    }
+
+    private HarLog prepareHarLog(Har originalHar) {
         HarLog newHarLog = new HarLog();
-        newHarLog.setCreator(harObject.getLog().getCreator());
-        newHarLog.setBrowser(harObject.getLog().getBrowser());
-        newHarLog.setComment(harObject.getLog().getComment());
-        for (HarPage currentPage : harObject.getLog().getPages()) {
+        newHarLog.setCreator(originalHar.getLog().getCreator());
+        newHarLog.setBrowser(originalHar.getLog().getBrowser());
+        newHarLog.setComment(originalHar.getLog().getComment());
+        for (HarPage currentPage : originalHar.getLog().getPages()) {
             newHarLog.addPage(currentPage);
         }
 
         return newHarLog;
     }
 
-    private Har getHarObject(Har harObject, HarLog harLog) {
-        if (!server.isStopped()) {
-            server.stop();
+    private Set<String> parseFilterValues(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return Collections.emptySet(); // indica que no se debe filtrar este campo
         }
-
-        if (harLog != null) {
-            harObject.setLog(harLog);
-        }
-
-        return harObject;
+        return Arrays.stream(input.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .map(s -> s.toLowerCase())
+                .collect(Collectors.toSet());
     }
 
 }
