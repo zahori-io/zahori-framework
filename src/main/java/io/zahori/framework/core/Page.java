@@ -39,8 +39,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.PointerInput;
 import org.openqa.selenium.interactions.Sequence;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class Page implements Serializable {
 
@@ -234,26 +232,35 @@ public class Page implements Serializable {
         return driver;
     }
 
+    /**
+     * Use getPageElements(String name, Locator locator) instead of this method
+     */
+    @Deprecated
     public List<PageElement> getPageElements(Locator locator) {
-        List<PageElement> elementsList = new ArrayList<>();
+        return getPageElements(null, locator);
+    }
 
-        WebElement element = null;
+    public List<PageElement> getPageElements(String name, Locator locator) {
+        List<PageElement> pageElements = new ArrayList<>();
+
         try {
-            element = (WebElement) new WebDriverWait(driver, Duration.ofSeconds(testContext.timeoutFindElement.longValue())).until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
+            List<WebElement> webElements = this.driver.findElements(locator.getBy());
+            if (webElements == null) {
+                return pageElements;
+            }
 
-        } catch (NoSuchElementException | TimeoutException e) {
-            return elementsList;
+            for (int i = 0; i < webElements.size(); i++) {
+                WebElement webElement = webElements.get(i);
+                String pageElementName = (name != null ? name : "pageElement") + " (" + (i + 1) + ")";
+                PageElement pageElement = new PageElement(this, pageElementName, locator);
+                pageElement.webElement = webElement;
+                pageElements.add(pageElement);
+            }
+            return pageElements;
+        } catch (Exception e) {
+            testContext.logWarn("Error getting pageElements with locator {}: {}", locator.getLocatorText(), e.getMessage());
+            return pageElements;
         }
-
-        List<WebElement> wdElements = this.driver.findElements(locator.getBy());
-
-        for (WebElement each : wdElements) {
-            PageElement pageElement = new PageElement(this, "pageElement", locator);
-            pageElement.webElement = each;
-            elementsList.add(pageElement);
-        }
-
-        return elementsList;
     }
 
     private void readObject(ObjectInputStream aInputStream) throws ClassNotFoundException, IOException {
