@@ -12,17 +12,16 @@ package io.zahori.framework.driver;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import java.util.HashMap;
@@ -35,21 +34,17 @@ public class CapabilitiesBuilder {
     public static void main(String[] args) {
         // TEST
         Browsers browsers = new Browsers().withName("chrome").withBits("64").withPlatform("iOS")
-                    .withVersion("").withScreenResolution("1920x1080x24").withRemote("YES")
-                    .withTestName("TC Name").withRemoteUrl("https://xxx:4444/wd").withCaseExecution("TC Id")
-                    .withExecution(1234L)
-                    .withEnvironmentUrl("https://prod.domain.com")
-                    .withEnvironmentName("Pro iOS");
-        System.out.println("Capabilities: " + getCapabilitiesWithPrefix("ios.", browsers));
-        
+                .withVersion("").withScreenResolution("1920x1080x24").withRemote("YES")
+                .withTestName("TC Name").withRemoteUrl("https://xxx:4444/wd").withCaseExecution("TC Id")
+                .withExecution(1234L)
+                .withEnvironmentUrl("https://prod.domain.com")
+                .withEnvironmentName("Pro iOS");
+        System.out.println("Capabilities: " + getCapabilities(browsers));
+
         //System.out.println("Capabilities: " + getCapabilities());
     }
 
-    public static DesiredCapabilities getCapabilities() {
-        return getCapabilitiesWithPrefix(null, null);
-    }
-
-    public static DesiredCapabilities getCapabilitiesWithPrefix(String prefix, Browsers browsers) {
+    public static DesiredCapabilities getCapabilities(Browsers browsers) {
         DesiredCapabilities capabilities = new DesiredCapabilities();
         try {
             Map<String, String> extraCapabilities = new ZahoriProperties().getExtraCapabilities();
@@ -57,15 +52,23 @@ public class CapabilitiesBuilder {
             // Crear un mapa para gestionar las propiedades dinámicamente
             Map<String, Object> capabilityMap = new HashMap<>();
 
+            String platform = browsers.getPlatform().toLowerCase();
+
             // Iterar sobre todas las claves del archivo properties
-            // for (String key : properties.stringPropertyNames()) {
             for (Map.Entry<String, String> entry : extraCapabilities.entrySet()) {
                 String key = entry.getKey();
-                String value = browsers != null ? getCapabilityValue(browsers, entry.getValue()) : entry.getValue();
+                String value = getCapabilityValue(browsers, entry.getValue());
 
-                if (StringUtils.isNotBlank(prefix)) {
-                    if (key.startsWith(prefix)) {
-                        key = key.replaceFirst(prefix, StringUtils.EMPTY);
+                if (StringUtils.startsWithIgnoreCase(key, "android.")) {
+                    if ("android".equalsIgnoreCase(platform)) {
+                        key = key.replaceFirst("android.", StringUtils.EMPTY);
+                    } else {
+                        continue;
+                    }
+                }
+                if (StringUtils.startsWithIgnoreCase(key, "ios.")) {
+                    if ("ios".equalsIgnoreCase(platform)) {
+                        key = key.replaceFirst("ios.", StringUtils.EMPTY);
                     } else {
                         continue;
                     }
@@ -134,10 +137,10 @@ public class CapabilitiesBuilder {
 
     // Método para interpretar el valor como Booleano, Número o String según corresponda
     private static Object parseValue(Object value) {
-        if (value == null){
+        if (value == null) {
             return "";
         }
-        
+
         String strValue = value.toString();
         if (isBoolean(strValue)) {
             return Boolean.valueOf(strValue);

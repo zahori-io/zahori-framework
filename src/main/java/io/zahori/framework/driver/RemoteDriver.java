@@ -175,46 +175,47 @@ public class RemoteDriver extends AbstractDriver {
     }
 
     private DesiredCapabilities getAppiumCapabilities(Browsers browsers) {
-        String prefix = browsers.getPlatform().toLowerCase() + ".";
-        DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilitiesWithPrefix(prefix, browsers);
+        // Set capabilities defined in zahori.properties starting with keys:
+        //      zahori.test.capabilities.add.android.
+        //      zahori.test.capabilities.add.ios.
+        DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilities(browsers);
 
-        // Temporal fix to increase browserstack idle timeout
-        // This capability should be adde in zahori.properties
-        // but as it conains a "." it is interpreted as a map
-        capabilities.setCapability("browserstack.idleTimeout", "240");
-                
         // TODO: remove below code. This is a temporal solution for mobile testing until mobile functionalities are fully implememted in server and framework
         Object rawBrowserStackOptions = capabilities.getCapability("bstack:options");
         Map<String, Object> browserStackOptions = new HashMap<>();
         if (rawBrowserStackOptions instanceof Map<?, ?>) {
             browserStackOptions = (Map<String, Object>) rawBrowserStackOptions;
+
+            // Temporal fix to increase browserstack idle timeout
+            // This capability should be adde in zahori.properties
+            // but as it conains a "." it is interpreted as a map
+            browserStackOptions.put("idleTimeout", "240");
         }
-        
+
         // NATIVE APP
-        if (StringUtils.startsWithIgnoreCase(browsers.getEnvironmentUrl(), "bs://") 
-                || capabilities.getCapability("app") != null 
-                || capabilities.getCapability("appium:app") != null ) {
-            
+        if (StringUtils.startsWithIgnoreCase(browsers.getEnvironmentUrl(), "bs://")
+                || capabilities.getCapability("appium:app") != null) {
+
             // bs:// url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
             if (StringUtils.startsWithIgnoreCase(browsers.getEnvironmentUrl(), "bs://")) {
                 // overwrite 'app' capability value defined in zahori.properties with environment url from selected configuration
-                capabilities.setCapability("app", browsers.getEnvironmentUrl());    
+                capabilities.setCapability("appium:app", browsers.getEnvironmentUrl());
             }
-            
+
             // Remove specific capabilities for Web apps if present
             if (capabilities.getCapability("browserName") != null) {
                 capabilities.setCapability("browserName", (String) null);
             }
-        
+
         } else { // WEB APP
             // Remove specific capabilities for Native apps if present
-            if (capabilities.getCapability("app") != null) {
-                capabilities.setCapability("app", (String) null);
+            if (capabilities.getCapability("appium:app") != null) {
+                capabilities.setCapability("appium:app", (String) null);
             }
-            
+
             // For Web apps in BrowserStack, the capabilities deviceName and platformVersion must be set at bstack:options level
-            browserStackOptions.put("deviceName", capabilities.getCapability("deviceName"));
-            browserStackOptions.put("platformVersion", capabilities.getCapability("platformVersion"));
+            browserStackOptions.put("deviceName", capabilities.getCapability("appium:deviceName"));
+            browserStackOptions.put("platformVersion", capabilities.getCapability("appium:platformVersion"));
         }
 
         System.out.println("- Appium capabilities: " + capabilities.toString());

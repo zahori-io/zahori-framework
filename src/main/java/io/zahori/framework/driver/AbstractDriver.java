@@ -26,7 +26,6 @@ import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
@@ -34,6 +33,7 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.remote.AbstractDriverOptions;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
@@ -92,33 +92,12 @@ public abstract class AbstractDriver implements Driver {
         options.setPageLoadStrategy(PageLoadStrategy.NONE);
         setZahoriPropertiesBrowserOptions(options);
 
-        MutableCapabilities capabilities = new MutableCapabilities();
-        capabilities.setCapability("name", browsers.getCaseExecutionId());
-        capabilities.setCapability("testName", browsers.getTestName());
-        capabilities.setCapability("screenResolution", browsers.getScreenResolution());
-        setZahoriPropertiesExtraCaps(capabilities);
-
-        options.merge(capabilities);
+        // Set capabilities defined in zahori.properties starting with key: zahori.test.capabilities.add.
+        DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilities(browsers);
+        capabilities.asMap().forEach((key, value) -> options.setCapability(key, value));
 
         System.out.println(browsers.getName() + " browser options and capabilities: " + options.toString());
         return options;
-    }
-
-    /**
-     * Configura capacidades adicionales del WebDriver basadas en las
-     * propiedades de Zahori.
-     *
-     * @param capabilities Objeto MutableCapabilities para agregar capacidades.
-     */
-    private void setZahoriPropertiesExtraCaps(MutableCapabilities capabilities) {
-        var extraCapabilities = new ZahoriProperties().getExtraCapabilities();
-        extraCapabilities.forEach((extraCap, value) -> {
-            if (isBoolean(value)) {
-                capabilities.setCapability(extraCap, Boolean.valueOf(value));
-            } else {
-                capabilities.setCapability(extraCap, value);
-            }
-        });
     }
 
     /**
