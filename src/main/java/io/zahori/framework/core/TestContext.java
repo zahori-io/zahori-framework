@@ -64,6 +64,7 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import net.lightbody.bmp.client.ClientUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -721,7 +722,7 @@ public class TestContext {
                 && !zahoriProperties.isHarEnabled()) {
             return null;
         }
-        
+
         if (isMobileDriver()) {
             return null;
         }
@@ -772,19 +773,19 @@ public class TestContext {
         if (!remoteBrowser) {
             return "localhost";
         }
-        
+
         if (isMobileWebApp()) {
             return "localhost";
         }
-        
+
         if (isLinuxOS()) {
             return getLocalIP();
         }
-        
+
         // Para que en Mac y Windows los contenedores de Selenoid tengan conexión con el proxy que no está en el deben usar "host.docker.internal"
         return "host.docker.internal";
     }
-    
+
     private String getLocalIP() {
         String ip = "";
         try {
@@ -961,44 +962,54 @@ public class TestContext {
     }
 
     public void switchToWindowWithUrl(String url) {
-//        if (isIOSDriver()) {
-//            logWarn("switchToWindowWithUrl not implemented for iOSDriver: driver.getWindowHandles() not supported");
-//            return;
-//        }
+        logInfo("switching to window with url: {}", url);
 
-        int secondsWaiting = 1;
-        while (secondsWaiting <= this.timeoutFindElement) {
-            for (String winHandle : this.driver.getWindowHandles()) {
+        String currentUrl = this.driver.getCurrentUrl();
+        // logInfo("currentUrl: {}", currentUrl);
+        if (StringUtils.containsIgnoreCase(currentUrl, url)) {
+            return;
+        }
+
+        Set<String> windowHandles = this.driver.getWindowHandles();
+        // logInfo("WindowHandles: {}", windowHandles.toString());
+
+        for (String winHandle : windowHandles) {
+            try {
                 this.driver.switchTo().window(winHandle);
 
                 if (StringUtils.contains(this.driver.getCurrentUrl().trim().toLowerCase(), url.trim().toLowerCase())) {
                     return;
                 }
+            } catch (Exception e) {
+                logError("Error switchToWindowWithUrl({}): {}", url, e.getMessage());
             }
-            Pause.pause(1);
-            secondsWaiting++;
         }
 
         throw new RuntimeException("Window containing url '" + url + "' not found");
     }
 
     public void switchToWindowWithTitle(String title) {
-        if (isIOSDriver()) {
-            logWarn("switchToWindowWithTitle not implemented for iOSDriver: driver.getWindowHandles() not supported");
+        logInfo("switching to window with title: {}", title);
+
+        String currentTitle = this.driver.getTitle();
+        // logInfo("currentTitle: {}", currentTitle);
+        if (StringUtils.containsIgnoreCase(currentTitle, title)) {
             return;
         }
 
-        int secondsWaiting = 1;
-        while (secondsWaiting <= this.timeoutFindElement) {
-            for (String winHandle : ((IOSDriver) this.driver).getWindowHandles()) {
+        Set<String> windowHandles = this.driver.getWindowHandles();
+        // logInfo("WindowHandles: {}", windowHandles.toString());
+
+        for (String winHandle : windowHandles) {
+            try {
                 this.driver.switchTo().window(winHandle);
 
                 if (StringUtils.contains(this.driver.getTitle().trim().toLowerCase(), title.trim().toLowerCase())) {
                     return;
                 }
+            } catch (Exception e) {
+                logError("Error switchToWindowWithTitle({}): {}", title, e.getMessage());
             }
-            Pause.pause(1);
-            secondsWaiting++;
         }
 
         throw new RuntimeException("Window containing title '" + title + "' not found");
@@ -1062,7 +1073,9 @@ public class TestContext {
         ArrayList<String> contexts = new ArrayList<>(androidDriver.getContextHandles());
         logInfo("getContextHandles: {}", contexts.toString());
 
-        for (String context : contexts) {
+        for (int i = contexts.size() - 1; i >= 0; i--) {
+            String context = contexts.get(i);
+
             if (StringUtils.isNotBlank(contextName) && context.equalsIgnoreCase(contextName)) {
                 logInfo("switching to context: {}", context);
                 androidDriver.context(context);
@@ -1082,7 +1095,9 @@ public class TestContext {
         ArrayList<String> contexts = new ArrayList<>(iOSDriver.getContextHandles());
         logInfo("getContextHandles: {}", contexts.toString());
 
-        for (String context : contexts) {
+        for (int i = contexts.size() - 1; i >= 0; i--) {
+            String context = contexts.get(i);
+
             if (StringUtils.isNotBlank(contextName) && context.equalsIgnoreCase(contextName)) {
                 logInfo("switching to context: {}", context);
                 iOSDriver.context(context);
