@@ -43,6 +43,7 @@ import io.zahori.framework.files.properties.ZahoriProperties;
 import io.zahori.framework.i18n.Messages;
 import io.zahori.framework.robot.UtilsRobot;
 import io.zahori.framework.tms.TmsService;
+import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Notification;
 import io.zahori.framework.utils.Pause;
 import io.zahori.framework.utils.WebdriverUtils;
@@ -64,7 +65,6 @@ import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import net.lightbody.bmp.client.ClientUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -963,19 +963,30 @@ public class TestContext {
 
     public void switchToWindowWithUrl(String url) {
         logInfo("switching to window with url: {}", url);
+        // getPageSource();
 
+        // logInfo("getting current url...");
         String currentUrl = this.driver.getCurrentUrl();
-        // logInfo("currentUrl: {}", currentUrl);
+        logInfo("currentUrl: {}", currentUrl);
         if (StringUtils.containsIgnoreCase(currentUrl, url)) {
             return;
         }
 
-        Set<String> windowHandles = this.driver.getWindowHandles();
-        // logInfo("WindowHandles: {}", windowHandles.toString());
+        getPageSource();
+        ArrayList<String> windowHandles = new ArrayList<>(this.driver.getWindowHandles());
+        logInfo("WindowHandles: {}", windowHandles.toString());
 
-        for (String winHandle : windowHandles) {
+        for (int i = windowHandles.size() - 1; i >= 0; i--) {
+            String windowHandle = windowHandles.get(i);
             try {
-                this.driver.switchTo().window(winHandle);
+                logInfo("switching to windowHandle: {}", windowHandle);
+
+                if (isMobileNativeApp()) {
+                    switchToWebContext("WEBVIEW_" + windowHandle);
+                }
+
+                this.driver.switchTo().window(windowHandle);
+                getPageSource();
 
                 if (StringUtils.contains(this.driver.getCurrentUrl().trim().toLowerCase(), url.trim().toLowerCase())) {
                     return;
@@ -990,25 +1001,36 @@ public class TestContext {
 
     public void switchToWindowWithTitle(String title) {
         logInfo("switching to window with title: {}", title);
+        // getPageSource();
 
+        // logInfo("getting current title...");
         String currentTitle = this.driver.getTitle();
-        // logInfo("currentTitle: {}", currentTitle);
+        logInfo("currentUrl: {}", currentTitle);
         if (StringUtils.containsIgnoreCase(currentTitle, title)) {
             return;
         }
 
-        Set<String> windowHandles = this.driver.getWindowHandles();
-        // logInfo("WindowHandles: {}", windowHandles.toString());
+        getPageSource();
+        ArrayList<String> windowHandles = new ArrayList<>(this.driver.getWindowHandles());
+        logInfo("WindowHandles: {}", windowHandles.toString());
 
-        for (String winHandle : windowHandles) {
+        for (int i = windowHandles.size() - 1; i >= 0; i--) {
+            String windowHandle = windowHandles.get(i);
             try {
-                this.driver.switchTo().window(winHandle);
+                logInfo("switching to windowHandle: {}", windowHandle);
 
-                if (StringUtils.contains(this.driver.getTitle().trim().toLowerCase(), title.trim().toLowerCase())) {
+                if (isMobileNativeApp()) {
+                    switchToWebContext("WEBVIEW_" + windowHandle);
+                }
+
+                this.driver.switchTo().window(windowHandle);
+                getPageSource();
+
+                if (StringUtils.contains(this.driver.getCurrentUrl().trim().toLowerCase(), title.trim().toLowerCase())) {
                     return;
                 }
             } catch (Exception e) {
-                logError("Error switchToWindowWithTitle({}): {}", title, e.getMessage());
+                logError("Error switchToWindowWithUrl({}): {}", title, e.getMessage());
             }
         }
 
@@ -1067,9 +1089,13 @@ public class TestContext {
             IOSDriver iosDriver = (IOSDriver) driver;
             switchToWebContextIOS(iosDriver, contextName);
         }
+        getPageSource();
     }
 
     private void switchToWebContextAndroid(AndroidDriver androidDriver, String contextName) {
+        logInfo("switchToWebContextAndroid({})", contextName);
+        getPageSource();
+        // logInfo("getContextHandles...");
         ArrayList<String> contexts = new ArrayList<>(androidDriver.getContextHandles());
         logInfo("getContextHandles: {}", contexts.toString());
 
@@ -1092,6 +1118,9 @@ public class TestContext {
     }
 
     private void switchToWebContextIOS(IOSDriver iOSDriver, String contextName) {
+        logInfo("switchToWebContextIOS({})", contextName);
+        getPageSource();
+        // logInfo("getContextHandles...");
         ArrayList<String> contexts = new ArrayList<>(iOSDriver.getContextHandles());
         logInfo("getContextHandles: {}", contexts.toString());
 
@@ -1150,6 +1179,19 @@ public class TestContext {
     }
 
     public String getPageSource() {
-        return driver.getPageSource();
+        String sourceCode = "";
+
+        Chronometer crono = new Chronometer();
+        while (StringUtils.isBlank(sourceCode) && crono.getElapsedSeconds() < timeoutFindElement) {
+            try {
+                // logInfo("getting page source...");
+                sourceCode = driver.getPageSource();
+            } catch (Exception e) {
+                Pause.pause(1);
+            }
+        }
+        // logInfo("page source -> {} ", sourceCode);
+        return sourceCode;
     }
+
 }
