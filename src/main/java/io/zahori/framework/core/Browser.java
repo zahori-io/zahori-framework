@@ -58,7 +58,6 @@ public class Browser {
     private Map<String, WebDriver> allDrivers;
     private String mainDriverHandle;
     private String activeDriverHandle;
-    private Proxy proxy;
 
     private static final String TXT_TITLE = "TITLE";
     private static final String TXT_URL = "URL";
@@ -187,10 +186,8 @@ public class Browser {
 
             browsers = StringUtils.isEmpty(testContext.getDownloadPath()) ? browsers : browsers.withDownloadPath(testContext.getDownloadPath());
 
-            proxy = testContext.createBrowserMobProxy();
-            this.wbs = proxy == null ? new WebDriverBrowserSelenium(browsers) : new WebDriverBrowserSelenium(browsers, proxy);
-            //				this.wbs = testContext.isHarEnabled() ? new WebDriverBrowserSelenium(browsers, testContext.getProxy4Driver())
-            //						: new WebDriverBrowserSelenium(browsers);
+            // BrowserMob Proxy removed - CDP HAR capture handles network features (ZAH-156)
+            this.wbs = new WebDriverBrowserSelenium(browsers);
 
             this.driver = wbs.getWebDriver();
 

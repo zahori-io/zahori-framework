@@ -33,6 +33,8 @@ import static io.zahori.framework.core.BaseProcess.DEFAULT_BIT_DEPTH;
 import static io.zahori.framework.core.BaseProcess.DEFAULT_SCREEN_RESOLUTION;
 import io.zahori.framework.driver.browserfactory.BrowserMobProxy;
 import io.zahori.framework.driver.browserfactory.Browsers;
+import io.zahori.framework.utils.selenium4.CDPHarCapture;
+import net.lightbody.bmp.client.ClientUtil;
 import io.zahori.framework.evidences.Evidences;
 import io.zahori.framework.evidences.Evidences.ZahoriLogLevel;
 import io.zahori.framework.exception.ZahoriException;
@@ -57,16 +59,22 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
-import net.lightbody.bmp.client.ClientUtil;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.openqa.selenium.Capabilities;
@@ -139,7 +147,7 @@ public class TestContext {
     private int browserStackLocalRetry = 0;
     private final int browserStackLocalMaxRetries = 5;
 
-    private BrowserMobProxy browserMobProxy;
+    private CDPHarCapture cdpHarCapture;
 
     public TestContext(CaseExecution caseExecution, ProcessRegistration processRegistration) {
         this.caseExecution = caseExecution;
@@ -212,6 +220,9 @@ public class TestContext {
         } else {
             browser = new Browser(this);
             logInfo("Driver initialized!");
+
+            // Start CDP HAR capture if enabled and BrowserMobProxy is not used (ZAH-156)
+            startCdpHarCaptureIfNeeded();
         }
     }
 
@@ -716,50 +727,85 @@ public class TestContext {
         return zahoriProperties.isHarEnabled();
     }
 
+    /**
+     * Creates proxy configuration for network features.
+     * @deprecated BrowserMob Proxy removed - use CDP HAR capture instead (ZAH-156)
+     * @return null - proxy no longer used
+     */
+    @Deprecated
     public Proxy createBrowserMobProxy() {
-        if (!zahoriProperties.isAddHeadersEnabled()
-                && !zahoriProperties.isBlackListEnabled()
-                && !zahoriProperties.isHarEnabled()) {
-            return null;
-        }
-
-        if (isMobileDriver()) {
-            return null;
-        }
-
-        // BrowserMob proxy
-        browserMobProxy = new BrowserMobProxy(zahoriProperties);
-        browserMobProxy.start();
-        browserMobProxy.startHarCapture(this.caseExecution.getCas().getName());
-
-        // Selenium proxy
-        Proxy seleniumProxy = ClientUtil.createSeleniumProxy(browserMobProxy.getProxy());
-
-        String ip = getProxyIP();
-        int port = browserMobProxy.getPort();
-        String hostAndPort = ip + ":" + port;
-        seleniumProxy.setHttpProxy(hostAndPort);
-        seleniumProxy.setSslProxy(hostAndPort);
-
-        logInfo("Defined selenium proxy at {}", hostAndPort);
-
-        return seleniumProxy;
+        // BrowserMob Proxy removed - CDP HAR capture handles network features now
+        return null;
     }
 
+    /**
+     * Stops HAR capture and saves evidence.
+     * Now uses CDP-based capture (ZAH-156).
+     */
     public void stopBrowserMobProxy() {
-        if (browserMobProxy != null) {
+        // CDP HAR capture (ZAH-156)
+        if (cdpHarCapture != null) {
             try {
-                saveHarLog();
-                browserMobProxy.stop();
+                saveCdpHarLog();
             } catch (Exception e) {
-                logWarn("Error stopping selenium proxy: {}", e.getMessage());
+                logWarn("Error saving CDP HAR log: {}", e.getMessage());
             }
         }
     }
 
-    private void saveHarLog() throws IOException {
-        if (browserMobProxy != null) {
-            browserMobProxy.stopHarCapture(new File(evidences.getEvidencesPath() + evidences.getHarLogFileName()));
+    /**
+     * Saves HAR log using CDP capture (ZAH-156).
+     */
+    private void saveCdpHarLog() throws IOException {
+        if (cdpHarCapture != null && cdpHarCapture.isCapturing()) {
+            cdpHarCapture.stopCapture();
+            File harFile = new File(evidences.getEvidencesPath() + evidences.getHarLogFileName());
+            cdpHarCapture.writeToFile(
+                    harFile,
+                    zahoriProperties.getHarFilterByUrls(),
+                    zahoriProperties.getHarFilterByRequestMethods(),
+                    zahoriProperties.getHarFilterByResponseContentTypes()
+            );
+            logInfo("CDP HAR log saved: {}", harFile.getAbsolutePath());
+        }
+    }
+
+    /**
+     * Starts CDP HAR capture if HAR is enabled.
+     * This is the method for Selenium 4+ (ZAH-156).
+     */
+    private void startCdpHarCaptureIfNeeded() {
+        // Only start CDP capture if HAR is enabled
+        if (!zahoriProperties.isHarEnabled()) {
+            return;
+        }
+
+        // Check if driver supports DevTools
+        if (driver == null || !(driver instanceof org.openqa.selenium.devtools.HasDevTools)) {
+            logWarn("CDP HAR capture not available - driver does not support DevTools");
+            return;
+        }
+
+        try {
+            cdpHarCapture = new CDPHarCapture(driver);
+
+            // Configure extra headers if enabled
+            if (zahoriProperties.isAddHeadersEnabled()) {
+                cdpHarCapture.setExtraHeaders(zahoriProperties.getHeadersToBeAdded());
+            }
+
+            // Configure URL blacklist if enabled
+            if (zahoriProperties.isBlackListEnabled()) {
+                java.util.List<String> blacklistUrls = new java.util.ArrayList<>(zahoriProperties.getBlackList().values());
+                cdpHarCapture.setBlockedUrls(blacklistUrls);
+            }
+
+            // Start capture
+            cdpHarCapture.startCapture(this.caseExecution.getCas().getName());
+            logInfo("CDP HAR capture started for: {}", this.caseExecution.getCas().getName());
+
+        } catch (Exception e) {
+            logWarn("Error starting CDP HAR capture: {}", e.getMessage());
         }
     }
 

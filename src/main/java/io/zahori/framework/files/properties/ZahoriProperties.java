@@ -252,6 +252,68 @@ public class ZahoriProperties {
         return BooleanUtils.getBoolean(getProperty("zahori.test.results.evidence.generateScreenshots"));
     }
 
+    /**
+     * Gets the JPEG compression quality for screenshots.
+     * Value between 0.0 (maximum compression, lowest quality) and 1.0 (minimum compression, highest quality).
+     * Default: 0.7 (good balance between quality and file size)
+     */
+    public float getScreenshotQuality() {
+        String quality = getProperty("zahori.test.results.evidence.screenshot.quality");
+        if (StringUtils.isBlank(quality)) {
+            return 0.7f;
+        }
+        try {
+            float value = Float.parseFloat(quality);
+            return Math.max(0.0f, Math.min(1.0f, value));
+        } catch (NumberFormatException e) {
+            return 0.7f;
+        }
+    }
+
+    /**
+     * Gets the scale factor for screenshots.
+     * Value between 0.1 and 1.0 (1.0 = original size, 0.5 = half size).
+     * Default: 1.0 (no scaling)
+     */
+    public float getScreenshotScale() {
+        String scale = getProperty("zahori.test.results.evidence.screenshot.scale");
+        if (StringUtils.isBlank(scale)) {
+            return 1.0f;
+        }
+        try {
+            float value = Float.parseFloat(scale);
+            return Math.max(0.1f, Math.min(1.0f, value));
+        } catch (NumberFormatException e) {
+            return 1.0f;
+        }
+    }
+
+    /**
+     * Gets the screenshot output format.
+     * Supported formats: jpg (default), png, webp (requires TwelveMonkeys ImageIO).
+     * If webp is configured but not available, falls back to jpg.
+     * Default: jpg (maintains backward compatibility)
+     */
+    public String getScreenshotFormat() {
+        String format = getProperty("zahori.test.results.evidence.screenshot.format");
+        if (StringUtils.isBlank(format)) {
+            return "jpg";
+        }
+        String normalized = format.toLowerCase().trim();
+        // Validate supported formats
+        if ("jpg".equals(normalized) || "jpeg".equals(normalized)) {
+            return "jpg";
+        }
+        if ("png".equals(normalized)) {
+            return "png";
+        }
+        if ("webp".equals(normalized)) {
+            return "webp";
+        }
+        // Unknown format, default to jpg
+        return "jpg";
+    }
+
     // ***** TMS *****
     public boolean isTMSEnabled() {
         if (configuration != null && configuration.getTms() != null) {

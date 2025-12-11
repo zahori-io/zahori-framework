@@ -34,14 +34,28 @@ import io.zahori.model.Step;
 import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,8 +71,9 @@ public class Evidences {
 
     private ZahoriLogLevel logLevel;
     public static final ZahoriLogLevel LOG_DEFAULT_LEVEL = ZahoriLogLevel.INFO;
-    private static final String LOG_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-    private SimpleDateFormat sdf;
+
+    // Thread-safe: DateTimeFormatter is immutable and thread-safe (unlike SimpleDateFormat)
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private static final Logger LOG = LogManager.getLogger(Evidences.class);
 
@@ -67,32 +82,43 @@ public class Evidences {
     private static final String[] BOLD_LIST = new String[]{"[STEP ", "[TEST "};
     private static final String RED = "FF0000";
 
-    private String evidenceFileNamePattern;
-    private String path;
-    private ZahoriProperties zahoriProperties;
+    // Cached WebP support check (immutable after class loading)
+    // scanForPlugins() ensures TwelveMonkeys SPI registration is triggered
+    private static final boolean WEBP_SUPPORTED;
+    static {
+        ImageIO.scanForPlugins();
+        WEBP_SUPPORTED = ImageIO.getImageWritersByFormatName("webp").hasNext();
+    }
 
-    // Doc
-    private List<String> docFileNames = new ArrayList<>();
-    private Map<String, Word> docs = new LinkedHashMap<>();
+    private final String evidenceFileNamePattern;
+    private final String path;
+    private final ZahoriProperties zahoriProperties;
 
-    // Log
-    private List<String> logFileNames = new ArrayList<>();
-    private Map<String, LogFile> logFiles = new LinkedHashMap<>();
+    // Thread-safe collections for concurrent access
+    // CopyOnWriteArrayList: optimal for read-heavy, write-rare scenarios (evidence file names)
+    private final List<String> docFileNames = new CopyOnWriteArrayList<>();
+    private final List<String> logFileNames = new CopyOnWriteArrayList<>();
 
-    // Video
-    private EnterpriseScreenRecorder video;
-    private String videoFileName;
+    // Synchronized maps for document/log file access
+    // Using Collections.synchronizedMap for compatibility; iteration still needs external sync
+    private final Map<String, Word> docs = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, LogFile> logFiles = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    // Har Log
-    private String harLogFileName;
+    // Video recording with explicit locking for start/stop coordination
+    private final ReadWriteLock videoLock = new ReentrantReadWriteLock();
+    private volatile EnterpriseScreenRecorder video;
+    private final String videoFileName;
 
-    // Screenshots
-    private List<String> screenshots;
+    // Har Log (immutable after construction)
+    private final String harLogFileName;
 
-    // i18n messages
-    private Messages messages;
+    // Screenshots: thread-safe list, may be null if disabled
+    private final List<String> screenshots;
 
-    private boolean remoteBrowser;
+    // i18n messages (should be thread-safe or immutable)
+    private final Messages messages;
+
+    private final boolean remoteBrowser;
 
     public Evidences(CaseExecution caseExecution, ZahoriProperties zahoriProperties, Messages messages, String platform, String browser, String resolution,
             String testId, String templatePath, boolean remoteBrowser, ProcessRegistration processRegistration) {
@@ -157,14 +183,15 @@ public class Evidences {
         // Har Log
         harLogFileName = evidenceFileNamePattern + ".har";
 
-        // Screenshots
+        // Screenshots: use thread-safe list if enabled
         if (zahoriProperties.isScreenshotsGenerationEnabled()) {
-            screenshots = new ArrayList<>();
+            screenshots = new CopyOnWriteArrayList<>();
+        } else {
+            screenshots = null;
         }
 
         ZahoriLogLevel configuredLogLevel = zahoriProperties.getLogLevel();
         logLevel = configuredLogLevel == null ? LOG_DEFAULT_LEVEL : configuredLogLevel;
-        sdf = new SimpleDateFormat(LOG_DATE_FORMAT);
     }
 
     public void insertStep(List<Step> steps) {
@@ -211,43 +238,55 @@ public class Evidences {
 
     public void insertTextInLogFile(ZahoriLogLevel level, String text, String... textArgs) {
         if (level.compareTo(logLevel) >= 0) {
-            for (Map.Entry<String, LogFile> log : logFiles.entrySet()) {
-                log.getValue().write(sdf.format(new Date()) + StringUtils.SPACE + StringUtils.upperCase(String.valueOf(level)) + StringUtils.SPACE
-                        + StringUtils.SPACE + messages.getMessage(log.getKey(), text, textArgs));
+            String timestamp = LocalDateTime.now().format(DATE_FORMATTER);
+            // Synchronized iteration over logFiles map
+            synchronized (logFiles) {
+                for (Map.Entry<String, LogFile> log : logFiles.entrySet()) {
+                    log.getValue().write(timestamp + StringUtils.SPACE + StringUtils.upperCase(String.valueOf(level)) + StringUtils.SPACE
+                            + StringUtils.SPACE + messages.getMessage(log.getKey(), text, textArgs));
+                }
             }
         }
     }
 
     public void insertTextInDocs(String text, String... textArgs) {
-        for (Map.Entry<String, Word> doc : docs.entrySet()) {
-            doc.getValue().insertarTexto(messages.getMessage(doc.getKey(), text, textArgs));
+        synchronized (docs) {
+            for (Map.Entry<String, Word> doc : docs.entrySet()) {
+                doc.getValue().insertarTexto(messages.getMessage(doc.getKey(), text, textArgs));
+            }
         }
     }
 
     public void insertFailedTextInDocs(String text, String... textArgs) {
-        for (Map.Entry<String, Word> doc : docs.entrySet()) {
-            if (hasBoldText(text)) {
-                doc.getValue().insertarTextoColorNegrita(messages.getMessage(doc.getKey(), text, textArgs), RED);
-            } else {
-                doc.getValue().insertarTextoColor(messages.getMessage(doc.getKey(), text, textArgs), RED);
+        synchronized (docs) {
+            for (Map.Entry<String, Word> doc : docs.entrySet()) {
+                if (hasBoldText(text)) {
+                    doc.getValue().insertarTextoColorNegrita(messages.getMessage(doc.getKey(), text, textArgs), RED);
+                } else {
+                    doc.getValue().insertarTextoColor(messages.getMessage(doc.getKey(), text, textArgs), RED);
+                }
             }
         }
     }
 
     public void insertSuccessTextInDocs(String text, String... textArgs) {
-        for (Map.Entry<String, Word> doc : docs.entrySet()) {
-            if (hasBoldText(text)) {
-                doc.getValue().insertarTextoNegrita(messages.getMessage(doc.getKey(), text, textArgs));
-            } else {
-                doc.getValue().insertarTexto(messages.getMessage(doc.getKey(), text, textArgs));
+        synchronized (docs) {
+            for (Map.Entry<String, Word> doc : docs.entrySet()) {
+                if (hasBoldText(text)) {
+                    doc.getValue().insertarTextoNegrita(messages.getMessage(doc.getKey(), text, textArgs));
+                } else {
+                    doc.getValue().insertarTexto(messages.getMessage(doc.getKey(), text, textArgs));
+                }
             }
         }
     }
 
     public void insertImageInDoc(String image, String text, String... textArgs) {
         if (!StringUtils.isBlank(image)) {
-            for (Map.Entry<String, Word> doc : docs.entrySet()) {
-                doc.getValue().insertarImagen(new File(image), messages.getMessage(doc.getKey(), text, textArgs));
+            synchronized (docs) {
+                for (Map.Entry<String, Word> doc : docs.entrySet()) {
+                    doc.getValue().insertarImagen(new File(image), messages.getMessage(doc.getKey(), text, textArgs));
+                }
             }
         } else {
             insertTextInDocs(text);
@@ -267,38 +306,43 @@ public class Evidences {
     }
 
     private void insertStepsInLogFile(List<Step> steps) {
-        for (Map.Entry<String, LogFile> log : logFiles.entrySet()) {
-            StringBuilder stepText = new StringBuilder();
-            stepText.append("\n");
-            stepText.append(getStepPrefix(steps)).append("\n");
-            for (Step step : steps) {
-                stepText.append(messages.getMessage(log.getKey(), step.getDescription(), step.getDescriptionArgs())).append("\n");
+        String stepPrefix = getStepPrefix(steps);
+        synchronized (logFiles) {
+            for (Map.Entry<String, LogFile> log : logFiles.entrySet()) {
+                StringBuilder stepText = new StringBuilder();
+                stepText.append("\n");
+                stepText.append(stepPrefix).append("\n");
+                for (Step step : steps) {
+                    stepText.append(messages.getMessage(log.getKey(), step.getDescription(), step.getDescriptionArgs())).append("\n");
+                }
+                log.getValue().write(stepText.toString());
             }
-            log.getValue().write(stepText.toString());
         }
     }
 
     private void insertStepsInDoc(List<Step> steps) {
-        for (Map.Entry<String, Word> doc : docs.entrySet()) {
-            insertTextInDoc(doc, "\n", null);
-            String prefixText = getStepPrefix(steps);
-            insertTextInDoc(doc, prefixText, steps.get(steps.size() - 1).getStatus());
-            for (Step step : steps) {
-                String status = step.getStatus();
-                File image = (step.getAttachments() == null) || step.getAttachments().isEmpty() ? null : step.getAttachments().get(0);
-                if (image != null) {
-                    switch (status) {
-                        case Status.FAILED:
-                            doc.getValue().insertarImagenColor(image, messages.getMessage(doc.getKey(), step.getDescription(), step.getDescriptionArgs()), RED);
-                            break;
-                        default:
-                            doc.getValue().insertarImagen(image, messages.getMessage(doc.getKey(), step.getDescription(), step.getDescriptionArgs()));
-                    }
-
-                } else {
-                    insertTextInDoc(doc, messages.getMessage(doc.getKey(), step.getDescription(), step.getDescriptionArgs()), status);
-                }
+        String prefixText = getStepPrefix(steps);
+        synchronized (docs) {
+            for (Map.Entry<String, Word> doc : docs.entrySet()) {
                 insertTextInDoc(doc, "\n", null);
+                insertTextInDoc(doc, prefixText, steps.get(steps.size() - 1).getStatus());
+                for (Step step : steps) {
+                    String status = step.getStatus();
+                    File image = (step.getAttachments() == null) || step.getAttachments().isEmpty() ? null : step.getAttachments().get(0);
+                    if (image != null) {
+                        switch (status) {
+                            case Status.FAILED:
+                                doc.getValue().insertarImagenColor(image, messages.getMessage(doc.getKey(), step.getDescription(), step.getDescriptionArgs()), RED);
+                                break;
+                            default:
+                                doc.getValue().insertarImagen(image, messages.getMessage(doc.getKey(), step.getDescription(), step.getDescriptionArgs()));
+                        }
+
+                    } else {
+                        insertTextInDoc(doc, messages.getMessage(doc.getKey(), step.getDescription(), step.getDescriptionArgs()), status);
+                    }
+                    insertTextInDoc(doc, "\n", null);
+                }
             }
         }
     }
@@ -333,12 +377,13 @@ public class Evidences {
     }
 
     public String createScreenshot(int numPaso, int numSubPaso, WebDriver driver) {
-        String screenshotJpgFilePath = null;
+        String screenshotFilePath = null;
         if (screenshots != null) {
-            screenshotJpgFilePath = path + "Step_" + numPaso + "_" + numSubPaso + ".jpg";
+            String format = getEffectiveScreenshotFormat();
+            screenshotFilePath = path + "Step_" + numPaso + "_" + numSubPaso + "." + format;
             try {
                 File screenShotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-                savePngFileAsJpg(screenShotFile, screenshotJpgFilePath);
+                saveScreenshot(screenShotFile, screenshotFilePath, format);
             } catch (Exception e) {
                 String error = "Error creating screenshot: " + e.getMessage();
                 console(ZahoriLogLevel.ERROR, error);
@@ -346,41 +391,175 @@ public class Evidences {
                 insertFailedTextInDocs(error);
             }
         }
-        return screenshotJpgFilePath;
+        return screenshotFilePath;
     }
 
-    private void savePngFileAsJpg(File pngFile, String jpgFilePath) throws IOException {
-        // Long start = System.currentTimeMillis();
-        BufferedImage pngImage = ImageIO.read(pngFile);
+    /**
+     * Gets the effective screenshot format, falling back to jpg if webp is not available.
+     */
+    private String getEffectiveScreenshotFormat() {
+        String format = zahoriProperties.getScreenshotFormat();
+        if ("webp".equals(format) && !isWebPSupported()) {
+            console(ZahoriLogLevel.WARN, "WebP format not available (TwelveMonkeys ImageIO not in classpath), falling back to JPG");
+            return "jpg";
+        }
+        return format;
+    }
 
-        // jpg needs BufferedImage.TYPE_INT_RGB
-        // png needs BufferedImage.TYPE_INT_ARGB
-        // create a blank, RGB, same width and height
-        BufferedImage jpgImage = new BufferedImage(pngImage.getWidth(), pngImage.getHeight(), BufferedImage.TYPE_INT_RGB);
+    /**
+     * Checks if WebP format is supported (TwelveMonkeys ImageIO plugin available).
+     * Uses cached value for performance (checked once at class loading).
+     */
+    private boolean isWebPSupported() {
+        return WEBP_SUPPORTED;
+    }
 
-        // draw a white background and puts the originalImage on it.
-        jpgImage.createGraphics().drawImage(pngImage, 0, 0, Color.WHITE, null);
+    /**
+     * Saves screenshot in the configured format with optimization.
+     */
+    private void saveScreenshot(File sourceFile, String outputPath, String format) throws IOException {
+        BufferedImage sourceImage = ImageIO.read(sourceFile);
 
-        // save image
-        File jpgFile = new File(jpgFilePath);
-        ImageIO.write(jpgImage, "jpg", jpgFile);
-        // LOG.debug("Convert png to jpg --> time: " + (System.currentTimeMillis() - start));
+        // Apply scaling if configured
+        float scaleFactor = zahoriProperties.getScreenshotScale();
+        BufferedImage scaledImage = scaleImage(sourceImage, scaleFactor);
+
+        switch (format) {
+            case "png":
+                savePng(scaledImage, outputPath);
+                break;
+            case "webp":
+                saveWebP(scaledImage, outputPath);
+                break;
+            case "jpg":
+            default:
+                saveJpg(scaledImage, outputPath);
+                break;
+        }
+    }
+
+    /**
+     * Saves image as optimized JPG with configurable quality.
+     */
+    private void saveJpg(BufferedImage image, String filePath) throws IOException {
+        // Convert to RGB (JPG doesn't support alpha channel)
+        BufferedImage rgbImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = rgbImage.createGraphics();
+        g2d.drawImage(image, 0, 0, Color.WHITE, null);
+        g2d.dispose();
+
+        float quality = zahoriProperties.getScreenshotQuality();
+        saveJpgWithQuality(rgbImage, filePath, quality);
+    }
+
+    /**
+     * Saves image as PNG (lossless, larger file size).
+     */
+    private void savePng(BufferedImage image, String filePath) throws IOException {
+        ImageIO.write(image, "png", new File(filePath));
+    }
+
+    /**
+     * Saves image as WebP with configurable quality (requires TwelveMonkeys ImageIO).
+     * WebP provides ~25-35% better compression than JPG at same quality.
+     */
+    private void saveWebP(BufferedImage image, String filePath) throws IOException {
+        // Convert to RGB for better WebP compression
+        BufferedImage rgbImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = rgbImage.createGraphics();
+        g2d.drawImage(image, 0, 0, Color.WHITE, null);
+        g2d.dispose();
+
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("webp");
+        if (!writers.hasNext()) {
+            throw new IOException("WebP format not supported - TwelveMonkeys ImageIO not available");
+        }
+
+        ImageWriter writer = writers.next();
+        ImageWriteParam param = writer.getDefaultWriteParam();
+
+        // Configure WebP compression if supported
+        if (param.canWriteCompressed()) {
+            param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            param.setCompressionQuality(zahoriProperties.getScreenshotQuality());
+        }
+
+        File outputFile = new File(filePath);
+        try (ImageOutputStream ios = ImageIO.createImageOutputStream(outputFile)) {
+            writer.setOutput(ios);
+            writer.write(null, new IIOImage(rgbImage, null, null), param);
+        } finally {
+            writer.dispose();
+        }
+    }
+
+    /**
+     * Scales an image by the given factor.
+     * Uses bilinear interpolation for smooth results.
+     *
+     * @param original the original image
+     * @param scaleFactor scale factor (1.0 = original size, 0.5 = half size)
+     * @return scaled image, or original if scaleFactor is 1.0
+     */
+    private BufferedImage scaleImage(BufferedImage original, float scaleFactor) {
+        if (scaleFactor >= 1.0f) {
+            return original;
+        }
+
+        int newWidth = Math.max(1, (int) (original.getWidth() * scaleFactor));
+        int newHeight = Math.max(1, (int) (original.getHeight() * scaleFactor));
+
+        BufferedImage scaled = new BufferedImage(newWidth, newHeight, original.getType());
+        Graphics2D g2d = scaled.createGraphics();
+        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.drawImage(original, 0, 0, newWidth, newHeight, null);
+        g2d.dispose();
+
+        return scaled;
+    }
+
+    /**
+     * Saves a BufferedImage as JPEG with configurable compression quality.
+     *
+     * @param image the image to save
+     * @param filePath output file path
+     * @param quality compression quality (0.0-1.0, where 1.0 is highest quality)
+     */
+    private void saveJpgWithQuality(BufferedImage image, String filePath, float quality) throws IOException {
+        ImageWriter writer = ImageIO.getImageWritersByFormatName("jpg").next();
+        ImageWriteParam param = writer.getDefaultWriteParam();
+        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+        param.setCompressionQuality(quality);
+
+        File outputFile = new File(filePath);
+        try (ImageOutputStream ios = ImageIO.createImageOutputStream(outputFile)) {
+            writer.setOutput(ios);
+            writer.write(null, new IIOImage(image, null, null), param);
+        } finally {
+            writer.dispose();
+        }
     }
 
     public void startVideo() {
-        if (video != null) {
-            try {
+        videoLock.writeLock().lock();
+        try {
+            if (video != null) {
                 video.start();
-            } catch (Exception e) {
-                console(ZahoriLogLevel.ERROR, "Error starting video: " + e.getMessage());
-                insertTextInLogFile(ZahoriLogLevel.ERROR, "Error starting video: " + e.getMessage());
             }
+        } catch (Exception e) {
+            console(ZahoriLogLevel.ERROR, "Error starting video: " + e.getMessage());
+            insertTextInLogFile(ZahoriLogLevel.ERROR, "Error starting video: " + e.getMessage());
+        } finally {
+            videoLock.writeLock().unlock();
         }
     }
 
     public void stopVideo(boolean isTestPassed) {
-        if (video != null) {
-            try {
+        videoLock.writeLock().lock();
+        try {
+            if (video != null) {
                 video.stop();
 
                 if ((isTestPassed && zahoriProperties.isVideoGenerationEnabledWhenPassed())
@@ -389,13 +568,13 @@ public class Evidences {
                 } else {
                     video.deleteVideoTemp();
                 }
-            } catch (Exception e) {
-                console(ZahoriLogLevel.ERROR, "Error stopping video: " + e.getMessage());
-                insertTextInLogFile(ZahoriLogLevel.ERROR, "Error stopping video: " + e.getMessage());
-
             }
+        } catch (Exception e) {
+            console(ZahoriLogLevel.ERROR, "Error stopping video: " + e.getMessage());
+            insertTextInLogFile(ZahoriLogLevel.ERROR, "Error stopping video: " + e.getMessage());
+        } finally {
+            videoLock.writeLock().unlock();
         }
-
     }
 
     public String getEvidenceFileNamePattern() {
@@ -406,12 +585,20 @@ public class Evidences {
         return path;
     }
 
+    /**
+     * Returns an unmodifiable view of the document file names.
+     * Thread-safe: CopyOnWriteArrayList provides snapshot iteration.
+     */
     public List<String> getDocFileNames() {
-        return docFileNames;
+        return Collections.unmodifiableList(docFileNames);
     }
 
+    /**
+     * Returns an unmodifiable view of the log file names.
+     * Thread-safe: CopyOnWriteArrayList provides snapshot iteration.
+     */
     public List<String> getLogFileNames() {
-        return logFileNames;
+        return Collections.unmodifiableList(logFileNames);
     }
 
     public String getHarLogFileName() {
@@ -422,29 +609,35 @@ public class Evidences {
         return videoFileName;
     }
 
+    /**
+     * Returns an unmodifiable view of the screenshots list, or null if disabled.
+     * Thread-safe: CopyOnWriteArrayList provides snapshot iteration.
+     */
     public List<String> getScreenshots() {
-        return screenshots;
+        return screenshots != null ? Collections.unmodifiableList(screenshots) : null;
     }
 
     private String getStepPrefix(List<Step> steps) {
         Step step = steps.get(steps.size() - 1);
-        return "[STEP " + step.getName() + " - " + step.getStatus() + " at " + sdf.format(new Date()) + "]";
+        return "[STEP " + step.getName() + " - " + step.getStatus() + " at " + LocalDateTime.now().format(DATE_FORMATTER) + "]";
     }
 
+    /**
+     * Prepares the evidence directory, creating it if necessary.
+     * Uses atomic check-and-create to avoid race conditions.
+     */
     private void prepareDirectory(File dir) {
         if (dir == null) {
             return;
         }
-        /* Prepare Directory */
-        if (!dir.exists()) {
-            // create all non existing directories
-            dir.mkdirs();
-
-            // Permissions: rwx r-x r-x
+        // mkdirs() is atomic and returns false if directory already exists
+        // This avoids the check-then-act race condition
+        if (dir.mkdirs()) {
+            // Directory was created, set permissions
             dir.setWritable(true, true);
             dir.setReadable(true);
-            // dir.setExecutable(true);
         }
+        // If mkdirs() returned false, directory already exists (no action needed)
     }
 
     private boolean hasBoldText(String text) {

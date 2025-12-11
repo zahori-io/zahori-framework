@@ -24,9 +24,15 @@ package io.zahori.framework.utils.selenium4;
  */
 
 import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.apache.logging.log4j.LogManager;
@@ -373,5 +379,303 @@ public final class BiDiNetworkUtils {
                     .forEach(url -> LOG.info("  - {}", url));
         }
         LOG.info("=== Fin Resumen ===");
+    }
+
+    // ==================== Wait for Request/Response (ZAH-146) ====================
+
+    /**
+     * Espera a que se realice una peticion HTTP que coincida con el patron de URL.
+     * Este es el metodo principal solicitado en ZAH-146.
+     *
+     * <p>Ejemplo de uso:
+     * <pre>
+     * // Esperar a que se llame a la API de login
+     * Optional&lt;CapturedRequest&gt; loginRequest = BiDiNetworkUtils.waitForRequest(
+     *     driver,
+     *     "/api/auth/login",
+     *     Duration.ofSeconds(10)
+     * );
+     *
+     * if (loginRequest.isPresent()) {
+     *     System.out.println("Login request capturado: " + loginRequest.get().url());
+     * }
+     * </pre>
+     *
+     * @param driver WebDriver con BiDi habilitado
+     * @param urlPattern patron de URL a buscar (substring match)
+     * @param timeout tiempo maximo de espera
+     * @return Optional con el request capturado, o empty si timeout
+     */
+    public static Optional<CapturedRequest> waitForRequest(WebDriver driver, String urlPattern, Duration timeout) {
+        if (!supportsBiDi(driver)) {
+            LOG.warn("BiDi no soportado - waitForRequest no disponible");
+            return Optional.empty();
+        }
+
+        AtomicReference<CapturedRequest> result = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        try {
+            Network network = new Network(driver);
+            network.onBeforeRequestSent(request -> {
+                String url = request.getRequest().getUrl();
+                if (url.contains(urlPattern)) {
+                    CapturedRequest captured = new CapturedRequest(
+                            url,
+                            request.getRequest().getMethod(),
+                            System.currentTimeMillis()
+                    );
+                    result.set(captured);
+                    latch.countDown();
+                    LOG.info("Request esperado capturado: {} {}", captured.method(), captured.url());
+                }
+            });
+
+            LOG.debug("Esperando request que coincida con: {}", urlPattern);
+            boolean found = latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+
+            if (!found) {
+                LOG.warn("Timeout esperando request: {} ({}ms)", urlPattern, timeout.toMillis());
+            }
+
+            network.close();
+            return Optional.ofNullable(result.get());
+
+        } catch (Exception e) {
+            LOG.error("Error en waitForRequest: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Espera a que se reciba una respuesta HTTP que coincida con el patron de URL.
+     *
+     * @param driver WebDriver con BiDi habilitado
+     * @param urlPattern patron de URL a buscar
+     * @param timeout tiempo maximo de espera
+     * @return Optional con el response capturado, o empty si timeout
+     */
+    public static Optional<CapturedResponse> waitForResponse(WebDriver driver, String urlPattern, Duration timeout) {
+        if (!supportsBiDi(driver)) {
+            LOG.warn("BiDi no soportado - waitForResponse no disponible");
+            return Optional.empty();
+        }
+
+        AtomicReference<CapturedResponse> result = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        try {
+            Network network = new Network(driver);
+            network.onResponseCompleted(response -> {
+                String url = response.getRequest().getUrl();
+                if (url.contains(urlPattern)) {
+                    CapturedResponse captured = new CapturedResponse(
+                            url,
+                            response.getResponseData().getStatus(),
+                            response.getResponseData().getStatusText(),
+                            System.currentTimeMillis()
+                    );
+                    result.set(captured);
+                    latch.countDown();
+                    LOG.info("Response esperado capturado: {} {} {}", captured.statusCode(), captured.statusText(), captured.url());
+                }
+            });
+
+            LOG.debug("Esperando response que coincida con: {}", urlPattern);
+            boolean found = latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+
+            if (!found) {
+                LOG.warn("Timeout esperando response: {} ({}ms)", urlPattern, timeout.toMillis());
+            }
+
+            network.close();
+            return Optional.ofNullable(result.get());
+
+        } catch (Exception e) {
+            LOG.error("Error en waitForResponse: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Espera a que se reciba una respuesta HTTP exitosa (2xx) que coincida con el patron.
+     *
+     * @param driver WebDriver
+     * @param urlPattern patron de URL
+     * @param timeout tiempo maximo
+     * @return Optional con el response si es exitoso, empty si timeout o error
+     */
+    public static Optional<CapturedResponse> waitForSuccessResponse(WebDriver driver, String urlPattern, Duration timeout) {
+        if (!supportsBiDi(driver)) {
+            LOG.warn("BiDi no soportado");
+            return Optional.empty();
+        }
+
+        AtomicReference<CapturedResponse> result = new AtomicReference<>();
+        CountDownLatch latch = new CountDownLatch(1);
+
+        try {
+            Network network = new Network(driver);
+            network.onResponseCompleted(response -> {
+                String url = response.getRequest().getUrl();
+                int status = response.getResponseData().getStatus();
+                if (url.contains(urlPattern) && status >= 200 && status < 300) {
+                    CapturedResponse captured = new CapturedResponse(
+                            url, status, response.getResponseData().getStatusText(), System.currentTimeMillis()
+                    );
+                    result.set(captured);
+                    latch.countDown();
+                    LOG.info("Response exitoso capturado: {} {}", status, url);
+                }
+            });
+
+            boolean found = latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            network.close();
+
+            if (!found) {
+                LOG.warn("Timeout esperando response exitoso: {}", urlPattern);
+            }
+
+            return Optional.ofNullable(result.get());
+
+        } catch (Exception e) {
+            LOG.error("Error en waitForSuccessResponse: {}", e.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    /**
+     * Espera a que se realicen N peticiones que coincidan con el patron.
+     *
+     * @param driver WebDriver
+     * @param urlPattern patron de URL
+     * @param count numero de peticiones a esperar
+     * @param timeout tiempo maximo
+     * @return Lista de requests capturados (puede ser menor que count si timeout)
+     */
+    public static List<CapturedRequest> waitForRequests(WebDriver driver, String urlPattern, int count, Duration timeout) {
+        if (!supportsBiDi(driver)) {
+            LOG.warn("BiDi no soportado");
+            return Collections.emptyList();
+        }
+
+        List<CapturedRequest> results = Collections.synchronizedList(new ArrayList<>());
+        CountDownLatch latch = new CountDownLatch(count);
+
+        try {
+            Network network = new Network(driver);
+            network.onBeforeRequestSent(request -> {
+                String url = request.getRequest().getUrl();
+                if (url.contains(urlPattern)) {
+                    CapturedRequest captured = new CapturedRequest(
+                            url, request.getRequest().getMethod(), System.currentTimeMillis()
+                    );
+                    results.add(captured);
+                    latch.countDown();
+                    LOG.debug("Request {}/{} capturado: {}", results.size(), count, url);
+                }
+            });
+
+            LOG.debug("Esperando {} requests que coincidan con: {}", count, urlPattern);
+            latch.await(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            network.close();
+
+            LOG.info("Capturados {}/{} requests para patron: {}", results.size(), count, urlPattern);
+            return new ArrayList<>(results);
+
+        } catch (Exception e) {
+            LOG.error("Error en waitForRequests: {}", e.getMessage());
+            return new ArrayList<>(results);
+        }
+    }
+
+    /**
+     * Espera asincrona a que se realice una peticion.
+     * Permite continuar ejecutando acciones mientras se espera.
+     *
+     * <p>Ejemplo:
+     * <pre>
+     * CompletableFuture&lt;CapturedRequest&gt; future = BiDiNetworkUtils.waitForRequestAsync(
+     *     driver, "/api/data", Duration.ofSeconds(30)
+     * );
+     *
+     * // Ejecutar acciones que disparan el request
+     * button.click();
+     *
+     * // Esperar resultado
+     * CapturedRequest request = future.get();
+     * </pre>
+     *
+     * @param driver WebDriver
+     * @param urlPattern patron de URL
+     * @param timeout tiempo maximo
+     * @return CompletableFuture con el request capturado
+     */
+    public static CompletableFuture<CapturedRequest> waitForRequestAsync(WebDriver driver, String urlPattern, Duration timeout) {
+        return CompletableFuture.supplyAsync(() ->
+                waitForRequest(driver, urlPattern, timeout).orElse(null)
+        );
+    }
+
+    /**
+     * Espera a que se complete una peticion XHR/fetch especifica.
+     * Verifica tanto el request como el response.
+     *
+     * @param driver WebDriver
+     * @param urlPattern patron de URL del servicio
+     * @param timeout tiempo maximo
+     * @return Optional con la respuesta si se completo correctamente
+     */
+    public static Optional<CapturedResponse> waitForServiceCall(WebDriver driver, String urlPattern, Duration timeout) {
+        LOG.info("Esperando llamada a servicio: {}", urlPattern);
+        return waitForResponse(driver, urlPattern, timeout);
+    }
+
+    /**
+     * Verifica si se ha realizado una peticion a una URL especifica.
+     * Usa los requests ya capturados (requiere startCapturingRequests previo).
+     *
+     * @param urlPattern patron de URL a buscar
+     * @return true si se encontro al menos una peticion
+     */
+    public static boolean hasRequestTo(String urlPattern) {
+        return capturedRequests.stream()
+                .anyMatch(r -> r.url().contains(urlPattern));
+    }
+
+    /**
+     * Cuenta el numero de peticiones realizadas a una URL.
+     *
+     * @param urlPattern patron de URL
+     * @return numero de peticiones que coinciden
+     */
+    public static long countRequestsTo(String urlPattern) {
+        return capturedRequests.stream()
+                .filter(r -> r.url().contains(urlPattern))
+                .count();
+    }
+
+    /**
+     * Obtiene el ultimo request realizado a una URL especifica.
+     *
+     * @param urlPattern patron de URL
+     * @return Optional con el ultimo request, o empty si no hay
+     */
+    public static Optional<CapturedRequest> getLastRequestTo(String urlPattern) {
+        return capturedRequests.stream()
+                .filter(r -> r.url().contains(urlPattern))
+                .reduce((first, second) -> second); // Obtiene el ultimo
+    }
+
+    /**
+     * Obtiene la ultima respuesta recibida de una URL especifica.
+     *
+     * @param urlPattern patron de URL
+     * @return Optional con la ultima respuesta, o empty si no hay
+     */
+    public static Optional<CapturedResponse> getLastResponseFrom(String urlPattern) {
+        return capturedResponses.stream()
+                .filter(r -> r.url().contains(urlPattern))
+                .reduce((first, second) -> second);
     }
 }
