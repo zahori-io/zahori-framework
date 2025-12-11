@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+
+    <!-- False Positive: sikulix2tigervnc is NOT TigerVNC desktop software -->
+    <suppress>
+        <notes><![CDATA[
+            False positive: sikulix2tigervnc is a Java library for screen recording,
+            NOT the TigerVNC VNC server/client. These CVEs apply to the native TigerVNC
+            desktop application, not this Java wrapper library.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/com\.sikulix/sikulix2tigervnc@.*$</packageUrl>
+        <cpe>cpe:/a:tigervnc:tigervnc</cpe>
+    </suppress>
+
+    <!-- Abandonware: xmlrpc (client+common) has no maintained replacement -->
+    <suppress until="2026-01-01Z">
+        <notes><![CDATA[
+            xmlrpc 3.1.3 is abandonware (last release 2013). Used by testlink-java-api.
+            Consider replacing testlink-java-api or implementing custom XML-RPC client.
+            JIRA: Evaluate replacement by Q1 2026
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.xmlrpc/xmlrpc-(client|common)@.*$</packageUrl>
+        <vulnerabilityName regex="true">CVE-2019-17570|CVE-2016-5002</vulnerabilityName>
+    </suppress>
+
+    <!-- BouncyCastle jdk15on series ended at 1.70, CVE-2023-33202 requires jdk18on -->
+    <suppress until="2026-06-01Z">
+        <notes><![CDATA[
+            CVE-2023-33202 affects BouncyCastle jdk15on. Migration to jdk18on requires
+            sikulix2tigervnc update. sikulix2tigervnc has no update available.
+            Risk accepted: Limited impact in zahori-framework context.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.bouncycastle/bc.*-jdk15on@1\.70$</packageUrl>
+        <cve>CVE-2023-33202</cve>
+    </suppress>
+
+    <!-- commons-configuration2: transitive from testlink-java-api -->
+    <suppress until="2026-06-01Z">
+        <notes><![CDATA[
+            commons-configuration2 2.1.1 comes from testlink-java-api.
+            CVE-2024-29131/29133 are OGNL injection vulnerabilities.
+            Risk mitigated: TestLink integration is isolated, no user input processed.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.commons/commons-configuration2@.*$</packageUrl>
+        <vulnerabilityName regex="true">CVE-2024-29131|CVE-2024-29133</vulnerabilityName>
+    </suppress>
+
+    <!-- Netty 4.1.118 CVEs - Spring Boot managed, awaiting upstream fix -->
+    <suppress until="2026-03-01Z">
+        <notes><![CDATA[
+            CVE-2025-55163, CVE-2025-58056, CVE-2025-58057 affect Netty 4.1.118.
+            Netty is managed by Spring Boot BOM. Awaiting Spring Boot 3.4.x patch.
+            Risk mitigated: Framework does not expose memcache/mqtt protocols.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/io\.netty/netty-.*@4\.1\.118\.Final$</packageUrl>
+        <vulnerabilityName regex="true">CVE-2025-55163|CVE-2025-58056|CVE-2025-58057</vulnerabilityName>
+    </suppress>
+
+    <!-- httpclient5 5.4.1 - CVE-2025-27820 -->
+    <suppress until="2026-03-01Z">
+        <notes><![CDATA[
+            CVE-2025-27820 affects httpclient5 5.4.1. SSRF vulnerability.
+            Risk mitigated: Framework validates all URLs before requests.
+            Awaiting httpclient5 5.4.2+ with fix.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents\.client5/httpclient5@5\.4\.1$</packageUrl>
+        <cve>CVE-2025-27820</cve>
+    </suppress>
+
+    <!-- Tomcat embed 10.1.34 - managed by Spring Boot -->
+    <suppress until="2026-03-01Z">
+        <notes><![CDATA[
+            Multiple CVEs affect Tomcat 10.1.34 (embedded via Spring Boot 3.4.1).
+            Awaiting Spring Boot 3.4.2+ with Tomcat update to 10.1.35+.
+            Risk: Several HIGH/CRITICAL CVEs - prioritize Spring Boot upgrade.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.tomcat\.embed/tomcat-embed-.*@10\.1\.34$</packageUrl>
+        <vulnerabilityName regex="true">CVE-2025-.*</vulnerabilityName>
+    </suppress>
+
+    <!-- commons-lang3 3.17.0 - CVE-2025-48924 -->
+    <suppress until="2026-03-01Z">
+        <notes><![CDATA[
+            CVE-2025-48924 affects commons-lang3 3.17.0.
+            Awaiting commons-lang3 3.18.0 with fix.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.commons/commons-lang3@3\.17\.0$</packageUrl>
+        <cve>CVE-2025-48924</cve>
+    </suppress>
+
+    <!-- POI 5.3.0 - CVE-2025-31672 -->
+    <suppress until="2026-03-01Z">
+        <notes><![CDATA[
+            CVE-2025-31672 affects Apache POI 5.3.0.
+            XXE vulnerability. Risk mitigated: Framework only processes trusted Excel files.
+            Awaiting POI 5.4.0 with fix.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.poi/poi.*@5\.3\.0$</packageUrl>
+        <cve>CVE-2025-31672</cve>
+    </suppress>
+
+    <!-- angus-activation 2.0.2 - False positive (angus_mail CPE mismatch) -->
+    <suppress>
+        <notes><![CDATA[
+            False positive: angus-activation is NOT angus-mail.
+            CVE-2025-7962 applies to angus-mail, not angus-activation.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.eclipse\.angus/angus-activation@.*$</packageUrl>
+        <cpe>cpe:/a:eclipse:angus_mail</cpe>
+    </suppress>
+
+</suppressions>
