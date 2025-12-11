@@ -26,6 +26,8 @@ import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
@@ -43,6 +45,11 @@ import org.openqa.selenium.remote.RemoteWebDriver;
  * RemoteDriver o LocalDriver.
  */
 public abstract class AbstractDriver implements Driver {
+
+    private static final Logger LOG = LogManager.getLogger();
+
+    /** Propiedad para configurar PageLoadStrategy desde zahori.properties */
+    private static final String PROP_PAGE_LOAD_STRATEGY = "zahori.browser.pageLoadStrategy";
 
     /**
      * Metodo abstracto para crear una instancia de WebDriver. Debe ser
@@ -83,21 +90,37 @@ public abstract class AbstractDriver implements Driver {
         if (proxy != null) {
             options.setProxy(proxy);
         }
-        /*
-            PageLoadStrategy:
-            - normal	Ready State=complete --> Used by default, waits for all resources to download
-            - eager	Ready State=interactive	--> DOM access is ready, but other resources like images may still be loading
-            - none	Ready State=Any	--> Does not block WebDriver at all
-         */
-        options.setPageLoadStrategy(PageLoadStrategy.NONE);
+        // PageLoadStrategy configurable desde zahori.properties
+        // Valores: normal (default Selenium), eager, none
+        options.setPageLoadStrategy(getPageLoadStrategy());
         setZahoriPropertiesBrowserOptions(options);
 
         // Set capabilities defined in zahori.properties starting with key: zahori.test.capabilities.add.
         DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilities(browsers);
         capabilities.asMap().forEach((key, value) -> options.setCapability(key, value));
 
-        System.out.println(browsers.getName() + " browser options and capabilities: " + options.toString());
+        LOG.info("{} browser options and capabilities: {}", browsers.getName(), options);
         return options;
+    }
+
+    /**
+     * Obtiene el PageLoadStrategy configurado en zahori.properties.
+     * Valores permitidos: normal, eager, none
+     * Por defecto: normal (comportamiento estandar de Selenium)
+     *
+     * @return PageLoadStrategy configurado
+     */
+    private PageLoadStrategy getPageLoadStrategy() {
+        String strategy = new ZahoriProperties().getProperty(PROP_PAGE_LOAD_STRATEGY);
+        if (StringUtils.isBlank(strategy)) {
+            return PageLoadStrategy.NORMAL; // Default seguro
+        }
+        try {
+            return PageLoadStrategy.fromString(strategy.toLowerCase());
+        } catch (IllegalArgumentException e) {
+            LOG.warn("PageLoadStrategy invalido '{}', usando NORMAL. Valores validos: normal, eager, none", strategy);
+            return PageLoadStrategy.NORMAL;
+        }
     }
 
     /**
@@ -133,7 +156,7 @@ public abstract class AbstractDriver implements Driver {
                 String extraPrefValue = extraPreferences.get(extraPrefKey);
                 if (isBoolean(extraPreferences.get(extraPrefKey))) {
                     firefoxOptions.addPreference(extraPrefKey, Boolean.valueOf(extraPrefValue));
-                } else if (isDigit(extraPrefValue)) {
+                } else if (isNumeric(extraPrefValue)) {
                     firefoxOptions.addPreference(extraPrefKey, Integer.valueOf(extraPrefValue));
                 } else {
                     firefoxOptions.addPreference(extraPrefKey, extraPrefValue);
@@ -164,10 +187,13 @@ public abstract class AbstractDriver implements Driver {
         return StringUtils.equalsIgnoreCase("true", input) || StringUtils.equalsIgnoreCase("false", input);
     }
 
-    private boolean isDigit(String input) {
-        return StringUtils.equalsIgnoreCase("0", input) || StringUtils.equalsIgnoreCase("1", input) || StringUtils.equalsIgnoreCase("2", input)
-                || StringUtils.equalsIgnoreCase("3", input) || StringUtils.equalsIgnoreCase("4", input) || StringUtils.equalsIgnoreCase("5", input)
-                || StringUtils.equalsIgnoreCase("6", input) || StringUtils.equalsIgnoreCase("7", input) || StringUtils.equalsIgnoreCase("8", input)
-                || StringUtils.equalsIgnoreCase("9", input);
+    /**
+     * Determina si una cadena representa un valor numerico entero.
+     *
+     * @param input La cadena a evaluar
+     * @return true si es un numero entero valido
+     */
+    private boolean isNumeric(String input) {
+        return StringUtils.isNumeric(input);
     }
 }

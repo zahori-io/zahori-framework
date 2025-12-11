@@ -26,7 +26,6 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.edge.EdgeOptions;
 import org.openqa.selenium.firefox.FirefoxOptions;
 import org.openqa.selenium.ie.InternetExplorerOptions;
-import org.openqa.selenium.opera.OperaOptions;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 import org.openqa.selenium.safari.SafariOptions;
 
@@ -56,14 +55,6 @@ public enum OptionsFactory {
             firefoxOptions.setAcceptInsecureCerts(true);
 
             return firefoxOptions;
-        }
-    },
-    OPERA {
-        @Override
-        public OperaOptions getOptions() {
-            OperaOptions operaOptions = new OperaOptions();
-            operaOptions.setAcceptInsecureCerts(true);
-            return operaOptions;
         }
     },
     EDGE {
