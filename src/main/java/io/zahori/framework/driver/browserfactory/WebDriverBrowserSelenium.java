@@ -96,6 +96,26 @@ public class WebDriverBrowserSelenium {
         return driver;
     }
 
+    /**
+     * Configura timeouts del driver.
+     *
+     * <p><strong>NOTA IMPORTANTE sobre Implicit Waits:</strong></p>
+     * <p>Selenium 4 Best Practices recomienda NO usar implicit waits porque:</p>
+     * <ul>
+     *   <li>Hacen los tests mas lentos (siempre esperan el tiempo completo)</li>
+     *   <li>Pueden causar flaky tests cuando se mezclan con explicit waits</li>
+     *   <li>No permiten condiciones personalizadas</li>
+     * </ul>
+     *
+     * <p>Se recomienda usar WebDriverWait con ExpectedConditions:</p>
+     * <pre>
+     * WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+     * wait.until(ExpectedConditions.elementToBeClickable(locator));
+     * </pre>
+     *
+     * @param driver WebDriver a configurar
+     * @param browsers configuracion de navegador
+     */
     public void setProperties(final WebDriver driver, Browsers browsers) {
         if (driver == null) {
             return;
@@ -104,7 +124,35 @@ public class WebDriverBrowserSelenium {
         if (!(driver instanceof AndroidDriver)) { // pageLoadTimeout is not implemented yet for AndroidDriver
             driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(browsers.getPageLoadTimeout()));
         }
-        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(browsers.getImplicitlyWait()));
+
+        // NOTA: implicitlyWait esta desaconsejado en Selenium 4.
+        // Se mantiene por retrocompatibilidad, pero se recomienda usar explicit waits.
+        // Ver: https://www.selenium.dev/documentation/webdriver/waits/
+        long implicitWait = browsers.getImplicitlyWait();
+        if (implicitWait > 0) {
+            LOG.warn("Implicit wait configurado a {} segundos. Considere usar explicit waits (WebDriverWait) en su lugar.", implicitWait);
+        }
+        driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(implicitWait));
+    }
+
+    /**
+     * Configura solo el pageLoadTimeout (recomendado Selenium 4).
+     * No configura implicit waits, permitiendo usar solo explicit waits.
+     *
+     * @param driver WebDriver a configurar
+     * @param pageLoadTimeoutSeconds timeout para carga de pagina
+     */
+    public void setPropertiesWithoutImplicitWait(final WebDriver driver, long pageLoadTimeoutSeconds) {
+        if (driver == null) {
+            return;
+        }
+
+        if (!(driver instanceof AndroidDriver)) {
+            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(pageLoadTimeoutSeconds));
+        }
+        // No configurar implicit wait - usar solo explicit waits
+        driver.manage().timeouts().implicitlyWait(Duration.ZERO);
+        LOG.info("Driver configurado sin implicit waits (best practice Selenium 4)");
     }
 
     public WebDriver getDriver(final DesiredCapabilities caps)
