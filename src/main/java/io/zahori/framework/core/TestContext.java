@@ -31,10 +31,8 @@ import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.ios.IOSDriver;
 import static io.zahori.framework.core.BaseProcess.DEFAULT_BIT_DEPTH;
 import static io.zahori.framework.core.BaseProcess.DEFAULT_SCREEN_RESOLUTION;
-import io.zahori.framework.driver.browserfactory.BrowserMobProxy;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.utils.selenium4.CDPHarCapture;
-import net.lightbody.bmp.client.ClientUtil;
 import io.zahori.framework.evidences.Evidences;
 import io.zahori.framework.evidences.Evidences.ZahoriLogLevel;
 import io.zahori.framework.exception.ZahoriException;
@@ -82,72 +80,134 @@ import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
 
+/**
+ * TestContext - Thread-Safe & Optimized Version
+ *
+ * <h2>Mejoras de Concurrencia (Java Champion Level)</h2>
+ * <ul>
+ *   <li>CopyOnWriteArrayList para steps y attachments (muchas lecturas, pocas escrituras)</li>
+ *   <li>AtomicBoolean/AtomicInteger para estado del test</li>
+ *   <li>ReadWriteLock para operaciones compuestas sobre currentStep</li>
+ *   <li>DateTimeFormatter thread-safe (reemplaza SimpleDateFormat)</li>
+ *   <li>ObjectMapper singleton compartido</li>
+ *   <li>volatile para visibilidad entre hilos</li>
+ * </ul>
+ *
+ * <h2>Compatibilidad JDK 21</h2>
+ * <ul>
+ *   <li>Sin synchronized (evita thread pinning con Virtual Threads)</li>
+ *   <li>ReentrantReadWriteLock compatible con Virtual Threads</li>
+ * </ul>
+ */
 public class TestContext {
 
     public static final String JSON_REPORT = "testSteps.json";
+
+    // Constantes públicas para compatibilidad con código externo (Xray, etc.)
     public static final String DATE_FORMAT = "yyyyMMdd-HHmmss";
     public static final String DATE_WEB_FORMAT = "yyyy-MM-dd HH:mm:ss";
-    public String testId = new SimpleDateFormat(DATE_FORMAT).format(new Date());
-    public String url;
+
+    // ========================================================================
+    // FORMATTERS THREAD-SAFE (inmutables, reemplazan SimpleDateFormat)
+    // ========================================================================
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern(DATE_FORMAT);
+    private static final DateTimeFormatter DATE_WEB_FORMATTER =
+            DateTimeFormatter.ofPattern(DATE_WEB_FORMAT);
+
+    // ========================================================================
+    // OBJECTMAPPER SINGLETON (thread-safe después de configuración)
+    // ========================================================================
+    private static final ObjectMapper SHARED_MAPPER = new ObjectMapper();
+
+    // ========================================================================
+    // LOCK PARA OPERACIONES COMPUESTAS EN STEPS
+    // ========================================================================
+    private final ReadWriteLock stepLock = new ReentrantReadWriteLock();
+
+    // ========================================================================
+    // ESTADO DEL TEST - THREAD-SAFE
+    // ========================================================================
+    public final String testId = DATE_FORMATTER.format(LocalDateTime.now());
+    public volatile String url;
+
+    /** Estado del test con visibilidad garantizada entre hilos */
+    private final AtomicBoolean testPassedAtomic = new AtomicBoolean(true);
+    /** Excepción capturada de forma thread-safe */
+    private final AtomicReference<ZahoriException> zahoriExceptionRef = new AtomicReference<>();
+
+    // Campos públicos para compatibilidad (sincronizados con atomics en getters/setters)
     public boolean testPassed = true;
     public ZahoriException zahoriException;
-    private List<Step> currentStep = new ArrayList<>();
-    public List<List<Step>> testSteps = new ArrayList<>();
-    private int testDuration = 0;
-    private long testStartupTime;
-    private long stepStartupTime;
+
+    // ========================================================================
+    // COLECCIONES THREAD-SAFE
+    // ========================================================================
+    /** CopyOnWriteArrayList: óptimo para muchas lecturas, pocas escrituras */
+    private final List<Step> currentStep = new CopyOnWriteArrayList<>();
+    /** Lista de pasos del test - thread-safe para acceso concurrente */
+    public final List<List<Step>> testSteps = new CopyOnWriteArrayList<>();
+    /** Attachments thread-safe */
+    private final List<String> attachments = new CopyOnWriteArrayList<>();
+
+    // ========================================================================
+    // TIMING - VOLATILE PARA VISIBILIDAD
+    // ========================================================================
+    private final AtomicInteger testDurationAtomic = new AtomicInteger(0);
+    private volatile long testStartupTime;
+    private volatile long stepStartupTime;
 
     // TestNG parameters defined in xml file
     public String testCaseName;
-    public WebDriver driver;
-    public WebDriver hostDriver;
+    public volatile WebDriver driver;
+    public volatile WebDriver hostDriver;
     public String platform;
     public String browserName;
     public String bits;
     public String version;
     public String resolution;
-    public String remote;
-    public String remoteUrl;
-    public String appiumService;
+    public volatile String remote;
+    public volatile String remoteUrl;
+    public volatile String appiumService;
+
+    /** Contador de reintentos atómico */
+    private final AtomicInteger retriesAtomic = new AtomicInteger(0);
     public int retries = 0;
 
     // Properties
-    public ZahoriProperties zahoriProperties;
-    public ProjectProperties projectProperties;
+    public volatile ZahoriProperties zahoriProperties;
+    public volatile ProjectProperties projectProperties;
 
     // TEST EXECUTION TIMEOUTS
-    public Integer timeoutFindElement;
+    public volatile Integer timeoutFindElement;
 
     // Browser
-    private Browser browser;
+    private volatile Browser browser;
 
     // Evidences
-    public Evidences evidences;
-
-    // Attachments
-    private List<String> attachments = new ArrayList<>();
+    public volatile Evidences evidences;
 
     // TMS (Test Management Systems)
-    private TmsService tmsService;
+    private volatile TmsService tmsService;
     public String caseExecutionId;
 
     // i18n messages
-    // private Map<String, MessageReader> messages = new LinkedHashMap<String,
-    // MessageReader>();
-    private Messages messages;
-    private String executionNotes;
-    protected String failCause;
-    private boolean retriesDisabled;
-    private boolean updateTestResultDisabled;
+    private volatile Messages messages;
+    private volatile String executionNotes;
+    protected volatile String failCause;
+
+    /** Flags atómicos para control de estado */
+    private final AtomicBoolean retriesDisabledAtomic = new AtomicBoolean(false);
+    private final AtomicBoolean updateTestResultDisabledAtomic = new AtomicBoolean(false);
 
     public CaseExecution caseExecution;
     public ProcessRegistration processRegistration;
 
-    private Local browserStackLocal;
-    private int browserStackLocalRetry = 0;
-    private final int browserStackLocalMaxRetries = 5;
+    private volatile Local browserStackLocal;
+    private final AtomicInteger browserStackLocalRetry = new AtomicInteger(0);
+    private static final int BROWSERSTACK_LOCAL_MAX_RETRIES = 5;
 
-    private CDPHarCapture cdpHarCapture;
+    private volatile CDPHarCapture cdpHarCapture;
 
     public TestContext(CaseExecution caseExecution, ProcessRegistration processRegistration) {
         this.caseExecution = caseExecution;
@@ -234,7 +294,7 @@ public class TestContext {
         zahori.test.capabilities.add.ios.bstack\:options.localIdentifier={executionId}-{caseExecutionId}
      */
     public void startRemoteTunnel() {
-        browserStackLocalRetry++;
+        int currentRetry = browserStackLocalRetry.incrementAndGet();
 
         String browserStackLocalConnection = zahoriProperties.getProperty("zahori.test.capabilities.add." + platform.toLowerCase() + ".bstack:options.local");
         if (StringUtils.isBlank(browserStackLocalConnection) || !Boolean.parseBoolean(browserStackLocalConnection)) {
@@ -261,12 +321,6 @@ public class TestContext {
             // For doing simultaneous multiple local testing connections, set this uniquely for different processes:
             browserStackLocalArgs.put("localIdentifier", localIdentifier);
 
-            // Enable verbose logging:
-            //// bsLocalArgs.put("v", "true");
-            // Log file:
-            //// browserStackLocalArgs.put("logFile", "./browserstack-agent.log");
-            // Binary Path (downloads):
-            //// browserStackLocalArgs.put("binarypath", "./BrowserStackLocal");
             browserStackLocal = new Local();
             browserStackLocal.start(browserStackLocalArgs);
 
@@ -274,11 +328,11 @@ public class TestContext {
             if (!isRunning) {
                 throw new Exception("Connection is not running");
             }
-            logInfo("BrowserStack local connection started with id " + localIdentifier + " (" + String.valueOf(System.currentTimeMillis() - start) + " ms)");
+            logInfo("BrowserStack local connection started with id " + localIdentifier + " (" + (System.currentTimeMillis() - start) + " ms)");
 
         } catch (Exception e) {
-            String errorMessage = "BrowserStack local connection failed (id " + localIdentifier + ") [retry: " + browserStackLocalRetry + "]: " + e.getMessage();
-            if (browserStackLocalRetry >= browserStackLocalMaxRetries) {
+            String errorMessage = "BrowserStack local connection failed (id " + localIdentifier + ") [retry: " + currentRetry + "]: " + e.getMessage();
+            if (currentRetry >= BROWSERSTACK_LOCAL_MAX_RETRIES) {
                 failTest(errorMessage);
             } else {
                 logWarn(errorMessage);
@@ -364,7 +418,8 @@ public class TestContext {
     }
 
     protected void passTest(boolean withScreenshot, String messageKey, String... messageArgs) {
-        testPassed = true;
+        testPassedAtomic.set(true);
+        testPassed = true; // Sincronizar campo público
         String message = getMessage(messageKey, messageArgs);
         failCause = message;
         if (withScreenshot) {
@@ -384,11 +439,16 @@ public class TestContext {
     }
 
     protected void failTest(Exception e) {
-        this.testPassed = false;
+        testPassedAtomic.set(false);
+        testPassed = false; // Sincronizar campo público
         if (e instanceof ZahoriException) {
-            this.zahoriException = (ZahoriException) e;
+            ZahoriException ze = (ZahoriException) e;
+            zahoriExceptionRef.set(ze);
+            zahoriException = ze; // Sincronizar campo público
         } else {
-            this.zahoriException = new ZahoriException(testCaseName, e.getMessage());
+            ZahoriException ze = new ZahoriException(testCaseName, e.getMessage());
+            zahoriExceptionRef.set(ze);
+            zahoriException = ze; // Sincronizar campo público
             logStepWithScreenshot(Status.FAILED, getMessage(zahoriException.getMessageKey()) + getErrorLine(e));
             logError(ExceptionUtils.getStackTrace(e));
         }
@@ -421,7 +481,8 @@ public class TestContext {
 
     public void reportTestResult() {
         String testResult;
-        if (testPassed) {
+        boolean passed = testPassedAtomic.get();
+        if (passed) {
             testResult = "\n[TEST PASSED]: " + testCaseName;
             logInfo(testResult);
             evidences.insertSuccessTextInDocs(testResult);
@@ -430,15 +491,18 @@ public class TestContext {
             logInfo(testResult);
             evidences.insertFailedTextInDocs(testResult);
 
-            logInfo(zahoriException.getMessageKey(), zahoriException.getMessageArgs());
-            evidences.insertFailedTextInDocs(zahoriException.getMessageKey(), zahoriException.getMessageArgs());
+            ZahoriException ze = zahoriExceptionRef.get();
+            if (ze != null) {
+                logInfo(ze.getMessageKey(), ze.getMessageArgs());
+                evidences.insertFailedTextInDocs(ze.getMessageKey(), ze.getMessageArgs());
+            }
         }
     }
 
     // Update test result on Test Link, ALM,...
     public void uploadResultsToTms() {
-        if (!updateTestResultDisabled) {
-            tmsService.updateTestResult(caseExecution, testPassed, testSteps, testDuration, browserName, platform);
+        if (!updateTestResultDisabledAtomic.get()) {
+            tmsService.updateTestResult(caseExecution, testPassedAtomic.get(), testSteps, testDurationAtomic.get(), browserName, platform);
         }
     }
 
@@ -506,62 +570,115 @@ public class TestContext {
         logPartialStepWithScreenshot(Status.FAILED, description, descriptionArgs);
     }
 
+    /**
+     * Registra un paso parcial con sincronización.
+     */
     private void logPartialStep(String status, String description, String... descriptionArgs) {
-        Step step = new Step(null, (testSteps.size() + 1) + "_" + (currentStep.size() + 1), status, description);
-        step.setDescriptionArgs(descriptionArgs);
-        currentStep.add(step);
+        stepLock.writeLock().lock();
+        try {
+            Step step = new Step(null, (testSteps.size() + 1) + "_" + (currentStep.size() + 1), status, description);
+            step.setDescriptionArgs(descriptionArgs);
+            currentStep.add(step);
+        } finally {
+            stepLock.writeLock().unlock();
+        }
     }
 
+    /**
+     * Registra un paso parcial con screenshot y sincronización.
+     */
     private void logPartialStepWithScreenshot(String status, String description, String... descriptionArgs) {
-        Step step = new Step(null, (testSteps.size() + 1) + "_" + (currentStep.size() + 1), status, description);
-        step.setDescriptionArgs(descriptionArgs);
-
-        createScreenshot(step);
-        currentStep.add(step);
+        stepLock.writeLock().lock();
+        try {
+            Step step = new Step(null, (testSteps.size() + 1) + "_" + (currentStep.size() + 1), status, description);
+            step.setDescriptionArgs(descriptionArgs);
+            createScreenshot(step);
+            currentStep.add(step);
+        } finally {
+            stepLock.writeLock().unlock();
+        }
     }
 
+    /**
+     * Registra un paso completo con sincronización.
+     * Usa ReadWriteLock para evitar race conditions en operaciones compuestas.
+     */
     private Step logStep(String status, String description, String... descriptionArgs) {
-        Step step = new Step(null, "" + (testSteps.size() + 1), status, description);
-        step.setDescriptionArgs(descriptionArgs);
-        setStepDuration(step);
+        stepLock.writeLock().lock();
+        try {
+            Step step = new Step(null, String.valueOf(testSteps.size() + 1), status, description);
+            step.setDescriptionArgs(descriptionArgs);
+            setStepDuration(step);
 
-        currentStep.add(step);
-        testSteps.add(currentStep);
-        evidences.insertStep(currentStep);
-        currentStep = new ArrayList<>();
+            currentStep.add(step);
 
-        if (Status.FAILED.equals(status)) {
-            setExecutionNotes(getMessage(description, descriptionArgs));
+            // Crear copia inmutable antes de agregar a testSteps
+            List<Step> completedStep = new ArrayList<>(currentStep);
+            testSteps.add(completedStep);
+            evidences.insertStep(completedStep);
+
+            // Limpiar currentStep para el siguiente paso
+            currentStep.clear();
+
+            if (Status.FAILED.equals(status)) {
+                setExecutionNotes(getMessage(description, descriptionArgs));
+            }
+
+            // Sincronizar con campo público para compatibilidad
+            testPassed = testPassedAtomic.get();
+
+            return step;
+        } finally {
+            stepLock.writeLock().unlock();
         }
-
-        return step;
     }
 
+    /**
+     * Registra un paso completo con screenshot y sincronización.
+     */
     private Step logStepWithScreenshot(String status, String description, String... descriptionArgs) {
-        Step step = new Step(null, String.valueOf(testSteps.size() + 1), status, description);
-        step.setDescriptionArgs(descriptionArgs);
-        setStepDuration(step);
+        stepLock.writeLock().lock();
+        try {
+            Step step = new Step(null, String.valueOf(testSteps.size() + 1), status, description);
+            step.setDescriptionArgs(descriptionArgs);
+            setStepDuration(step);
 
-        createScreenshot(step);
-        currentStep.add(step);
-        testSteps.add(currentStep);
-        evidences.insertStep(currentStep);
-        currentStep = new ArrayList<>();
+            createScreenshot(step);
+            currentStep.add(step);
 
-        if (Status.FAILED.equals(status)) {
-            setExecutionNotes(getMessage(description, descriptionArgs));
+            // Crear copia inmutable antes de agregar a testSteps
+            List<Step> completedStep = new ArrayList<>(currentStep);
+            testSteps.add(completedStep);
+            evidences.insertStep(completedStep);
+
+            // Limpiar currentStep para el siguiente paso
+            currentStep.clear();
+
+            if (Status.FAILED.equals(status)) {
+                setExecutionNotes(getMessage(description, descriptionArgs));
+            }
+
+            // Sincronizar con campo público para compatibilidad
+            testPassed = testPassedAtomic.get();
+
+            return step;
+        } finally {
+            stepLock.writeLock().unlock();
         }
-
-        return step;
     }
 
+    /**
+     * Calcula la duración del paso de forma thread-safe.
+     */
     private void setStepDuration(Step step) {
-        long stepDurationLong = System.currentTimeMillis() - stepStartupTime;
-        int stepDuration = (Long.valueOf(TimeUnit.MILLISECONDS.toSeconds(stepDurationLong))).intValue();
+        long now = System.currentTimeMillis();
+        long stepDurationLong = now - stepStartupTime;
+        // Eliminado boxing innecesario: (Long.valueOf(...)).intValue()
+        int stepDuration = (int) TimeUnit.MILLISECONDS.toSeconds(stepDurationLong);
         step.setDuration(stepDuration);
 
         // Reset duration for next step
-        stepStartupTime = System.currentTimeMillis();
+        stepStartupTime = now;
     }
 
     private void createScreenshot(Step step) {
@@ -582,7 +699,8 @@ public class TestContext {
 
     public void stopChronometer() {
         long testDurationLong = System.currentTimeMillis() - testStartupTime;
-        testDuration = (Long.valueOf(TimeUnit.MILLISECONDS.toSeconds(testDurationLong))).intValue();
+        int duration = (int) TimeUnit.MILLISECONDS.toSeconds(testDurationLong);
+        testDurationAtomic.set(duration);
     }
 
     public void startVideo() {
@@ -593,7 +711,7 @@ public class TestContext {
 
     public void stopVideo() {
         if (browser != null) {
-            evidences.stopVideo(testPassed);
+            evidences.stopVideo(testPassedAtomic.get());
         }
     }
 
@@ -868,11 +986,11 @@ public class TestContext {
     }
 
     public int getMaxRetries() {
-        return retriesDisabled ? 0 : zahoriProperties.getDefinedRetries();
+        return retriesDisabledAtomic.get() ? 0 : zahoriProperties.getDefinedRetries();
     }
 
     public void disableTestRetries() {
-        retriesDisabled = true;
+        retriesDisabledAtomic.set(true);
         logInfo("zahori.testInfo.execution.retries.disabled");
     }
 
@@ -881,12 +999,12 @@ public class TestContext {
     }
 
     public void disableUpdateTestResult() {
-        updateTestResultDisabled = true;
+        updateTestResultDisabledAtomic.set(true);
         logInfo("zahori.testInfo.execution.updatetms.disabled");
     }
 
     public int getTestDuration() {
-        return testDuration;
+        return testDurationAtomic.get();
     }
 
     public String getTmsName() {
@@ -901,63 +1019,77 @@ public class TestContext {
         this.remoteUrl = url;
     }
 
+    /**
+     * Escribe los pasos a JSON usando ObjectMapper compartido (thread-safe).
+     */
     public void writeSteps2Json() {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectNode json = mapper.createObjectNode();
+        ObjectNode json = SHARED_MAPPER.createObjectNode();
         json.put("testName", testCaseName);
-        json.put("testStatus", testPassed ? "PASSED" : "FAILED");
-        json.put("executionDate", getDate(testId));
+        json.put("testStatus", testPassedAtomic.get() ? "PASSED" : "FAILED");
+        json.put("executionDate", formatDateForWeb(testId));
         json.put("platform", platform);
         json.put("browserName", browserName);
         json.put("browserVersion", version);
         json.put("bits", bits);
         json.put("durationSeconds", getTestDuration());
         json.put("executionNotes", executionNotes);
-        ArrayNode stepsArray = mapper.convertValue(testSteps, ArrayNode.class);
-        ArrayNode newStepsArray = mapper.createArrayNode();
+
+        // Crear snapshot de testSteps para serialización thread-safe
+        ArrayNode stepsArray = SHARED_MAPPER.valueToTree(new ArrayList<>(testSteps));
+        ArrayNode newStepsArray = SHARED_MAPPER.createArrayNode();
         int stepPosition = 1;
         for (JsonNode currentStepList : stepsArray) {
-            // ArrayNode subStepsArray = mapper.createArrayNode();
             for (JsonNode step : currentStepList) {
-                ObjectNode currentStep = (ObjectNode) step;
+                ObjectNode currentStepNode = (ObjectNode) step;
                 String key = step.get("description").asText();
                 List<String> argsList = new ArrayList<>();
                 for (JsonNode currentArg : step.get("descriptionArgs")) {
                     argsList.add(currentArg.asText());
                 }
-                String[] args = argsList.stream().toArray(String[]::new);
-                currentStep.put("messageText", getMessage(key, args));
-                currentStep.put("name", stepPosition);
+                String[] args = argsList.toArray(String[]::new);
+                currentStepNode.put("messageText", getMessage(key, args));
+                currentStepNode.put("name", stepPosition);
                 stepPosition++;
-                newStepsArray.add(currentStep);
+                newStepsArray.add(currentStepNode);
             }
-            // newStepsArray.add(subStepsArray);
         }
         json.set("steps", newStepsArray);
         try {
-            mapper.writeValue(new File(evidences.getPath() + JSON_REPORT), json);
+            SHARED_MAPPER.writeValue(new File(evidences.getPath() + JSON_REPORT), json);
         } catch (IOException e) {
-            logInfo("Error writting steps JSON file: " + e.getMessage());
+            logInfo("Error writing steps JSON file: " + e.getMessage());
         }
     }
 
-    private String getDate(String date) {
-        Date formattedDate;
+    /**
+     * Formatea fecha usando DateTimeFormatter (thread-safe).
+     * Reemplaza SimpleDateFormat que NO es thread-safe.
+     */
+    private String formatDateForWeb(String date) {
         try {
-            formattedDate = new SimpleDateFormat(DATE_FORMAT).parse(date);
-            return new SimpleDateFormat(DATE_WEB_FORMAT).format(formattedDate);
-        } catch (ParseException e) {
-            logError("Error parsing jenkins date '" + date + "': " + e.getMessage());
+            LocalDateTime parsed = LocalDateTime.parse(date, DATE_FORMATTER);
+            return DATE_WEB_FORMATTER.format(parsed);
+        } catch (DateTimeParseException e) {
+            logError("Error parsing date '" + date + "': " + e.getMessage());
             return "";
         }
     }
 
+    /**
+     * Retorna una vista inmutable de los attachments.
+     */
     public List<String> getAttachments() {
-        return attachments;
+        return Collections.unmodifiableList(attachments);
     }
 
-    public void setAttachments(List<String> attachments) {
-        this.attachments = attachments;
+    /**
+     * Reemplaza todos los attachments (thread-safe).
+     */
+    public void setAttachments(List<String> newAttachments) {
+        attachments.clear();
+        if (newAttachments != null) {
+            attachments.addAll(newAttachments);
+        }
     }
 
     public void addAttachment(String filepath) {
