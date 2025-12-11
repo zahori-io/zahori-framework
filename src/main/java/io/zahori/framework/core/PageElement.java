@@ -28,22 +28,32 @@ import io.zahori.framework.robot.UtilsRobot;
 import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
 import io.zahori.framework.utils.WebdriverUtils;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Action;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.interactions.PointerInput;
 import org.openqa.selenium.interactions.Sequence;
+import org.openqa.selenium.interactions.WheelInput;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class PageElement {
+
+    private static final Logger LOG = LogManager.getLogger(PageElement.class);
 
     public static final String ERROR = "\nError: ";
     public static final String ON = "\" on ";
@@ -980,13 +990,273 @@ public class PageElement {
 
     public void printElementPosition() {
         Point point = getElementPosition();
-        System.out.println("Element position: x=" + point.x + " y=" + point.y);
-        System.out.println("Element position: x=" + driver.manage().window().getPosition().x + " y=" + driver.manage().window().getPosition().y);
+        LOG.info("Element position: x={} y={}", point.x, point.y);
+        LOG.info("Window position: x={} y={}", driver.manage().window().getPosition().x, driver.manage().window().getPosition().y);
     }
 
     public void printWindowPosition() {
         Point point = driver.manage().window().getPosition();
-        System.out.println("Window position: x=" + point.x + " y=" + point.y);
+        LOG.info("Window position: x={} y={}", point.x, point.y);
+    }
+
+    // ==================== Element Screenshot (Selenium 4) ====================
+
+    // ==================== Shadow DOM Support (Selenium 4) ====================
+
+    /**
+     * Obtiene el Shadow Root del elemento (Selenium 4).
+     * Permite acceder a elementos dentro de Web Components con Shadow DOM.
+     *
+     * Ejemplo:
+     * <pre>
+     * SearchContext shadow = hostElement.getShadowRoot();
+     * WebElement innerElement = shadow.findElement(By.cssSelector("input"));
+     * </pre>
+     *
+     * @return SearchContext del Shadow DOM
+     * @throws RuntimeException si el elemento no tiene Shadow Root
+     */
+    public SearchContext getShadowRoot() {
+        initWebElement();
+        try {
+            SearchContext shadowRoot = webElement.getShadowRoot();
+            testContext.logInfo("Shadow Root obtenido de: " + this);
+            return shadowRoot;
+        } catch (Exception e) {
+            throw new RuntimeException("El elemento no tiene Shadow Root: " + this + getErrorMessage(e));
+        }
+    }
+
+    /**
+     * Busca un elemento dentro del Shadow DOM de este elemento.
+     *
+     * @param by localizador del elemento dentro del Shadow DOM
+     * @return WebElement encontrado en el Shadow DOM
+     */
+    public WebElement findElementInShadow(By by) {
+        SearchContext shadowRoot = getShadowRoot();
+        try {
+            WebElement element = shadowRoot.findElement(by);
+            testContext.logInfo("Elemento encontrado en Shadow DOM: " + by);
+            return element;
+        } catch (Exception e) {
+            throw new RuntimeException("Elemento no encontrado en Shadow DOM: " + by + getErrorMessage(e));
+        }
+    }
+
+    /**
+     * Busca multiples elementos dentro del Shadow DOM de este elemento.
+     *
+     * @param by localizador de los elementos dentro del Shadow DOM
+     * @return Lista de WebElements encontrados en el Shadow DOM
+     */
+    public List<WebElement> findElementsInShadow(By by) {
+        SearchContext shadowRoot = getShadowRoot();
+        try {
+            List<WebElement> elements = shadowRoot.findElements(by);
+            testContext.logInfo("Encontrados " + elements.size() + " elementos en Shadow DOM: " + by);
+            return elements;
+        } catch (Exception e) {
+            throw new RuntimeException("Error buscando elementos en Shadow DOM: " + by + getErrorMessage(e));
+        }
+    }
+
+    /**
+     * Crea un PageElement a partir de un elemento en el Shadow DOM.
+     *
+     * @param name nombre del elemento
+     * @param by localizador dentro del Shadow DOM
+     * @return PageElement para el elemento del Shadow DOM
+     */
+    public PageElement getPageElementInShadow(String name, By by) {
+        WebElement shadowElement = findElementInShadow(by);
+        PageElement pageElement = new PageElement(this.page, name, Locator.css(by.toString()));
+        pageElement.webElement = shadowElement;
+        return pageElement;
+    }
+
+    // ==================== WheelInput Scroll (Selenium 4) ====================
+
+    /**
+     * Realiza scroll usando WheelInput de Selenium 4 (mas preciso que JavaScript).
+     *
+     * @param deltaX scroll horizontal (positivo = derecha)
+     * @param deltaY scroll vertical (positivo = abajo)
+     */
+    public void scrollWithWheel(int deltaX, int deltaY) {
+        initWebElement();
+        try {
+            Actions actions = new Actions(driver);
+            actions.scrollToElement(webElement)
+                   .scrollByAmount(deltaX, deltaY)
+                   .perform();
+            testContext.logInfo("Scroll con wheel deltaX=" + deltaX + ", deltaY=" + deltaY + " desde: " + this);
+        } catch (Exception e) {
+            throw new RuntimeException("Error en scroll con wheel: " + this + getErrorMessage(e));
+        }
+    }
+
+    /**
+     * Hace scroll hasta que este elemento este visible usando WheelInput (Selenium 4).
+     */
+    public void scrollToElementWithWheel() {
+        initWebElement();
+        try {
+            Actions actions = new Actions(driver);
+            actions.scrollToElement(webElement).perform();
+            testContext.logInfo("Scroll to element con wheel: " + this);
+        } catch (Exception e) {
+            throw new RuntimeException("Error en scrollToElement: " + this + getErrorMessage(e));
+        }
+    }
+
+    /**
+     * Scroll hacia abajo desde este elemento usando WheelInput.
+     *
+     * @param pixels cantidad de pixels a scrollear
+     */
+    public void scrollDownWithWheel(int pixels) {
+        scrollWithWheel(0, pixels);
+    }
+
+    /**
+     * Scroll hacia arriba desde este elemento usando WheelInput.
+     *
+     * @param pixels cantidad de pixels a scrollear
+     */
+    public void scrollUpWithWheel(int pixels) {
+        scrollWithWheel(0, -pixels);
+    }
+
+    /**
+     * Scroll hacia la derecha desde este elemento usando WheelInput.
+     *
+     * @param pixels cantidad de pixels a scrollear
+     */
+    public void scrollRightWithWheel(int pixels) {
+        scrollWithWheel(pixels, 0);
+    }
+
+    /**
+     * Scroll hacia la izquierda desde este elemento usando WheelInput.
+     *
+     * @param pixels cantidad de pixels a scrollear
+     */
+    public void scrollLeftWithWheel(int pixels) {
+        scrollWithWheel(-pixels, 0);
+    }
+
+    // ==================== getRect() Optimization (Selenium 4) ====================
+
+    /**
+     * Obtiene Rectangle del elemento (posicion + tamano en una sola llamada).
+     * Mas eficiente que llamar getLocation() y getSize() por separado.
+     *
+     * @return Rectangle con x, y, width, height
+     */
+    public Rectangle getRect() {
+        initWebElement();
+        try {
+            Rectangle rect = webElement.getRect();
+            testContext.logInfo("Rect obtenido de " + this + ": x=" + rect.getX() + ", y=" + rect.getY() +
+                    ", w=" + rect.getWidth() + ", h=" + rect.getHeight());
+            return rect;
+        } catch (Exception e) {
+            throw new RuntimeException("Error obteniendo rect de: " + this + getErrorMessage(e));
+        }
+    }
+
+    /**
+     * Obtiene la posicion del elemento usando getRect() (optimizado Selenium 4).
+     *
+     * @return Point con coordenadas x, y
+     */
+    public Point getPosition() {
+        Rectangle rect = getRect();
+        return new Point(rect.getX(), rect.getY());
+    }
+
+    /**
+     * Obtiene el tamano del elemento usando getRect() (optimizado Selenium 4).
+     *
+     * @return Dimension con width, height
+     */
+    public Dimension getSize() {
+        Rectangle rect = getRect();
+        return new Dimension(rect.getWidth(), rect.getHeight());
+    }
+
+    /**
+     * Obtiene el centro del elemento calculado desde getRect().
+     *
+     * @return Point con coordenadas del centro
+     */
+    public Point getCenter() {
+        Rectangle rect = getRect();
+        int centerX = rect.getX() + (rect.getWidth() / 2);
+        int centerY = rect.getY() + (rect.getHeight() / 2);
+        return new Point(centerX, centerY);
+    }
+
+    // ==================== Element Screenshot (Selenium 4) ====================
+
+    /**
+     * Captura screenshot del elemento especifico (Selenium 4).
+     * A diferencia del screenshot de pagina completa, este captura solo el elemento.
+     *
+     * @return bytes del screenshot en formato PNG
+     */
+    public byte[] takeScreenshot() {
+        initWebElement();
+        try {
+            byte[] screenshot = webElement.getScreenshotAs(OutputType.BYTES);
+            testContext.logInfo("Screenshot capturado de elemento: " + this);
+            return screenshot;
+        } catch (Exception e) {
+            throw new RuntimeException("No se pudo capturar screenshot de: " + this + getErrorMessage(e));
+        }
+    }
+
+    /**
+     * Captura screenshot del elemento y lo guarda en un archivo (Selenium 4).
+     *
+     * @param filePath ruta donde guardar el archivo (debe terminar en .png)
+     * @return File con el screenshot guardado
+     */
+    public File takeScreenshot(String filePath) {
+        initWebElement();
+        try {
+            File screenshotFile = webElement.getScreenshotAs(OutputType.FILE);
+            Path destination = Path.of(filePath);
+
+            // Crear directorios padres si no existen
+            if (destination.getParent() != null) {
+                Files.createDirectories(destination.getParent());
+            }
+
+            Files.copy(screenshotFile.toPath(), destination, StandardCopyOption.REPLACE_EXISTING);
+            testContext.logInfo("Screenshot guardado en: " + filePath + " de elemento: " + this);
+            return destination.toFile();
+        } catch (IOException e) {
+            throw new RuntimeException("No se pudo guardar screenshot en: " + filePath + getErrorMessage(e));
+        }
+    }
+
+    /**
+     * Captura screenshot del elemento como Base64 (Selenium 4).
+     * Util para embeddings en reportes HTML.
+     *
+     * @return String Base64 del screenshot PNG
+     */
+    public String takeScreenshotAsBase64() {
+        initWebElement();
+        try {
+            String base64 = webElement.getScreenshotAs(OutputType.BASE64);
+            testContext.logInfo("Screenshot Base64 capturado de elemento: " + this);
+            return base64;
+        } catch (Exception e) {
+            throw new RuntimeException("No se pudo capturar screenshot Base64 de: " + this + getErrorMessage(e));
+        }
     }
 
     private String getErrorMessage(Exception exception) {
