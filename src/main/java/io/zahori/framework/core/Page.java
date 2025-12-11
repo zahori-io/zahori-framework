@@ -36,6 +36,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.PointerInput;
 import org.openqa.selenium.interactions.Sequence;
@@ -43,9 +45,10 @@ import org.openqa.selenium.interactions.Sequence;
 public class Page implements Serializable {
 
     private static final long serialVersionUID = 7043344065990287228L;
+    private static final Logger LOG = LogManager.getLogger(Page.class);
 
     public TestContext testContext;
-    private WebDriver driver;
+    private transient WebDriver driver;
     public String name;
     public String url;
 
@@ -313,6 +316,108 @@ public class Page implements Serializable {
             throw new RuntimeException("Unable to swipe: " + this + getErrorMessage(e));
         }
     }
+
+    // ==================== New Window API (Selenium 4) ====================
+
+    /**
+     * Abre una nueva ventana del navegador (Selenium 4).
+     * El foco se cambia automaticamente a la nueva ventana.
+     *
+     * @return handle de la nueva ventana
+     */
+    public String openNewWindow() {
+        pageHandleId = this.driver.getWindowHandle();
+        this.driver.switchTo().newWindow(WindowType.WINDOW);
+        String newWindowHandle = this.driver.getWindowHandle();
+        LOG.info("Nueva ventana abierta: {}", newWindowHandle);
+        testContext.logInfo("Nueva ventana abierta");
+        return newWindowHandle;
+    }
+
+    /**
+     * Abre una nueva pestana del navegador (Selenium 4).
+     * El foco se cambia automaticamente a la nueva pestana.
+     *
+     * @return handle de la nueva pestana
+     */
+    public String openNewTab() {
+        pageHandleId = this.driver.getWindowHandle();
+        this.driver.switchTo().newWindow(WindowType.TAB);
+        String newTabHandle = this.driver.getWindowHandle();
+        LOG.info("Nueva pestana abierta: {}", newTabHandle);
+        testContext.logInfo("Nueva pestana abierta");
+        return newTabHandle;
+    }
+
+    /**
+     * Cierra la ventana/pestana actual y vuelve a la ventana principal.
+     */
+    public void closeCurrentWindow() {
+        String currentHandle = this.driver.getWindowHandle();
+        this.driver.close();
+        LOG.info("Ventana cerrada: {}", currentHandle);
+
+        // Volver a la ventana principal si existe
+        if (pageHandleId != null && !pageHandleId.equals(currentHandle)) {
+            this.driver.switchTo().window(pageHandleId);
+            testContext.logInfo("Volviendo a ventana principal");
+        } else {
+            // Si no hay ventana principal, cambiar a la primera disponible
+            Set<String> handles = this.driver.getWindowHandles();
+            if (!handles.isEmpty()) {
+                this.driver.switchTo().window(handles.iterator().next());
+            }
+        }
+    }
+
+    /**
+     * Obtiene el numero de ventanas/pestanas abiertas.
+     *
+     * @return numero de handles de ventana
+     */
+    public int getWindowCount() {
+        return this.driver.getWindowHandles().size();
+    }
+
+    /**
+     * Cambia a una ventana por su indice (0-based).
+     *
+     * @param index indice de la ventana (0 = primera)
+     */
+    public void switchToWindowByIndex(int index) {
+        Set<String> handles = this.driver.getWindowHandles();
+        if (index >= handles.size()) {
+            throw new RuntimeException("Indice de ventana fuera de rango: " + index + " (total: " + handles.size() + ")");
+        }
+        String targetHandle = handles.toArray(new String[0])[index];
+        this.driver.switchTo().window(targetHandle);
+        LOG.info("Cambiado a ventana indice {}: {}", index, targetHandle);
+    }
+
+    // ==================== Full Page Screenshot (Selenium 4) ====================
+
+    /**
+     * Captura screenshot de la pagina completa incluyendo scroll (Selenium 4).
+     * Solo funciona en Firefox con geckodriver.
+     *
+     * @return bytes del screenshot en formato PNG
+     */
+    public byte[] takeFullPageScreenshot() {
+        try {
+            if (driver instanceof TakesScreenshot) {
+                // Para Firefox, usar metodo especifico de full page
+                if (driver.getClass().getSimpleName().contains("Firefox")) {
+                    return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+                }
+            }
+            // Fallback: screenshot normal
+            return ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+        } catch (Exception e) {
+            throw new RuntimeException("No se pudo capturar screenshot de pagina completa" + getErrorMessage(e));
+        }
+    }
+
+    // ==================== Private Methods ====================
 
     private String getErrorMessage(Exception exception) {
         return ERROR + removeSeleniumBuildInfo(removeSeleniumSessionInfo(exception.getMessage()));
