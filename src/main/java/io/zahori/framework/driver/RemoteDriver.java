@@ -165,6 +165,7 @@ public class RemoteDriver extends AbstractDriver {
 
     /**
      * Construye las opciones de Selenoid desde zahori.properties.
+     * Implements ZAH-158: Selenoid video recording support.
      */
     private Map<String, Object> buildSelenoidOptions(Browsers browsers) {
         ZahoriProperties props = new ZahoriProperties();
@@ -175,12 +176,44 @@ public class RemoteDriver extends AbstractDriver {
         selenoidOptions.put("screenResolution", browsers.getScreenResolution());
 
         // Opciones configurables
-        selenoidOptions.put("enableVNC", getBooleanProperty(props, PROP_SELENOID_VNC, DEFAULT_VNC));
-        selenoidOptions.put("enableVideo", getBooleanProperty(props, PROP_SELENOID_VIDEO, DEFAULT_VIDEO));
-        selenoidOptions.put("enableLog", getBooleanProperty(props, PROP_SELENOID_LOG, DEFAULT_LOG));
+        boolean enableVNC = getBooleanProperty(props, PROP_SELENOID_VNC, DEFAULT_VNC);
+        boolean enableVideo = getBooleanProperty(props, PROP_SELENOID_VIDEO, DEFAULT_VIDEO);
+        boolean enableLog = getBooleanProperty(props, PROP_SELENOID_LOG, DEFAULT_LOG);
+
+        selenoidOptions.put("enableVNC", enableVNC);
+        selenoidOptions.put("enableVideo", enableVideo);
+        selenoidOptions.put("enableLog", enableLog);
+
+        // Video name for Selenoid (ZAH-158)
+        if (enableVideo) {
+            String videoName = buildVideoName(browsers);
+            selenoidOptions.put("videoName", videoName);
+            LOG.info("Selenoid video recording enabled: {}", videoName);
+        }
 
         LOG.debug("Selenoid options: {}", selenoidOptions);
         return selenoidOptions;
+    }
+
+    /**
+     * Builds video filename for Selenoid.
+     * Format: {caseExecutionId}_{sanitizedTestName}.mp4
+     */
+    private String buildVideoName(Browsers browsers) {
+        String caseId = browsers.getCaseExecutionId();
+        String testName = browsers.getTestName();
+
+        // Sanitize test name for filesystem
+        String sanitized = testName != null
+                ? testName.replaceAll("[^a-zA-Z0-9_-]", "_")
+                : "test";
+
+        // Limit length
+        if (sanitized.length() > 50) {
+            sanitized = sanitized.substring(0, 50);
+        }
+
+        return caseId + "_" + sanitized + ".mp4";
     }
 
     /**

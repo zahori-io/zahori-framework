@@ -27,7 +27,10 @@ import io.zahori.framework.files.log.LogFile;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import io.zahori.framework.i18n.Messages;
 import io.zahori.framework.utils.video.AndroidScreenRecorder;
+import io.zahori.framework.utils.video.CDPScreenRecorder;
 import io.zahori.framework.utils.video.EnterpriseScreenRecorder;
+import io.zahori.framework.utils.video.IOSScreenRecorder;
+import io.zahori.framework.utils.video.SelenoidVideoRecorder;
 import io.zahori.framework.utils.video.VideoRecorder;
 import io.zahori.model.Status;
 import io.zahori.model.Step;
@@ -165,16 +168,13 @@ public class Evidences {
             }
         }
 
-        // Video
-        videoFileName = evidenceFileNamePattern + ".avi";
+        // Video - Strategy selection based on platform and remote mode
+        // For remote=YES (Selenoid): video is recorded by Selenoid server (ZAH-158)
+        // For remote=NO (local): use CDP for Chrome/Edge, Monte for others
+        videoFileName = evidenceFileNamePattern + (remoteBrowser ? ".mp4" : ".avi");
         if (zahoriProperties.isVideoGenerationEnabledWhenPassed() || zahoriProperties.isVideoGenerationEnabledWhenFailed()) {
             try {
-                if (StringUtils.equalsIgnoreCase("Android", platform)) {
-                    video = new AndroidScreenRecorder(path, Integer.valueOf(zahoriProperties.getExecutionTimeout()));
-                } else {
-                    video = new VideoRecorder(new File(path));
-                }
-
+                video = createVideoRecorder(platform, browser, remoteBrowser, path, zahoriProperties);
             } catch (Exception e) {
                 throw new RuntimeException("Error creating new video instance: " + e.getMessage());
             }
@@ -649,6 +649,82 @@ public class Evidences {
         }
 
         return found;
+    }
+
+    // ==================== Video Recorder Factory ====================
+
+    /**
+     * Creates the appropriate video recorder based on execution context.
+     *
+     * <h2>Strategy (ZAH-158)</h2>
+     * <ul>
+     *   <li>Android: AndroidScreenRecorder (ADB screenrecord)</li>
+     *   <li>Remote/Selenoid: SelenoidVideoRecorder (server-side recording)</li>
+     *   <li>Local Chrome/Edge: CDPScreenRecorder (CDP Page.captureScreenshot)</li>
+     *   <li>Local Firefox/Safari: VideoRecorder (Monte Media fallback)</li>
+     * </ul>
+     *
+     * @param platform execution platform (Android, iOS, null for desktop)
+     * @param browser browser name (chrome, firefox, edge, safari)
+     * @param remoteBrowser true if running on remote grid (Selenoid)
+     * @param evidencesPath path to save video
+     * @param props zahori properties
+     * @return appropriate EnterpriseScreenRecorder implementation
+     */
+    private EnterpriseScreenRecorder createVideoRecorder(
+            String platform,
+            String browser,
+            boolean remoteBrowser,
+            String evidencesPath,
+            ZahoriProperties props) throws Exception {
+
+        // 1. Android: Use ADB screenrecord
+        if (StringUtils.equalsIgnoreCase("Android", platform)) {
+            LOG.info("Video recorder: AndroidScreenRecorder (ADB)");
+            return new AndroidScreenRecorder(evidencesPath, props.getExecutionTimeout());
+        }
+
+        // 2. iOS: Use Appium XCUITest screen recording
+        // Note: IOSScreenRecorder needs IOSDriver, will be set later when driver is available
+        if (StringUtils.equalsIgnoreCase("iOS", platform)) {
+            LOG.info("Video recorder: IOSScreenRecorder (Appium XCUITest)");
+            // Will be created when driver is available
+            return null;
+        }
+
+        // 4. Remote (Selenoid/Grid): Video recorded server-side
+        // Note: For Selenoid, video is created automatically when enableVideo=true
+        // SelenoidVideoRecorder handles download after session ends
+        if (remoteBrowser) {
+            LOG.info("Video recorder: SelenoidVideoRecorder (server-side, ZAH-158)");
+            // SelenoidVideoRecorder will be initialized with sessionId later
+            // For now, return null - video download happens in stopVideo()
+            return null;
+        }
+
+        // 5. Local Chrome/Edge: Use CDP (headless compatible)
+        if (isCDPCompatibleBrowser(browser)) {
+            LOG.info("Video recorder: CDPScreenRecorder (CDP Page.captureScreenshot)");
+            // Note: CDPScreenRecorder needs WebDriver, will be set later
+            return null; // Will be created when driver is available
+        }
+
+        // 6. Fallback: Monte Media (Firefox, Safari, others)
+        LOG.info("Video recorder: VideoRecorder (Monte Media fallback)");
+        return new VideoRecorder(new File(evidencesPath));
+    }
+
+    /**
+     * Checks if browser supports CDP (Chrome DevTools Protocol).
+     */
+    private boolean isCDPCompatibleBrowser(String browser) {
+        if (browser == null) {
+            return false;
+        }
+        String lowerBrowser = browser.toLowerCase();
+        return lowerBrowser.contains("chrome")
+                || lowerBrowser.contains("chromium")
+                || lowerBrowser.contains("edge");
     }
 
 }
