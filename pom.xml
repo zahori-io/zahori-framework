@@ -42,23 +42,34 @@
 
         <skip.integration.tests>false</skip.integration.tests>
         <skip.unit.tests>true</skip.unit.tests>
-        
-        <!-- Selenium-Appium compatibility matrix: https://github.com/appium/java-client#add-appium-java-client-to-your-test-framework -->
-        <selenium.version>4.36.0</selenium.version>
-        <appium.version>10.0.0</appium.version>
-        
-        <poi.version>5.2.5</poi.version>
-        <jackson.version>2.16.0</jackson.version>
-        <log4j.version>2.22.0</log4j.version>
 
+        <!-- Selenium-Appium compatibility matrix: https://github.com/appium/java-client#add-appium-java-client-to-your-test-framework -->
+        <selenium.version>4.38.0</selenium.version>
+        <appium.version>10.0.0</appium.version>
+
+        <!-- Library versions - 2025 Security Patched -->
+        <poi.version>5.3.0</poi.version>
+        <jackson.version>2.18.2</jackson.version>
+        <log4j.version>2.24.3</log4j.version>
+        <guava.version>33.4.0-jre</guava.version>
+        <byte-buddy.version>1.15.10</byte-buddy.version>
+        <opentelemetry.version>1.45.0</opentelemetry.version>
+        <httpclient5.version>5.4.1</httpclient5.version>
+        <httpcore5.version>5.3.2</httpcore5.version>
+        <netty.version>4.1.118.Final</netty.version>
+        <bouncycastle.version>1.79</bouncycastle.version>
+        <commons-compress.version>1.27.1</commons-compress.version>
+
+        <!-- SonarCloud -->
         <sonar.projectKey>zahori-io_zahori-framework</sonar.projectKey>
         <sonar.organization>zahoriio</sonar.organization>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
 
-        <asm.version>9.6</asm.version>
+        <asm.version>9.7.1</asm.version>
 
-        <spring-boot-version>3.0.6</spring-boot-version>
-        <spring-cloud.version>2022.0.2</spring-cloud.version>
+        <!-- Spring ecosystem - 2025 Security Patched -->
+        <spring-boot-version>3.4.1</spring-boot-version>
+        <spring-cloud.version>2024.0.0</spring-cloud.version>
 
     </properties>
 
@@ -71,19 +82,21 @@
 
     <build>
         <plugins>
+            <!-- Maven Core Plugins - 2025 Latest -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
-                <version>3.3.2</version>
+                <version>3.4.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>3.5.2</version>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
+                <version>3.13.0</version>
                 <inherited>true</inherited>
                 <configuration>
                     <release>${java.version}</release>
@@ -99,20 +112,55 @@
                 </configuration>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>3.1.3</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.1.3</version>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.16.2</version>
+                <version>2.18.0</version>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.1.1</version>
                 <configuration>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
+                </configuration>
+            </plugin>
+            <!-- OWASP Dependency-Check - SCA Security Scanning -->
+            <plugin>
+                <groupId>org.owasp</groupId>
+                <artifactId>dependency-check-maven</artifactId>
+                <version>12.1.0</version>
+                <configuration>
+                    <failBuildOnCVSS>7</failBuildOnCVSS>
+                    <suppressionFile>owasp-suppressions.xml</suppressionFile>
+                    <formats>
+                        <format>HTML</format>
+                        <format>JSON</format>
+                    </formats>
+                    <nvdApiDelay>4000</nvdApiDelay>
+                    <nvdMaxRetryCount>10</nvdMaxRetryCount>
                 </configuration>
             </plugin>
         </plugins>
@@ -157,10 +205,50 @@
                 <version>${selenium.version}</version>
             </dependency>
             
+            <!-- selenium-opera-driver REMOVED - Opera browser EOL -->
+
+            <!-- Alinear selenium-ie-driver con selenium.version -->
             <dependency>
                 <groupId>org.seleniumhq.selenium</groupId>
-                <artifactId>selenium-opera-driver</artifactId>
-                <version>4.4.0</version>
+                <artifactId>selenium-ie-driver</artifactId>
+                <version>${selenium.version}</version>
+            </dependency>
+
+            <!-- Convergence fix: selenium-manager and selenium-os -->
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-manager</artifactId>
+                <version>${selenium.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-os</artifactId>
+                <version>${selenium.version}</version>
+            </dependency>
+
+            <!-- Convergence fix: Guava transitive deps (docx4j vs guava conflict) -->
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>checker-qual</artifactId>
+                <version>3.43.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>2.36.0</version>
+            </dependency>
+
+            <!-- Convergence fix: httpclient 4.x (testlink, consul-api, spring-cloud) -->
+            <dependency>
+                <groupId>org.apache.httpcomponents</groupId>
+                <artifactId>httpclient</artifactId>
+                <version>4.5.14</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             
             <dependency>
@@ -187,11 +275,7 @@
                 <version>${selenium.version}</version>
             </dependency>
         
-            <dependency>
-                <groupId>io.github.bonigarcia</groupId>
-                <artifactId>webdrivermanager</artifactId>
-                <version>6.3.3</version>
-            </dependency>
+            <!-- WebDriverManager REMOVED - Selenium Manager nativo (4.6+) gestiona drivers automaticamente -->
 
             <dependency>
                 <groupId>io.appium</groupId>
@@ -202,15 +286,59 @@
             <dependency>
                 <groupId>org.apache.httpcomponents.client5</groupId>
                 <artifactId>httpclient5</artifactId>
-                <version>5.5.1</version>
+                <version>${httpclient5.version}</version>
             </dependency>
 
             <dependency>
                 <groupId>org.apache.httpcomponents.core5</groupId>
                 <artifactId>httpcore5</artifactId>
-                <version>5.3.6</version>
+                <version>${httpcore5.version}</version>
             </dependency>
-            
+
+            <!-- Convergence fix: byte-buddy -->
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${byte-buddy.version}</version>
+            </dependency>
+
+            <!-- Convergence fix: OpenTelemetry -->
+            <dependency>
+                <groupId>io.opentelemetry</groupId>
+                <artifactId>opentelemetry-bom</artifactId>
+                <version>${opentelemetry.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Security fix: Netty (CVE-2023-44487, CVE-2024-47535, etc.) -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Security fix: BouncyCastle (CVE-2020-15522, CVE-2023-33202) -->
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk18on</artifactId>
+                <version>${bouncycastle.version}</version>
+            </dependency>
+
+            <!-- Security fix: commons-compress (CVE-2024-25710, CVE-2024-26308) -->
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${commons-compress.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>com.github.stephenc.monte</groupId>
                 <artifactId>monte-screen-recorder</artifactId>
@@ -270,6 +398,12 @@
                 <groupId>br.eti.kinoshita</groupId>
                 <artifactId>testlink-java-api</artifactId>
                 <version>1.9.16-1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -282,6 +416,25 @@
                 <groupId>org.apache.pdfbox</groupId>
                 <artifactId>pdfbox</artifactId>
                 <version>3.0.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- Convergence fix: fontbox version aligned with pdfbox -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>fontbox</artifactId>
+                <version>3.0.1</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>
@@ -416,16 +569,13 @@
                 <artifactId>xmlgraphics-commons</artifactId>
                 <version>2.9</version>
             </dependency>
+            <!-- Security: CVE-2025-48924 fixed in 3.17+ -->
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-lang3</artifactId>
-                <version>3.14.0</version>
+                <version>3.17.0</version>
             </dependency>
-            <dependency>
-                <groupId>org.apache.commons</groupId>
-                <artifactId>commons-compress</artifactId>
-                <version>1.25.0</version>
-            </dependency>
+            <!-- commons-compress managed in security section with ${commons-compress.version} -->
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>
@@ -468,10 +618,18 @@
                 <version>${log4j.version}</version>
             </dependency>-->
 
+            <!-- commons-logging: usar jcl-over-slf4j en su lugar para bridge a Log4j2 -->
             <dependency>
                 <groupId>commons-logging</groupId>
                 <artifactId>commons-logging</artifactId>
                 <version>1.3.0</version>
+            </dependency>
+
+            <!-- SLF4J bridge for commons-logging -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>jcl-over-slf4j</artifactId>
+                <version>2.0.16</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
@@ -506,7 +664,7 @@
             <dependency>
                 <groupId>com.google.guava</groupId>
                 <artifactId>guava</artifactId>
-                <version>32.1.3-jre</version>
+                <version>${guava.version}</version>
             </dependency>
             <dependency>
                 <groupId>commons-codec</groupId>
@@ -567,6 +725,35 @@
                 <groupId>com.sikulix</groupId>
                 <artifactId>sikulix2tigervnc</artifactId>
                 <version>1.1.4</version>
+                <exclusions>
+                    <!-- Exclude vulnerable BouncyCastle 1.58 -->
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcprov-jdk15on</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.bouncycastle</groupId>
+                        <artifactId>bcpkix-jdk15on</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- Force secure BouncyCastle versions (replaces jdk15on 1.58) -->
+            <!-- jdk15on series ended at 1.70, use 1.70 as it's the last CVE-free version for that series -->
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcprov-jdk15on</artifactId>
+                <version>1.70</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcpkix-jdk15on</artifactId>
+                <version>1.70</version>
+            </dependency>
+            <dependency>
+                <groupId>org.bouncycastle</groupId>
+                <artifactId>bcutil-jdk15on</artifactId>
+                <version>1.70</version>
             </dependency>
 
             <dependency>
@@ -629,10 +816,7 @@
             <artifactId>selenium-firefox-driver</artifactId>
         </dependency>
             
-        <dependency>
-            <groupId>org.seleniumhq.selenium</groupId>
-            <artifactId>selenium-opera-driver</artifactId>
-        </dependency>
+        <!-- selenium-opera-driver REMOVED - Opera browser EOL -->
             
         <dependency>
             <groupId>org.seleniumhq.selenium</groupId>
@@ -654,10 +838,7 @@
             <artifactId>selenium-support</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>io.github.bonigarcia</groupId>
-            <artifactId>webdrivermanager</artifactId>
-        </dependency>
+        <!-- WebDriverManager REMOVED - Using native Selenium Manager (4.6+) -->
 
         <dependency>
             <groupId>io.appium</groupId>
@@ -1081,7 +1262,7 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-dependency-plugin</artifactId>
-                        <version>3.6.1</version>
+                        <version>3.8.1</version>
                         <executions>
                             <execution>
                                 <id>analyze</id>
@@ -1092,6 +1273,11 @@
                                     <failOnWarning>false</failOnWarning>
                                     <outputXML>true</outputXML>
                                     <ignoreNonCompile>true</ignoreNonCompile>
+                                    <ignoredUnusedDeclaredDependencies>
+                                        <!-- Drivers JDBC, reflexion, runtime -->
+                                        <ignoredUnusedDeclaredDependency>org.springframework.boot:spring-boot-devtools</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.springframework.boot:spring-boot-starter-log4j2</ignoredUnusedDeclaredDependency>
+                                    </ignoredUnusedDeclaredDependencies>
                                 </configuration>
                             </execution>
                         </executions>
@@ -1099,21 +1285,52 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-enforcer-plugin</artifactId>
-                        <version>3.4.1</version>
+                        <version>3.5.0</version>
                         <executions>
                             <execution>
-                                <id>enforce</id>
-                                <configuration>
-                                    <rules>
-                                        <DependencyConvergence />
-                                        <requireMavenVersion>
-                                            <version>3.6.3</version>
-                                        </requireMavenVersion>
-                                    </rules>
-                                </configuration>
+                                <id>enforce-governance</id>
+                                <phase>validate</phase>
                                 <goals>
                                     <goal>enforce</goal>
                                 </goals>
+                                <configuration>
+                                    <rules>
+                                        <!-- Convergencia: UNA version por dependencia -->
+                                        <dependencyConvergence/>
+
+                                        <!-- Prohibir duplicados en POM -->
+                                        <banDuplicatePomDependencyVersions/>
+
+                                        <!-- Version minima Maven -->
+                                        <requireMavenVersion>
+                                            <version>3.9.0</version>
+                                            <message>Maven 3.9+ required for Build Cache support</message>
+                                        </requireMavenVersion>
+
+                                        <!-- Java 17 obligatorio -->
+                                        <requireJavaVersion>
+                                            <version>17</version>
+                                            <message>Java 17 LTS required</message>
+                                        </requireJavaVersion>
+
+                                        <!-- Dependencias prohibidas (seguridad) -->
+                                        <bannedDependencies>
+                                            <searchTransitive>true</searchTransitive>
+                                            <excludes>
+                                                <!-- Logging legacy/vulnerable -->
+                                                <exclude>commons-logging:commons-logging</exclude>
+                                                <exclude>log4j:log4j</exclude>
+                                                <exclude>org.apache.logging.log4j:log4j-core:[,2.17.0)</exclude>
+                                                <!-- JUnit 4 legacy en scope test -->
+                                                <!-- <exclude>junit:junit</exclude> -->
+                                                <!-- Commons-collections vulnerable -->
+                                                <exclude>commons-collections:commons-collections:[,3.2.2)</exclude>
+                                            </excludes>
+                                            <message>Banned dependency detected - check security/compatibility</message>
+                                        </bannedDependencies>
+                                    </rules>
+                                    <fail>true</fail>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
