@@ -12,25 +12,27 @@ package io.zahori.framework.core;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 
+import java.util.HashMap;
+import java.util.Map;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxOptions;
-import org.openqa.selenium.remote.DesiredCapabilities;
 
 public class HostPage extends Page {
 
     private static final long serialVersionUID = 5112565167634493112L;
+    private static final int MAX_FUNCTION_KEY = 12;
 
     private HostPageElement connectionInput;
     private HostPageElement connectButton;
@@ -39,18 +41,8 @@ public class HostPage extends Page {
     private String emulatorURL;
     protected String logActions;
 
-    private HostPageElement f1Button;
-    private HostPageElement f2Button;
-    private HostPageElement f3Button;
-    private HostPageElement f4Button;
-    private HostPageElement f5Button;
-    private HostPageElement f6Button;
-    private HostPageElement f7Button;
-    private HostPageElement f8Button;
-    private HostPageElement f9Button;
-    private HostPageElement f10Button;
-    private HostPageElement f11Button;
-    private HostPageElement f12Button;
+    // Function buttons stored in Map instead of 12 individual fields
+    private final Map<Integer, HostPageElement> functionButtons = new HashMap<>();
 
     protected HostPage(TestContext context) {
         super(context);
@@ -92,67 +84,40 @@ public class HostPage extends Page {
         return this.logActions;
     }
 
-    protected void f1Button() {
-        fxButton(this.f1Button, "F1");
+    /**
+     * Press a function key (F1-F12).
+     *
+     * @param functionKey the function key number (1-12)
+     * @throws IllegalArgumentException if functionKey is not between 1 and 12
+     */
+    protected void pressFunctionKey(int functionKey) {
+        if (functionKey < 1 || functionKey > MAX_FUNCTION_KEY) {
+            throw new IllegalArgumentException(
+                "Invalid function key: " + functionKey + ". Must be between 1 and " + MAX_FUNCTION_KEY);
+        }
+        fxButton(functionButtons.get(functionKey), "F" + functionKey);
     }
 
-    protected void f2Button() {
-        fxButton(this.f2Button, "F2");
-    }
-
-    protected void f3Button() {
-        fxButton(this.f3Button, "F3");
-    }
-
-    protected void f4Button() {
-        fxButton(this.f4Button, "F4");
-    }
-
-    protected void f5Button() {
-        fxButton(this.f5Button, "F5");
-    }
-
-    protected void f6Button() {
-        fxButton(this.f6Button, "F6");
-    }
-
-    protected void f7Button() {
-        fxButton(this.f7Button, "F7");
-    }
-
-    protected void f8Button() {
-        fxButton(this.f8Button, "F8");
-    }
-
-    protected void f9Button() {
-        fxButton(this.f9Button, "F9");
-    }
-
-    protected void f10Button() {
-        fxButton(this.f10Button, "F10");
-    }
-
-    protected void f11Button() {
-        fxButton(this.f11Button, "F11");
-    }
-
-    protected void f12Button() {
-        fxButton(this.f12Button, "F12");
-    }
+    // Backward compatibility methods - delegate to pressFunctionKey
+    protected void f1Button() { pressFunctionKey(1); }
+    protected void f2Button() { pressFunctionKey(2); }
+    protected void f3Button() { pressFunctionKey(3); }
+    protected void f4Button() { pressFunctionKey(4); }
+    protected void f5Button() { pressFunctionKey(5); }
+    protected void f6Button() { pressFunctionKey(6); }
+    protected void f7Button() { pressFunctionKey(7); }
+    protected void f8Button() { pressFunctionKey(8); }
+    protected void f9Button() { pressFunctionKey(9); }
+    protected void f10Button() { pressFunctionKey(10); }
+    protected void f11Button() { pressFunctionKey(11); }
+    protected void f12Button() { pressFunctionKey(12); }
 
     private void initFButtons() {
-        this.f1Button = new HostPageElement(this, "f1Button", Locator.name("pf1"));
-        this.f2Button = new HostPageElement(this, "f2Button", Locator.name("pf2"));
-        this.f3Button = new HostPageElement(this, "f3Button", Locator.name("pf3"));
-        this.f4Button = new HostPageElement(this, "f45Button", Locator.name("pf4"));
-        this.f5Button = new HostPageElement(this, "f5Button", Locator.name("pf5"));
-        this.f6Button = new HostPageElement(this, "f6Button", Locator.name("pf6"));
-        this.f7Button = new HostPageElement(this, "f7Button", Locator.name("pf7"));
-        this.f8Button = new HostPageElement(this, "f8Button", Locator.name("pf8"));
-        this.f9Button = new HostPageElement(this, "f9Button", Locator.name("pf9"));
-        this.f10Button = new HostPageElement(this, "f10Button", Locator.name("pf10"));
-        this.f11Button = new HostPageElement(this, "f11Button", Locator.name("pf11"));
-        this.f12Button = new HostPageElement(this, "f12Button", Locator.name("pf12"));
+        functionButtons.clear();
+        for (int i = 1; i <= MAX_FUNCTION_KEY; i++) {
+            functionButtons.put(i,
+                new HostPageElement(this, "f" + i + "Button", Locator.name("pf" + i)));
+        }
     }
 
     private void initHostBrowser() {
@@ -183,5 +148,4 @@ public class HostPage extends Page {
         button.click();
         this.logActions = this.logActions + txtButton + " function key has been pressed.";
     }
-
 }

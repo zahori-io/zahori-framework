@@ -31,7 +31,6 @@ import io.zahori.framework.utils.Pause;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,11 +40,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Proxy;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.remote.CapabilityType;
-import org.openqa.selenium.remote.DesiredCapabilities;
-import org.openqa.selenium.remote.RemoteWebDriver;
 
 public class Browser {
 
@@ -66,9 +61,7 @@ public class Browser {
     public Browser(TestContext testContext) {
         this.testContext = testContext;
         createDriver();
-        if (driver instanceof AndroidDriver || driver instanceof IOSDriver) {
-
-        } else {
+        if (!(driver instanceof AndroidDriver || driver instanceof IOSDriver)) {
             mainDriverHandle = driver.getWindowHandle();
         }
         activeDriverHandle = mainDriverHandle;
@@ -136,26 +129,28 @@ public class Browser {
         return url;
     }
 
+    /**
+     * Carga una página usando un proxy HTTP.
+     * El proxy se configura al crear el driver (no después de un timeout).
+     *
+     * @param url URL a cargar
+     * @param urlProxy URL del proxy (host:port)
+     * @param user Usuario del proxy
+     * @param password Contraseña del proxy
+     */
     public void loadPageWithProxy(String url, String urlProxy, String user, String password) {
-        createDriver();
+        // Configurar proxy antes de crear el driver
+        String stringProxy = user + ":" + password + "@" + urlProxy;
+        Proxy proxy = new Proxy();
+        proxy.setHttpProxy(stringProxy);
 
-        try {
-            driver.get(url);
-        } catch (TimeoutException e) {
-            String stringProxy = user + ":" + password + "@" + urlProxy;
-            Proxy proxy = new Proxy();
-            proxy.setHttpProxy(stringProxy);
-            DesiredCapabilities caps = (DesiredCapabilities) ((RemoteWebDriver) driver).getCapabilities();
-            caps.setCapability(CapabilityType.PROXY, proxy);
-            try {
-                driver = wbs.getDriver(caps);
-            } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | InstantiationException e1) {
-                LOG.error("Error al cargar el driver: " + e1.getMessage());
-            }
-        } finally {
-            driver.get(url);
-        }
+        // Crear driver con proxy configurado usando la configuración existente
+        Browsers browsersConfig = wbs.getNavega();
+        wbs = new WebDriverBrowserSelenium(browsersConfig, proxy);
+        driver = wbs.getWebDriver();
+        testContext.driver = driver;
 
+        driver.get(url);
         testContext.logInfo(LOADING_PAGE + url);
         setZoomTo100();
     }
@@ -320,20 +315,25 @@ public class Browser {
 
     private void killProcess(String nombreProceso) {
         if (StringUtils.equalsIgnoreCase(PLATFORM_WINDOWS, testContext.platform)) {
-            // Se mata el proceso IEDriverServer.exe
-            String cmd = "taskkill /f /im  " + nombreProceso;
-            Process proceso;
+            // Validate process name to prevent command injection
+            if (!nombreProceso.matches("^[a-zA-Z0-9_.\\-]+$")) {
+                LOG.error("Invalid process name: {}", nombreProceso);
+                return;
+            }
             try {
-                proceso = Runtime.getRuntime().exec(cmd);
+                ProcessBuilder pb = new ProcessBuilder("taskkill", "/f", "/im", nombreProceso);
+                Process proceso = pb.start();
                 proceso.waitFor();
                 if (proceso.exitValue() == 0) {
-                    LOG.debug("Se ha matado correctamente el proceso: " + nombreProceso);
+                    LOG.debug("Se ha matado correctamente el proceso: {}", nombreProceso);
                 }
             } catch (IOException | InterruptedException e) {
-                LOG.error("Error intentando matar el proceso " + nombreProceso + ": " + e.getMessage());
+                LOG.error("Error intentando matar el proceso {}: {}", nombreProceso, e.getMessage());
+                if (e instanceof InterruptedException) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
-
     }
 
     private String switchBrowserWindowByParm(String parm, String option, boolean newWindow) {

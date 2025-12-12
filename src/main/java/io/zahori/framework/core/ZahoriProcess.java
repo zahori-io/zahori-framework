@@ -22,8 +22,6 @@ package io.zahori.framework.core;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import org.apache.commons.lang.StringUtils;
@@ -104,18 +102,8 @@ public abstract class ZahoriProcess extends BaseProcess {
         }
     }
 
-    private void printJsonBody(CaseExecution caseExecution) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(caseExecution);
-            LOG.info(json);
-        } catch (JsonProcessingException ex) {
-            LOG.warn("Error printing request body: {}", ex.getMessage());
-        }
-
-    }
-
     @EventListener
+    @SuppressWarnings({"PMD.UnusedPrivateMethod", "PMD.UnusedFormalParameter"}) // Spring event handler
     private void onApplicationEvent(ApplicationReadyEvent event) {
         LOG.info("============== PROCESS STARTED ==============");
 

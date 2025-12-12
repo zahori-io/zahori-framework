@@ -47,7 +47,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
-import java.util.Random;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -108,7 +107,6 @@ public abstract class BaseProcess {
             testContext.createDriver();
 
             testContext.startChronometer();
-            // testContext.moveMouseToUpperLeftCorner();
             testContext.startVideo();
 
             return testContext;
@@ -116,14 +114,9 @@ public abstract class BaseProcess {
             if (testContext != null) {
                 testContext.stopRemoteTunnel();
             }
-            e.printStackTrace();
+            LOG.error("Error initializing case: {}", e.getMessage(), e);
             throw new ZahoriException("", "Error initializing case: " + e.getMessage());
         }
-    }
-
-    private int randomNumber() {
-        Random rnd = new Random();
-        return 100 + rnd.nextInt(900);
     }
 
     private void process(TestContext testContext, CaseExecution caseExecution) {
@@ -151,7 +144,6 @@ public abstract class BaseProcess {
         if (testContext.retries < testContext.getMaxRetries()) {
             testContext.retries++;
             testContext.failCause = StringUtils.EMPTY;
-            // testContext.resetExecutionNotes();
             testContext.setExecutionNotes(" --> Retry " + testContext.retries + ": ");
 
             if (!(e instanceof ZahoriException)) {
@@ -217,7 +209,6 @@ public abstract class BaseProcess {
             testContext.uploadResultsToTms();
         } catch (Exception ex) {
             LOG.error("Error uploading case results to {}: {}", testContext.getTmsName(), ex.getMessage());
-            // ex.printStackTrace();
         }
     }
 

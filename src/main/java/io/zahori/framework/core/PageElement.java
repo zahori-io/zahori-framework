@@ -23,7 +23,6 @@ package io.zahori.framework.core;
  * #L%
  */
 import com.google.common.collect.ImmutableMap;
-import io.appium.java_client.AppiumDriver;
 import io.zahori.framework.robot.UtilsRobot;
 import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
@@ -35,7 +34,6 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
@@ -44,8 +42,6 @@ import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Action;
 import org.openqa.selenium.interactions.Actions;
-import org.openqa.selenium.interactions.PointerInput;
-import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.interactions.WheelInput;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
@@ -569,13 +565,14 @@ public class PageElement {
         return getAttributeValue(attribute, false);
     }
 
+    @SuppressWarnings("PMD.EmptyCatchBlock") // Expected when attribute doesn't exist
     private String getAttributeValue(String attribute, boolean print) {
         webElement = findElementPresent();
         String value = "";
         try {
             value = webElement.getAttribute(attribute).trim();
         } catch (final Exception e) {
-            //
+            // Attribute not found or element interaction failed - return empty string
         }
         if (print) {
             testContext.logInfo("Get '" + attribute + "' attribute [value='" + value + "'] for " + this);
@@ -911,19 +908,7 @@ public class PageElement {
     }
 
     public void swipeVertical(int x, int startY, int endY) {
-        try {
-            PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
-            Sequence seqSwipe = new Sequence(finger, 1);
-
-            seqSwipe.addAction(finger.createPointerMove(Duration.ofSeconds(0), PointerInput.Origin.viewport(), x, startY));
-            seqSwipe.addAction(finger.createPointerDown(0));
-
-            seqSwipe.addAction(finger.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), x, endY));
-            seqSwipe.addAction(finger.createPointerUp(0));
-            ((AppiumDriver) driver).perform(Arrays.asList(seqSwipe));
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to swipe: " + this + getErrorMessage(e));
-        }
+        SwipeHelper.swipeVertical(driver, x, startY, endY, this.toString());
     }
 
     public void swipeLeftUntilVisible() {
@@ -951,19 +936,7 @@ public class PageElement {
     }
 
     public void swipeHorizontal(int y, int startX, int endX) {
-        try {
-            PointerInput finger = new PointerInput(PointerInput.Kind.TOUCH, "finger");
-            Sequence seqSwipe = new Sequence(finger, 1);
-
-            seqSwipe.addAction(finger.createPointerMove(Duration.ofSeconds(0), PointerInput.Origin.viewport(), startX, y));
-            seqSwipe.addAction(finger.createPointerDown(0));
-
-            seqSwipe.addAction(finger.createPointerMove(Duration.ofMillis(500), PointerInput.Origin.viewport(), endX, y));
-            seqSwipe.addAction(finger.createPointerUp(0));
-            ((AppiumDriver) driver).perform(Arrays.asList(seqSwipe));
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to swipe: " + this + getErrorMessage(e));
-        }
+        SwipeHelper.swipeHorizontal(driver, y, startX, endX, this.toString());
     }
 
     public void scrollUp() {

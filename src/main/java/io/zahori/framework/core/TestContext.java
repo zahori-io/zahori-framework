@@ -53,8 +53,6 @@ import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -63,7 +61,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -170,8 +167,6 @@ public class TestContext {
     public volatile String remoteUrl;
     public volatile String appiumService;
 
-    /** Contador de reintentos atómico */
-    private final AtomicInteger retriesAtomic = new AtomicInteger(0);
     public int retries = 0;
 
     // Properties
@@ -927,64 +922,6 @@ public class TestContext {
         }
     }
 
-    private boolean isLinuxOS() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        return osName.contains("nux") || osName.contains("nix");
-    }
-
-    private String getProxyIP() {
-        boolean remoteBrowser = StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote);
-        if (!remoteBrowser) {
-            return "localhost";
-        }
-
-        if (isMobileWebApp()) {
-            return "localhost";
-        }
-
-        if (isLinuxOS()) {
-            return getLocalIP();
-        }
-
-        // Para que en Mac y Windows los contenedores de Selenoid tengan conexión con el proxy que no está en el deben usar "host.docker.internal"
-        return "host.docker.internal";
-    }
-
-    private String getLocalIP() {
-        String ip = "";
-        try {
-            // A. Alternativa rápida (menos precisa), puede devolver 127.0.0.1 en muchos entornos, especialmente en contenedores o configuraciones sin DNS apropiado.
-            //ip = Inet4Address.getLocalHost().getHostAddress();
-
-            // B. Alternativa más precisa:
-            // Iterar sobre todas las interfaces de red
-            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            while (interfaces.hasMoreElements()) {
-                NetworkInterface iface = interfaces.nextElement();
-
-                // Ignorar interfaces no activas o loopback
-                if (!iface.isUp() || iface.isLoopback() || iface.isVirtual()) {
-                    continue;
-                }
-
-                Enumeration<InetAddress> addresses = iface.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    InetAddress addr = addresses.nextElement();
-
-                    // Solo IPv4 (si se necesita IPv6, quitar este filtro)
-                    if (addr.getHostAddress().contains(".")) {
-                        ip = addr.getHostAddress();
-                        // System.out.println("IP local: " + ip);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logInfo("Error getting local IP: {}", e.getMessage());
-        } finally {
-            return ip;
-        }
-    }
-
     public int getMaxRetries() {
         return retriesDisabledAtomic.get() ? 0 : zahoriProperties.getDefinedRetries();
     }
@@ -1140,51 +1077,19 @@ public class TestContext {
     }
 
     public void switchToWindowWithUrl(String url) {
-        logInfo("switching to window with url: {}", url);
-        // getPageSource();
-
-        // logInfo("getting current url...");
-        String currentUrl = this.driver.getCurrentUrl();
-        logInfo("currentUrl: {}", currentUrl);
-        if (StringUtils.containsIgnoreCase(currentUrl, url)) {
-            return;
-        }
-
-        getPageSource();
-        ArrayList<String> windowHandles = new ArrayList<>(this.driver.getWindowHandles());
-        logInfo("WindowHandles: {}", windowHandles.toString());
-
-        for (int i = windowHandles.size() - 1; i >= 0; i--) {
-            String windowHandle = windowHandles.get(i);
-            try {
-                logInfo("switching to windowHandle: {}", windowHandle);
-
-                if (isMobileNativeApp()) {
-                    switchToWebContext("WEBVIEW_" + windowHandle);
-                }
-
-                this.driver.switchTo().window(windowHandle);
-                getPageSource();
-
-                if (StringUtils.contains(this.driver.getCurrentUrl().trim().toLowerCase(), url.trim().toLowerCase())) {
-                    return;
-                }
-            } catch (Exception e) {
-                logError("Error switchToWindowWithUrl({}): {}", url, e.getMessage());
-            }
-        }
-
-        throw new RuntimeException("Window containing url '" + url + "' not found");
+        switchToWindowMatching("url", url, () -> this.driver.getCurrentUrl());
     }
 
     public void switchToWindowWithTitle(String title) {
-        logInfo("switching to window with title: {}", title);
-        // getPageSource();
+        switchToWindowMatching("title", title, () -> this.driver.getTitle());
+    }
 
-        // logInfo("getting current title...");
-        String currentTitle = this.driver.getTitle();
-        logInfo("currentUrl: {}", currentTitle);
-        if (StringUtils.containsIgnoreCase(currentTitle, title)) {
+    private void switchToWindowMatching(String type, String searchValue, java.util.function.Supplier<String> valueGetter) {
+        logInfo("switching to window with {}: {}", type, searchValue);
+
+        String currentValue = valueGetter.get();
+        logInfo("current {}: {}", type, currentValue);
+        if (StringUtils.containsIgnoreCase(currentValue, searchValue)) {
             return;
         }
 
@@ -1204,15 +1109,15 @@ public class TestContext {
                 this.driver.switchTo().window(windowHandle);
                 getPageSource();
 
-                if (StringUtils.contains(this.driver.getCurrentUrl().trim().toLowerCase(), title.trim().toLowerCase())) {
+                if (StringUtils.containsIgnoreCase(valueGetter.get(), searchValue)) {
                     return;
                 }
             } catch (Exception e) {
-                logError("Error switchToWindowWithUrl({}): {}", title, e.getMessage());
+                logError("Error switchToWindowWith{}({}): {}", type, searchValue, e.getMessage());
             }
         }
 
-        throw new RuntimeException("Window containing title '" + title + "' not found");
+        throw new RuntimeException("Window containing " + type + " '" + searchValue + "' not found");
     }
 
     public void switchToNativeContext() {
