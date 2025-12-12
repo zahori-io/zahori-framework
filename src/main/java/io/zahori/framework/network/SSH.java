@@ -116,8 +116,7 @@ public class SSH {
                     if (i < 0) {
                         break;
                     }
-                    // System.out.print(new String(tmp, 0, i));
-                    out.append(new String(tmp, 0, i));
+                    out.append(new String(tmp, 0, i, java.nio.charset.StandardCharsets.UTF_8));
                 }
 
                 while (errorStream.available() > 0) {
@@ -125,8 +124,7 @@ public class SSH {
                     if (i < 0) {
                         break;
                     }
-                    // System.err.print(new String(tmpErr, 0, i));
-                    err.append(new String(tmpErr, 0, i));
+                    err.append(new String(tmpErr, 0, i, java.nio.charset.StandardCharsets.UTF_8));
                 }
 
                 if (channel.isClosed()) {
