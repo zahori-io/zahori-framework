@@ -62,9 +62,7 @@ public class ZahoriCipher {
             Cipher cipher = Cipher.getInstance(ALGORITHM); // cipher is not thread
             // safe
             cipher.init(Cipher.ENCRYPT_MODE, key);
-            String encryptedPwd = new String(Base64.getEncoder().encode(cipher.doFinal(cleartext)));
-
-            return encryptedPwd;
+            return new String(Base64.getEncoder().encode(cipher.doFinal(cleartext)), StandardCharsets.UTF_8);
         } catch (Exception e) {
             System.out.println(e.getMessage());
             return null;
