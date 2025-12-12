@@ -24,25 +24,44 @@ package io.zahori.framework.exception;
  */
 
 /**
- * Exception thrown when a test execution fails.
+ * Base exception class for all Zahori framework exceptions.
+ * Provides common functionality for message handling.
  */
-public class TestException extends BaseZahoriException {
+public abstract class BaseZahoriException extends Exception {
 
-    private static final long serialVersionUID = -7423023525671290494L;
+    private static final long serialVersionUID = 1L;
+    private String message;
 
-    public TestException() {
+    protected BaseZahoriException() {
         super();
     }
 
-    public TestException(String message) {
+    protected BaseZahoriException(String message) {
         super(message);
+        this.message = message;
     }
 
-    public TestException(Throwable cause) {
+    protected BaseZahoriException(Throwable cause) {
         super(cause);
+        this.message = cause != null ? cause.getMessage() : null;
     }
 
-    public TestException(String message, Throwable cause) {
+    protected BaseZahoriException(String message, Throwable cause) {
         super(message, cause);
+        this.message = message;
+    }
+
+    @Override
+    public String toString() {
+        return message;
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
     }
 }

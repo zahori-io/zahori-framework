@@ -12,21 +12,23 @@ package io.zahori.framework.exception;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 
-public class MethodException extends Exception {
+/**
+ * Exception thrown when a method execution fails.
+ */
+public class MethodException extends BaseZahoriException {
 
     private static final long serialVersionUID = 7632306832221561772L;
-    private String message;
 
     public MethodException() {
         super();
@@ -34,34 +36,13 @@ public class MethodException extends Exception {
 
     public MethodException(String message) {
         super(message);
-        this.message = message;
     }
 
     public MethodException(Throwable cause) {
         super(cause);
     }
 
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Throwable#toString()
-     */
-    @Override
-    public String toString() {
-        return message;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see java.lang.Throwable#getMessage()
-     */
-    @Override
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
+    public MethodException(String message, Throwable cause) {
+        super(message, cause);
     }
 }
