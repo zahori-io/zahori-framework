@@ -36,7 +36,19 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- DUAL JDK 17/21 COMPATIBILITY -->
+        <!-- Base: JDK 17 | Full support: JDK 21 -->
+        <!-- Uses release flag (NOT source/target) -->
+        <maven.compiler.release>17</maven.compiler.release>
         <java.version>17</java.version>
+
+        <!-- JDK 21 specific features (activated by profile) -->
+        <jdk21.features.enabled>false</jdk21.features.enabled>
+
+        <!-- Surefire JPMS args (populated by profiles) -->
+        <surefire.jpms.args></surefire.jpms.args>
+
         <license.licenseName>agpl_v3</license.licenseName>
         <license.licenseResolver>${project.baseUri}/src/license</license.licenseResolver>
 
@@ -92,6 +104,22 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.5.2</version>
+                <configuration>
+                    <!-- DUAL JDK 17/21: JPMS add-opens for reflection-heavy libs -->
+                    <!-- Required by: Mockito, Spring, docx4j, Apache POI -->
+                    <argLine>
+                        ${surefire.jpms.args}
+                        --add-opens java.base/java.lang=ALL-UNNAMED
+                        --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+                        --add-opens java.base/java.util=ALL-UNNAMED
+                        --add-opens java.base/java.io=ALL-UNNAMED
+                        --add-opens java.base/java.time=ALL-UNNAMED
+                        --add-opens java.base/java.text=ALL-UNNAMED
+                        --add-opens java.base/java.math=ALL-UNNAMED
+                        --add-opens java.base/sun.nio.ch=ALL-UNNAMED
+                        --add-opens java.desktop/java.awt.font=ALL-UNNAMED
+                    </argLine>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -99,7 +127,9 @@
                 <version>3.13.0</version>
                 <inherited>true</inherited>
                 <configuration>
-                    <release>${java.version}</release>
+                    <!-- DUAL JDK: Uses release flag (superior to source/target) -->
+                    <!-- Validates API compatibility at compile time via ct.sym -->
+                    <release>${maven.compiler.release}</release>
                     <encoding>${project.build.sourceEncoding}</encoding>
                     <compilerArgs>
                         <arg>-Xlint:unchecked</arg>
@@ -116,10 +146,33 @@
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.3.1</version>
             </plugin>
+            <!-- DUAL JDK: Toolchains decouples Maven JDK from compilation JDK -->
+            <!-- Requires ~/.m2/toolchains.xml (see zahori-framework/toolchains.xml.example) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-toolchains-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <toolchains>
+                        <jdk>
+                            <version>${maven.compiler.release}</version>
+                        </jdk>
+                    </toolchains>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <!-- DUAL JDK: Multi-Release JAR ready -->
+                            <!-- Set to true when src/main/java-21 exists -->
+                            <Multi-Release>${jdk21.features.enabled}</Multi-Release>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -145,6 +198,93 @@
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
+                </configuration>
+            </plugin>
+            <!-- ============================================== -->
+            <!-- STATIC ANALYSIS SUITE (JDK 17/21)             -->
+            <!-- SpotBugs + PMD + Checkstyle                   -->
+            <!-- ============================================== -->
+
+            <!-- SpotBugs - Bytecode Analysis with FindSecBugs -->
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+                <version>4.8.5.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs</artifactId>
+                        <version>4.8.5</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <effort>Max</effort>
+                    <threshold>Medium</threshold>
+                    <xmlOutput>true</xmlOutput>
+                    <xmlOutputDirectory>${project.build.directory}/spotbugs</xmlOutputDirectory>
+                    <failOnError>false</failOnError>
+                    <plugins>
+                        <plugin>
+                            <groupId>com.h3xstream.findsecbugs</groupId>
+                            <artifactId>findsecbugs-plugin</artifactId>
+                            <version>1.12.0</version>
+                        </plugin>
+                    </plugins>
+                </configuration>
+            </plugin>
+
+            <!-- PMD - Source Code Analysis + CPD (Duplicate Detection) -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.26.0</version>
+                <configuration>
+                    <targetJdk>${java.version}</targetJdk>
+                    <minimumTokens>100</minimumTokens>
+                    <skipEmptyReport>false</skipEmptyReport>
+                    <failOnViolation>false</failOnViolation>
+                    <printFailingErrors>true</printFailingErrors>
+                    <minimumPriority>3</minimumPriority>
+                    <analysisCache>true</analysisCache>
+                    <analysisCacheLocation>${project.build.directory}/pmd/pmd.cache</analysisCacheLocation>
+                    <excludes>
+                        <exclude>**/generated/**/*.java</exclude>
+                    </excludes>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-core</artifactId>
+                        <version>7.9.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>net.sourceforge.pmd</groupId>
+                        <artifactId>pmd-java</artifactId>
+                        <version>7.9.0</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
+
+            <!-- Checkstyle - Code Style Validation -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>3.5.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>com.puppycrawl.tools</groupId>
+                        <artifactId>checkstyle</artifactId>
+                        <version>10.20.0</version>
+                    </dependency>
+                </dependencies>
+                <configuration>
+                    <!-- Custom ruleset: 4-space indent, 120 chars, no mandatory Javadoc -->
+                    <configLocation>zahori-checkstyle.xml</configLocation>
+                    <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
+                    <violationSeverity>warning</violationSeverity>
+                    <failOnViolation>false</failOnViolation>
+                    <consoleOutput>true</consoleOutput>
+                    <includeTestSourceDirectory>false</includeTestSourceDirectory>
                 </configuration>
             </plugin>
             <!-- OWASP Dependency-Check - SCA Security Scanning -->
@@ -353,10 +493,11 @@
 
             <!-- Docx4j: is a library which helps you to work with the Office Open
             XML file format as used in docx documents, pptx presentations, and xlsx spreadsheets. -->
+            <!-- 11.5.8: Jakarta JAXB 4.0, JDK 17/21 support, Eclipse Angus -->
             <dependency>
                 <groupId>org.docx4j</groupId>
                 <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
-                <version>11.4.9</version>
+                <version>11.5.8</version>
                 <exclusions>
                     <exclusion>
                         <groupId>org.slf4j</groupId>
@@ -1184,6 +1325,106 @@
     </dependencies>
 
     <profiles>
+        <!-- ============================================== -->
+        <!-- DUAL JDK 17/21 PROFILES                       -->
+        <!-- Auto-activated based on running JDK version   -->
+        <!-- ============================================== -->
+
+        <!-- JDK 17 Profile: Base compatibility -->
+        <profile>
+            <id>jdk17</id>
+            <activation>
+                <jdk>[17,18)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>17</maven.compiler.release>
+                <jdk21.features.enabled>false</jdk21.features.enabled>
+                <surefire.jpms.args></surefire.jpms.args>
+            </properties>
+        </profile>
+
+        <!-- JDK 21 Profile: Full features + Virtual Threads ready -->
+        <profile>
+            <id>jdk21</id>
+            <activation>
+                <jdk>[21,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>21</maven.compiler.release>
+                <jdk21.features.enabled>true</jdk21.features.enabled>
+                <!-- Additional JPMS opens for JDK 21 stricter encapsulation -->
+                <surefire.jpms.args>
+                    --add-opens java.base/java.lang.invoke=ALL-UNNAMED
+                    --add-opens java.base/java.nio=ALL-UNNAMED
+                    --add-opens java.base/jdk.internal.misc=ALL-UNNAMED
+                </surefire.jpms.args>
+            </properties>
+            <build>
+                <plugins>
+                    <!-- Enable Virtual Threads diagnostics in JDK 21 -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <!-- Detect Virtual Thread pinning issues -->
+                                <jdk.tracePinnedThreads>short</jdk.tracePinnedThreads>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- JDK 17 Strict: Force JDK 17 even on newer JDK (manual activation) -->
+        <profile>
+            <id>jdk17-strict</id>
+            <properties>
+                <maven.compiler.release>17</maven.compiler.release>
+                <jdk21.features.enabled>false</jdk21.features.enabled>
+            </properties>
+        </profile>
+
+        <!-- Multi-Release JAR Profile: Compile JDK 21 specific classes -->
+        <!-- Activate manually: mvn compile -Pmr-jar -->
+        <!-- Requires: src/main/java-21/ directory with JDK 21 class overrides -->
+        <profile>
+            <id>mr-jar</id>
+            <activation>
+                <file>
+                    <exists>src/main/java-21</exists>
+                </file>
+            </activation>
+            <properties>
+                <jdk21.features.enabled>true</jdk21.features.enabled>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <executions>
+                            <!-- Additional execution for JDK 21 specific sources -->
+                            <execution>
+                                <id>compile-java-21</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <release>21</release>
+                                    <compileSourceRoots>
+                                        <compileSourceRoot>${project.basedir}/src/main/java-21</compileSourceRoot>
+                                    </compileSourceRoots>
+                                    <multiReleaseOutput>true</multiReleaseOutput>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <id>release</id>
             <build>
@@ -1376,10 +1617,10 @@
                                             <message>Maven 3.9+ required for Build Cache support</message>
                                         </requireMavenVersion>
 
-                                        <!-- Java 17 obligatorio -->
+                                        <!-- DUAL JDK: Java 17 minimum, 21 supported -->
                                         <requireJavaVersion>
-                                            <version>17</version>
-                                            <message>Java 17 LTS required</message>
+                                            <version>[17,22)</version>
+                                            <message>Java 17 or 21 LTS required (17 minimum, 21 recommended)</message>
                                         </requireJavaVersion>
 
                                         <!-- Dependencias prohibidas (seguridad) -->
