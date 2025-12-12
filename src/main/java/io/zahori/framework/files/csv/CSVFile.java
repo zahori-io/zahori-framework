@@ -30,7 +30,7 @@ import org.apache.commons.csv.CSVRecord;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Objects;
+import java.nio.charset.StandardCharsets;
 
 public class CSVFile {
 
@@ -38,42 +38,18 @@ public class CSVFile {
     }
 
     public static CSVRecord getRow(String fileName, final String columnKey, final String columnValue) {
-
-        FileReader fileReader = null;
-
-        CSVParser csvFileParser = null;
-
         // Create the CSVFormat object with the header mapping
         CSVFormat csvFileFormat = CSVFormat.Builder.create().setDelimiter(';').build();
 
-        try {
+        try (FileReader fileReader = new FileReader(fileName, StandardCharsets.UTF_8);
+             CSVParser csvFileParser = new CSVParser(fileReader, csvFileFormat)) {
 
-            // initialize FileReader object
-            fileReader = new FileReader(fileName);
-
-            // initialize CSVParser object
-            csvFileParser = new CSVParser(fileReader, csvFileFormat);
-
-            CSVRecord fila = (CSVRecord) CollectionUtils.find(csvFileParser.getRecords(),
+            return (CSVRecord) CollectionUtils.find(csvFileParser.getRecords(),
                     number -> columnValue.equals(((CSVRecord) number).get(columnKey)));
 
-            return fila;
-
-        } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
-        } finally {
-            try {
-                if (fileReader != null) {
-                    fileReader.close();
-                }
-                if (fileReader != null) {
-                    Objects.requireNonNull(csvFileParser).close();
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e.getMessage());
-            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error reading CSV file: " + e.getMessage(), e);
         }
-
     }
 
 }

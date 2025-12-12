@@ -29,6 +29,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class PutObjectToCSV {
@@ -46,19 +47,14 @@ public class PutObjectToCSV {
     }
 
     public void writeRowInCSV(List<String> campos) {
-        try {
-            FileWriter fichero = new FileWriter(this.ficheroEscritura, true);
-            int i = 0;
-            while (i < campos.size()) {
-                fichero.append(campos.get(i));
+        try (FileWriter fichero = new FileWriter(this.ficheroEscritura, StandardCharsets.UTF_8, true)) {
+            for (String campo : campos) {
+                fichero.append(campo);
                 fichero.append(SEPARADOR);
-                i++;
             }
             fichero.append("\n");
-            fichero.flush();
-            fichero.close();
         } catch (IOException e) {
-            LOG.error(ERROR_WRITE_ROW_IN_CSV + e.getMessage());
+            LOG.error("{}{}", ERROR_WRITE_ROW_IN_CSV, e.getMessage());
         }
     }
 
