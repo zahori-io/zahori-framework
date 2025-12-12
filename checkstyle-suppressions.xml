@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<!DOCTYPE suppressions PUBLIC
+    "-//Checkstyle//DTD SuppressionFilter Configuration 1.2//EN"
+    "https://checkstyle.org/dtds/suppressions_1_2.dtd">
+
+<!--
+    Zahori Framework Checkstyle Suppressions
+    For legacy code that cannot be easily refactored
+
+    Suppression Types:
+    - files: regex pattern for file paths
+    - checks: regex pattern for check names
+    - lines: specific line numbers (optional)
+    - columns: specific columns (optional)
+-->
+<suppressions>
+
+    <!-- ============ GENERATED CODE ============ -->
+
+    <!-- Exclude all generated sources -->
+    <suppress files="[\\/]generated[\\/]" checks=".*"/>
+    <suppress files="[\\/]generated-sources[\\/]" checks=".*"/>
+    <suppress files="[\\/]target[\\/]" checks=".*"/>
+
+    <!-- ============ TEST CODE: RELAXED RULES ============ -->
+
+    <!-- Test classes: allow flexible method naming (test_method_name style) -->
+    <suppress files=".*Test\.java$" checks="MethodName"/>
+    <suppress files=".*Tests\.java$" checks="MethodName"/>
+    <suppress files=".*IT\.java$" checks="MethodName"/>
+
+    <!-- Test classes: allow magic numbers in assertions -->
+    <suppress files=".*Test\.java$" checks="MagicNumber"/>
+    <suppress files=".*Tests\.java$" checks="MagicNumber"/>
+
+    <!-- Test classes: allow longer methods -->
+    <suppress files=".*Test\.java$" checks="MethodLength"/>
+
+    <!-- ============ LEGACY CODE: SPECIFIC FILES ============ -->
+
+    <!-- GUI classes: relaxed rules for Swing/AWT code -->
+    <suppress files=".*CipherGUI\.java$" checks=".*"/>
+    <suppress files="AbstractZahoriCipherGUI\.java$" checks=".*"/>
+
+    <!-- Video/Screen capture: complex logic allowed -->
+    <suppress files=".*ScreenRecorder\.java$" checks="CyclomaticComplexity"/>
+    <suppress files=".*ScreenRecorder\.java$" checks="MethodLength"/>
+    <suppress files="CDPScreenRecorder\.java$" checks="NestedIfDepth"/>
+
+    <!-- Driver factories: many browser variations -->
+    <suppress files=".*BrowserFactory\.java$" checks="CyclomaticComplexity"/>
+    <suppress files=".*Driver\.java$" checks="ParameterNumber"/>
+    <suppress files="LocalDriver\.java$" checks=".*"/>
+    <suppress files="RemoteDriver\.java$" checks=".*"/>
+
+    <!-- Thread utilities: legacy patterns -->
+    <suppress files="ThreadIE\.java$" checks=".*"/>
+
+    <!-- Date utilities: complex parsing logic -->
+    <suppress files="DateConstructor\.java$" checks="CyclomaticComplexity"/>
+    <suppress files="DateConstructor\.java$" checks="MethodLength"/>
+
+    <!-- TMS clients: API integration complexity -->
+    <suppress files=".*Client\.java$" checks="MethodLength"/>
+    <suppress files="Xray.*\.java$" checks=".*"/>
+
+    <!-- ============ LEGACY NAMING PATTERNS ============ -->
+
+    <!-- Allow abbreviations in certain packages -->
+    <suppress files="[\\/]tms[\\/]" checks="AbbreviationAsWordInName"/>
+    <suppress files="[\\/]utils[\\/]" checks="AbbreviationAsWordInName"/>
+
+    <!-- Allow short variable names in utility classes -->
+    <suppress files=".*Utils\.java$" checks="LocalVariableName"/>
+    <suppress files=".*Helper\.java$" checks="LocalVariableName"/>
+
+    <!-- Logger variable naming (LOG, log, logger all acceptable) -->
+    <suppress checks="ConstantName" message=".*LOG.*"/>
+
+    <!-- ============ INDENTATION: LEGACY FILES ============ -->
+
+    <!-- Files with mixed indentation that need gradual cleanup -->
+    <suppress files="ZahoriProcess\.java$" checks="Indentation"/>
+    <suppress files="TestContext\.java$" checks="Indentation"/>
+    <suppress files="Page\.java$" checks="Indentation"/>
+    <suppress files="PageElement\.java$" checks="Indentation"/>
+    <suppress files="Browser\.java$" checks="Indentation"/>
+    <suppress files="Evidences\.java$" checks="Indentation"/>
+
+    <!-- ============ LINE LENGTH: SPECIFIC PATTERNS ============ -->
+
+    <!-- Allow long lines in specific cases -->
+    <suppress checks="LineLength" files=".*\.java$" lines="1-30"/>
+    <!-- License headers often exceed line length -->
+
+    <!-- ============ CONFIGURATION CLASSES ============ -->
+
+    <!-- Config classes: many parameters allowed -->
+    <suppress files=".*Config\.java$" checks="ParameterNumber"/>
+    <suppress files=".*Configuration\.java$" checks="ParameterNumber"/>
+    <suppress files=".*Properties\.java$" checks="ParameterNumber"/>
+
+    <!-- ============ SPECIFIC SUPPRESSIONS ============ -->
+
+    <!-- ZahoriStringUtils: utility class with specific patterns -->
+    <suppress files="ZahoriStringUtils\.java$" checks="HideUtilityClassConstructor"/>
+
+    <!-- Notification: builder pattern complexity -->
+    <suppress files="Notification\.java$" checks="ParameterNumber"/>
+
+</suppressions>

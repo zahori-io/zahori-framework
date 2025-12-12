@@ -1,0 +1,225 @@
+<?xml version="1.0"?>
+<!DOCTYPE module PUBLIC
+    "-//Checkstyle//DTD Checkstyle Configuration 1.3//EN"
+    "https://checkstyle.org/dtds/configuration_1_3.dtd">
+
+<!--
+    Zahori Framework Custom Checkstyle Configuration
+    Based on Google Java Style Guide with relaxed rules for legacy code
+
+    Key differences from google_checks.xml:
+    - 4-space indentation (project convention)
+    - 120 character line length
+    - No mandatory Javadoc
+    - Relaxed naming conventions
+-->
+<module name="Checker">
+    <property name="charset" value="UTF-8"/>
+    <property name="severity" value="warning"/>
+    <property name="fileExtensions" value="java"/>
+
+    <!-- Suppressions -->
+    <module name="SuppressionFilter">
+        <property name="file" value="${config_loc}/checkstyle-suppressions.xml" default="checkstyle-suppressions.xml"/>
+        <property name="optional" value="true"/>
+    </module>
+
+    <!-- File Length -->
+    <module name="FileLength">
+        <property name="max" value="2000"/>
+    </module>
+
+    <!-- Line Length: 120 characters (relaxed from 100) -->
+    <module name="LineLength">
+        <property name="max" value="120"/>
+        <property name="ignorePattern" value="^package.*|^import.*|a]href|href|http://|https://|ftp://"/>
+    </module>
+
+    <!-- No trailing whitespace -->
+    <module name="RegexpSingleline">
+        <property name="format" value="\s+$"/>
+        <property name="message" value="Line has trailing whitespace."/>
+        <property name="severity" value="info"/>
+    </module>
+
+    <!-- TreeWalker checks -->
+    <module name="TreeWalker">
+        <!-- Suppress warnings annotation -->
+        <module name="SuppressWarningsHolder"/>
+
+        <!-- ============ NAMING CONVENTIONS ============ -->
+
+        <!-- Package names: lowercase -->
+        <module name="PackageName">
+            <property name="format" value="^[a-z]+(\.[a-z][a-z0-9]*)*$"/>
+        </module>
+
+        <!-- Type names: UpperCamelCase -->
+        <module name="TypeName">
+            <property name="format" value="^[A-Z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- Method names: lowerCamelCase (relaxed for test methods) -->
+        <module name="MethodName">
+            <property name="format" value="^[a-z][a-zA-Z0-9_]*$"/>
+        </module>
+
+        <!-- Member names: lowerCamelCase -->
+        <module name="MemberName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- Parameter names: lowerCamelCase -->
+        <module name="ParameterName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- Local variable names: lowerCamelCase -->
+        <module name="LocalVariableName">
+            <property name="format" value="^[a-z][a-zA-Z0-9]*$"/>
+        </module>
+
+        <!-- Constant names: UPPER_CASE -->
+        <module name="ConstantName">
+            <property name="format" value="^[A-Z][A-Z0-9]*(_[A-Z0-9]+)*$|^log(ger)?$"/>
+        </module>
+
+        <!-- ============ IMPORTS ============ -->
+
+        <!-- No star imports -->
+        <module name="AvoidStarImport"/>
+
+        <!-- No redundant imports -->
+        <module name="RedundantImport"/>
+
+        <!-- No unused imports -->
+        <module name="UnusedImports"/>
+
+        <!-- ============ WHITESPACE ============ -->
+
+        <!-- No whitespace after certain tokens -->
+        <module name="NoWhitespaceAfter">
+            <property name="tokens" value="AT,INC,DEC,UNARY_MINUS,UNARY_PLUS,BNOT,LNOT,DOT,ARRAY_DECLARATOR,INDEX_OP"/>
+        </module>
+
+        <!-- No whitespace before certain tokens -->
+        <module name="NoWhitespaceBefore">
+            <property name="tokens" value="COMMA,SEMI,POST_INC,POST_DEC,ELLIPSIS"/>
+        </module>
+
+        <!-- Whitespace around operators -->
+        <module name="WhitespaceAround">
+            <property name="allowEmptyConstructors" value="true"/>
+            <property name="allowEmptyMethods" value="true"/>
+            <property name="allowEmptyTypes" value="true"/>
+            <property name="allowEmptyLoops" value="true"/>
+        </module>
+
+        <!-- ============ INDENTATION: 4 SPACES ============ -->
+
+        <module name="Indentation">
+            <property name="basicOffset" value="4"/>
+            <property name="braceAdjustment" value="0"/>
+            <property name="caseIndent" value="4"/>
+            <property name="throwsIndent" value="4"/>
+            <property name="lineWrappingIndentation" value="4"/>
+            <property name="arrayInitIndent" value="4"/>
+        </module>
+
+        <!-- ============ BLOCKS ============ -->
+
+        <!-- Left curly brace at end of line -->
+        <module name="LeftCurly"/>
+
+        <!-- Right curly brace placement -->
+        <module name="RightCurly">
+            <property name="option" value="same"/>
+            <property name="tokens" value="LITERAL_TRY,LITERAL_CATCH,LITERAL_FINALLY,LITERAL_IF,LITERAL_ELSE"/>
+        </module>
+
+        <!-- Need braces for control statements -->
+        <module name="NeedBraces">
+            <property name="allowSingleLineStatement" value="true"/>
+        </module>
+
+        <!-- Empty blocks: must have comment or be documented -->
+        <module name="EmptyBlock">
+            <property name="option" value="text"/>
+            <property name="tokens" value="LITERAL_CATCH"/>
+        </module>
+
+        <!-- ============ CODING ============ -->
+
+        <!-- Avoid empty statements -->
+        <module name="EmptyStatement"/>
+
+        <!-- Equals and hashCode together -->
+        <module name="EqualsHashCode"/>
+
+        <!-- No fall through in switch -->
+        <module name="FallThrough"/>
+
+        <!-- Missing switch default -->
+        <module name="MissingSwitchDefault"/>
+
+        <!-- Simplify boolean expressions -->
+        <module name="SimplifyBooleanExpression"/>
+
+        <!-- Simplify boolean returns -->
+        <module name="SimplifyBooleanReturn"/>
+
+        <!-- String literal equality -->
+        <module name="StringLiteralEquality"/>
+
+        <!-- No nested try -->
+        <module name="NestedTryDepth">
+            <property name="max" value="2"/>
+        </module>
+
+        <!-- No nested if -->
+        <module name="NestedIfDepth">
+            <property name="max" value="3"/>
+        </module>
+
+        <!-- ============ CLASS DESIGN ============ -->
+
+        <!-- Final class with private constructor -->
+        <module name="FinalClass"/>
+
+        <!-- Utility class constructor -->
+        <module name="HideUtilityClassConstructor"/>
+
+        <!-- One top-level class per file -->
+        <module name="OneTopLevelClass"/>
+
+        <!-- ============ MISCELLANEOUS ============ -->
+
+        <!-- Array style: String[] args (not String args[]) -->
+        <module name="ArrayTypeStyle"/>
+
+        <!-- Upper case L for long literals -->
+        <module name="UpperEll"/>
+
+        <!-- Modifier order -->
+        <module name="ModifierOrder"/>
+
+        <!-- Redundant modifiers -->
+        <module name="RedundantModifier"/>
+
+        <!-- ============ JAVADOC: DISABLED ============ -->
+        <!--
+            Javadoc checks disabled for legacy code compatibility.
+            Enable these for new modules if desired:
+
+            <module name="MissingJavadocMethod"/>
+            <module name="MissingJavadocType"/>
+            <module name="JavadocMethod"/>
+            <module name="JavadocType"/>
+        -->
+
+    </module>
+
+    <!-- Suppression via @SuppressWarnings annotation -->
+    <module name="SuppressWarningsFilter"/>
+
+</module>
