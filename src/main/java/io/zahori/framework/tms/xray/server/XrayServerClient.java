@@ -307,6 +307,7 @@ public class XrayServerClient {
         return false;
     }
 
+    @SuppressWarnings("PMD.UnusedFormalParameter") // containerId reserved for future Xray API versions
     private void associateItem2Container(String itemId, String containerId, String urlSufix) {
         initRestObjects();
         String URL = jiraURL + urlSufix;

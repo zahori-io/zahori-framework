@@ -30,7 +30,7 @@ import java.time.Instant;
 
 public class Chronometer {
 
-    public static String DATE_FORMAT = "dd/MM/yyyy HH:mm:ss";
+    public static final String DATE_FORMAT = "dd/MM/yyyy HH:mm:ss";
 
     private Instant executionStarted;
 

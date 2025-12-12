@@ -106,20 +106,6 @@ public class UtilsRobot {
         }
     }
 
-    public void movePointerAutomaticallyVertical(int x1, int y1, int x2, int y2) throws InterruptedException {
-        this.robot.mouseMove(x1, y1);
-        int i;
-
-        int divisor = x1;
-        while (divisor < x2) {
-            for (i = 0; i <= y2; i++) {
-                this.robot.mouseMove(divisor, i);
-                this.robot.delay(10);
-            }
-        }
-
-    }
-
     public boolean scrollToElement(WebElement element) {
         int i = 0;
         while ((i < MAX_SCROLL) && (!element.isDisplayed())) {

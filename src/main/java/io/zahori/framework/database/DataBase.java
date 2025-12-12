@@ -61,7 +61,7 @@ public class DataBase {
         string.append(", user: ").append(user);
         string.append(", password: ").append(password);
         string.append("]");
-        return "";
+        return string.toString();
     }
 
     @Deprecated
@@ -77,21 +77,15 @@ public class DataBase {
 
         LOG.debug("Executing query");
 
-        Connection connection = null;
-        PreparedStatement prepStmt;
-        ResultSet resultSet = null;
-
         try {
-
             // Load class into memory
             Class.forName(driver); // throws ClassNotFoundException
+        } catch (ClassNotFoundException cnfe) {
+            throw new RuntimeException(ERROR_EXECUTING_QUERY + "Driver not found: " + cnfe.getMessage(), cnfe);
+        }
 
-            // Establish connection
-            connection = DriverManager.getConnection(url, user, password);
-
-            // Prepared statement
-            // sql = "SELECT * from OHEAD where X1CMP = ? and X1ORD = ?";
-            prepStmt = connection.prepareStatement(query);
+        try (Connection connection = DriverManager.getConnection(url, user, password);
+             PreparedStatement prepStmt = connection.prepareStatement(query)) {
 
             if ((args != null) && (args.length > 0)) {
                 for (int i = 0; i < args.length; i++) {
@@ -99,52 +93,25 @@ public class DataBase {
                 }
             }
 
-            // Execute
-            resultSet = prepStmt.executeQuery();
+            try (ResultSet resultSet = prepStmt.executeQuery()) {
+                LOG.debug("Query executed successfully! [time: {} ms]", System.currentTimeMillis() - startTime);
 
-            LOG.debug("Query executed successfully! [time: " + (System.currentTimeMillis() - startTime) + " ms]");
+                Map<String, String> map = new HashMap<>();
+                ResultSetMetaData metaData = resultSet.getMetaData();
+                int colCount = metaData.getColumnCount();
 
-            Map<String, String> map = new HashMap<>();
-
-            if (resultSet == null) {
-                LOG.info("The query does not return data.");
+                while (resultSet.next()) {
+                    LOG.info("--- Database row ---");
+                    for (int i = 0; i < colCount; i++) {
+                        LOG.info("{}: {}", metaData.getColumnName(i + 1), resultSet.getString(i + 1));
+                        map.put(metaData.getColumnName(i + 1), resultSet.getString(i + 1));
+                    }
+                }
                 return map;
             }
 
-            ResultSetMetaData metaData = resultSet.getMetaData();
-            int colCount = metaData.getColumnCount();
-
-            while (resultSet.next()) {
-                LOG.info("--- Database row ---");
-                for (int i = 0; i < colCount; i++) {
-                    LOG.info(metaData.getColumnName(i + 1) + ": " + resultSet.getString(i + 1));
-                    if (map.get(metaData.getColumnName(i + 1)) != null) {
-                        map.remove(metaData.getColumnName(i + 1));
-                    }
-                    map.put(metaData.getColumnName(i + 1), resultSet.getString(i + 1));
-                }
-            }
-            return map;
-
-        } catch (ClassNotFoundException cnfe) {
-            throw new RuntimeException(ERROR_EXECUTING_QUERY + "Driver not found: " + cnfe.getMessage());
-        } catch (Exception sqle) {
-            throw new RuntimeException(ERROR_EXECUTING_QUERY + sqle.getMessage());
-        } finally {
-            if (resultSet != null) {
-                try {
-                    resultSet.close();
-                } catch (SQLException sqle) {
-                    throw new RuntimeException(ERROR_EXECUTING_QUERY + sqle.getMessage());
-                }
-            }
-            if (connection != null) {
-                try {
-                    connection.close();
-                } catch (SQLException sqle) {
-                    throw new RuntimeException(ERROR_EXECUTING_QUERY + sqle.getMessage());
-                }
-            }
+        } catch (SQLException sqle) {
+            throw new RuntimeException(ERROR_EXECUTING_QUERY + sqle.getMessage(), sqle);
         }
     }
 
@@ -176,78 +143,50 @@ public class DataBase {
 
         LOG.debug("Executing query");
 
-        Connection connection = null;
-        PreparedStatement prepStmt = null;
-        ResultSet resultSet;
-
         try {
-
             // Load class into memory
             Class.forName(driver); // throws ClassNotFoundException
+        } catch (ClassNotFoundException cnfe) {
+            if (flagThrowException) {
+                throw new RuntimeException(ERROR_EXECUTING_QUERY + "Driver not found: " + cnfe.getMessage(), cnfe);
+            } else {
+                return new ArrayList<>();
+            }
+        }
 
-            // Establish connection
-            connection = DriverManager.getConnection(url, user, password);
+        try (Connection connection = DriverManager.getConnection(url, user, password);
+             PreparedStatement prepStmt = prepareQuery(connection, query, args)) {
 
-            // Prepared statement
-            prepStmt = prepareQuery(connection, query, args);
-
-            // Execute
             List<Map<String, String>> results = new ArrayList<>();
 
             if (StringUtils.startsWithIgnoreCase(query, "update")) {
                 prepStmt.executeUpdate();
                 connection.commit();
             } else if (StringUtils.startsWithIgnoreCase(query, "select")) {
-                resultSet = prepStmt.executeQuery();
+                try (ResultSet resultSet = prepStmt.executeQuery()) {
+                    ResultSetMetaData metaData = resultSet.getMetaData();
+                    int colCount = metaData.getColumnCount();
 
-                if (resultSet == null) {
-                    LOG.info("The query does not return data.");
-                    return results;
-                }
-
-                ResultSetMetaData metaData = resultSet.getMetaData();
-                int colCount = metaData.getColumnCount();
-
-                while (resultSet.next()) {
-
-                    Map<String, String> row = new HashMap<>();
-
-                    LOG.info("--- Database row ---");
-                    for (int i = 0; i < colCount; i++) {
-                        LOG.info(metaData.getColumnName(i + 1) + ": " + resultSet.getString(i + 1));
-                        if (row.get(metaData.getColumnName(i + 1)) != null) {
-                            row.remove(metaData.getColumnName(i + 1));
+                    while (resultSet.next()) {
+                        Map<String, String> row = new HashMap<>();
+                        LOG.info("--- Database row ---");
+                        for (int i = 0; i < colCount; i++) {
+                            LOG.info("{}: {}", metaData.getColumnName(i + 1), resultSet.getString(i + 1));
+                            row.put(metaData.getColumnName(i + 1), resultSet.getString(i + 1));
                         }
-                        row.put(metaData.getColumnName(i + 1), resultSet.getString(i + 1));
+                        results.add(row);
                     }
-                    results.add(row);
                 }
             }
 
-            LOG.debug("Query executed successfully! [time: " + (System.currentTimeMillis() - startTime) + " ms]");
-
+            LOG.debug("Query executed successfully! [time: {} ms]", System.currentTimeMillis() - startTime);
             return results;
 
-        } catch (ClassNotFoundException cnfe) {
+        } catch (SQLException sqle) {
             if (flagThrowException) {
-                throw new RuntimeException(ERROR_EXECUTING_QUERY + "Driver not found: " + cnfe.getMessage());
+                throw new RuntimeException(ERROR_EXECUTING_QUERY + sqle.getMessage(), sqle);
             } else {
                 return new ArrayList<>();
-            }
-        } catch (Exception sqle) {
-            if (flagThrowException) {
-                throw new RuntimeException(ERROR_EXECUTING_QUERY + sqle.getMessage());
-            } else {
-                return new ArrayList<>();
-            }
-        } finally {
-            if (connection != null) {
-                try {
-                    prepStmt.close();
-                    connection.close();
-                } catch (SQLException sqle) {
-                    throw new RuntimeException(ERROR_EXECUTING_QUERY + sqle.getMessage());
-                }
             }
         }
     }

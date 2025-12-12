@@ -24,9 +24,8 @@ package io.zahori.framework.utils.video;
  */
 
 import io.appium.java_client.ios.IOSDriver;
-import io.appium.java_client.ios.options.XCUITestOptions;
+import io.appium.java_client.ios.IOSStartScreenRecordingOptions;
 import io.appium.java_client.screenrecording.CanRecordScreen;
-import io.appium.java_client.screenrecording.ScreenRecordingUploadOptions;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -80,7 +79,6 @@ public class IOSScreenRecorder implements EnterpriseScreenRecorder {
     private static final int MAX_DURATION_SECONDS = 1800; // 30 minutes (Appium default max)
     private static final int DEFAULT_DURATION_SECONDS = 1800;
     private static final String VIDEO_EXTENSION = ".mp4";
-    private static final String DEFAULT_VIDEO_TYPE = "h264"; // Better compatibility than mjpeg
 
     // State (thread-safe)
     private final AtomicBoolean recording = new AtomicBoolean(false);
@@ -155,9 +153,9 @@ public class IOSScreenRecorder implements EnterpriseScreenRecorder {
             CanRecordScreen recordableDriver = (CanRecordScreen) driver;
 
             // Start recording with iOS-specific options
-            // Using XCUITest options for iOS
+            // Using IOSStartScreenRecordingOptions for iOS (JDK 17+ compatible)
             recordableDriver.startRecordingScreen(
-                new io.appium.java_client.screenrecording.BaseStartScreenRecordingOptions<>() {}
+                new IOSStartScreenRecordingOptions()
                     .withTimeLimit(Duration.ofSeconds(maxDurationSeconds))
             );
 

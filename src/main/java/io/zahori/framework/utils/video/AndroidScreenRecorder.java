@@ -444,7 +444,7 @@ public class AndroidScreenRecorder implements EnterpriseScreenRecorder {
      */
     private String readProcessOutput(Process process) {
         try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream()))) {
+                new InputStreamReader(process.getInputStream(), java.nio.charset.StandardCharsets.UTF_8))) {
             return reader.lines().collect(Collectors.joining("\n"));
         } catch (IOException e) {
             return "";

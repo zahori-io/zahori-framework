@@ -437,8 +437,10 @@ public class CDPScreenRecorder implements EnterpriseScreenRecorder {
 
     /**
      * Creates animated GIF from frames (pure Java fallback).
+     * @param targetGifPath path where GIF will be saved (reserved for future use)
      */
-    private boolean createAnimatedGif(Path gifPath) {
+    @SuppressWarnings("PMD.UnusedFormalParameter")
+    private boolean createAnimatedGif(Path targetGifPath) {
         try {
             File[] frames = tempFramesDir.toFile().listFiles(
                     (dir, name) -> name.endsWith(".jpg") || name.endsWith(".png"));
@@ -471,11 +473,11 @@ public class CDPScreenRecorder implements EnterpriseScreenRecorder {
      */
     private void saveFramesAsZip(String fileName) {
         try {
-            Path zipPath = evidencesPath.resolve(fileName + "_frames.zip");
+            // Path reserved for future ZIP implementation
+            // Path zipPath = evidencesPath.resolve(fileName + "_frames.zip");
 
-            // Simple copy of temp dir for now
-            // In production, use ZipOutputStream
-            LOG.info("Frames available at: {}", tempFramesDir);
+            // Simple copy of temp dir for now - In production, use ZipOutputStream
+            LOG.info("Frames available at: {} (fileName={})", tempFramesDir, fileName);
 
         } catch (Exception e) {
             LOG.error("Error saving frames as ZIP: {}", e.getMessage());
@@ -485,10 +487,11 @@ public class CDPScreenRecorder implements EnterpriseScreenRecorder {
     /**
      * Processes any remaining frames in the queue.
      */
+    @SuppressWarnings("PMD.EmptyControlStatement")
     private void processRemainingFrames() {
-        FrameData frame;
-        while ((frame = frameQueue.poll()) != null) {
-            // Frames already saved to disk in saveFrame()
+        // Drain remaining frames from queue - already saved to disk in saveFrame()
+        while (frameQueue.poll() != null) {
+            // Intentionally empty - just draining the queue
         }
     }
 

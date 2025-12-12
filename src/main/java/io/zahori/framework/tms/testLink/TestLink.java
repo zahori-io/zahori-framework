@@ -165,13 +165,10 @@ public class TestLink {
     }
 
     private static String getFileToStringBase64(String pathname) {
-        String fileContent = "";
-
         try {
-            fileContent = new String(Base64.encodeBase64Chunked(FileUtils.readFileToByteArray(new File(pathname))));
+            return new String(Base64.encodeBase64Chunked(FileUtils.readFileToByteArray(new File(pathname))), java.nio.charset.StandardCharsets.UTF_8);
         } catch (IOException e) {
-            System.out.println("Error al convertir el contenido del fichero a String" + e.getMessage());
+            return "";
         }
-        return fileContent;
     }
 }

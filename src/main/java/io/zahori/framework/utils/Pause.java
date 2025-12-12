@@ -86,16 +86,6 @@ public class Pause {
     }
 
     /**
-     * Pausa larga de 5 segundos.
-     *
-     * @deprecated Usar WebDriverWait con ExpectedConditions en su lugar.
-     */
-    @Deprecated(since = "0.2.26", forRemoval = false)
-    public static void longPause() {
-        sleep(Duration.ofMillis(TOOLONGSLEEPTIME));
-    }
-
-    /**
      * Pausa de N segundos.
      *
      * @param seconds segundos a esperar

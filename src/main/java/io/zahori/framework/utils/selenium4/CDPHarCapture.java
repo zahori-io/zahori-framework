@@ -26,8 +26,10 @@ package io.zahori.framework.utils.selenium4;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.File;
-import java.io.FileWriter;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -186,23 +188,7 @@ public class CDPHarCapture {
 
             // Enable network domain via CDP command (version-agnostic)
             ChromiumDriver chromiumDriver = (ChromiumDriver) driver;
-            chromiumDriver.executeCdpCommand("Network.enable", new HashMap<>());
-
-            // Apply extra headers if configured
-            if (!extraHeaders.isEmpty()) {
-                Map<String, Object> params = new HashMap<>();
-                params.put("headers", extraHeaders);
-                chromiumDriver.executeCdpCommand("Network.setExtraHTTPHeaders", params);
-                LOG.info("Extra HTTP headers configured: {}", extraHeaders.keySet());
-            }
-
-            // Apply URL blocking if configured
-            if (!blockedUrls.isEmpty()) {
-                Map<String, Object> params = new HashMap<>();
-                params.put("urls", blockedUrls);
-                chromiumDriver.executeCdpCommand("Network.setBlockedURLs", params);
-                LOG.info("URL blocking configured: {} patterns", blockedUrls.size());
-            }
+            enableNetworkCapture(chromiumDriver);
 
             // Enable performance logging for network event capture
             setupNetworkListeners(chromiumDriver);
@@ -233,31 +219,37 @@ public class CDPHarCapture {
 
         try {
             ChromiumDriver chromiumDriver = (ChromiumDriver) driver;
-
-            // Enable network domain
-            chromiumDriver.executeCdpCommand("Network.enable", new HashMap<>());
-
-            // Apply extra headers if configured
-            if (!extraHeaders.isEmpty()) {
-                Map<String, Object> params = new HashMap<>();
-                params.put("headers", extraHeaders);
-                chromiumDriver.executeCdpCommand("Network.setExtraHTTPHeaders", params);
-                LOG.info("Extra HTTP headers configured: {}", extraHeaders.keySet());
-            }
-
-            // Apply URL blocking if configured
-            if (!blockedUrls.isEmpty()) {
-                Map<String, Object> params = new HashMap<>();
-                params.put("urls", blockedUrls);
-                chromiumDriver.executeCdpCommand("Network.setBlockedURLs", params);
-                LOG.info("URL blocking configured: {} patterns", blockedUrls.size());
-            }
+            enableNetworkCapture(chromiumDriver);
 
             capturing = true;
             LOG.info("Simplified HAR capture started for: {}", pageName);
 
         } catch (Exception e) {
             LOG.error("Error starting simplified HAR capture: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Enables network capture with configured headers and URL blocking.
+     */
+    private void enableNetworkCapture(ChromiumDriver chromiumDriver) {
+        // Enable network domain
+        chromiumDriver.executeCdpCommand("Network.enable", new HashMap<>());
+
+        // Apply extra headers if configured
+        if (!extraHeaders.isEmpty()) {
+            Map<String, Object> params = new HashMap<>();
+            params.put("headers", extraHeaders);
+            chromiumDriver.executeCdpCommand("Network.setExtraHTTPHeaders", params);
+            LOG.info("Extra HTTP headers configured: {}", extraHeaders.keySet());
+        }
+
+        // Apply URL blocking if configured
+        if (!blockedUrls.isEmpty()) {
+            Map<String, Object> params = new HashMap<>();
+            params.put("urls", blockedUrls);
+            chromiumDriver.executeCdpCommand("Network.setBlockedURLs", params);
+            LOG.info("URL blocking configured: {} patterns", blockedUrls.size());
         }
     }
 
@@ -310,9 +302,8 @@ public class CDPHarCapture {
     @SuppressWarnings("unchecked")
     private void captureFromPerformanceLogs(ChromiumDriver chromiumDriver) {
         try {
-            // Get network entries via CDP
-            Map<String, Object> result = chromiumDriver.executeCdpCommand(
-                    "Performance.getMetrics", new HashMap<>());
+            // Get network entries via CDP (response reserved for future metric processing)
+            chromiumDriver.executeCdpCommand("Performance.getMetrics", new HashMap<>());
 
             // Also try to get entries from Log domain
             try {
@@ -508,7 +499,8 @@ public class CDPHarCapture {
         }
 
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        try (FileWriter writer = new FileWriter(file)) {
+        try (OutputStreamWriter writer = new OutputStreamWriter(
+                new FileOutputStream(file), StandardCharsets.UTF_8)) {
             gson.toJson(har, writer);
             LOG.info("HAR file written: {} ({} bytes)", file.getAbsolutePath(), file.length());
         }

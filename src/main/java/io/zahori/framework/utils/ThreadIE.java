@@ -111,6 +111,7 @@ public class ThreadIE extends Thread {
         }
     }
 
+    @SuppressWarnings("PMD.AvoidThreadGroup") // IE legacy - ThreadGroup required for thread enumeration
     private boolean isExistingNextThread() {
         ThreadGroup group = this.getThreadGroup().getParent();
         Thread[] threadsList = new Thread[group.activeCount()];

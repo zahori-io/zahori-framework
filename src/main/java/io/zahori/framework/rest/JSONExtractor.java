@@ -76,7 +76,11 @@ public class JSONExtractor {
     public static boolean getBooleanFromJson(JSONObject json, String path) {
         String[] pathElements = path.split("\\.");
         JSONObject jsonTemp = getSomethingFromJson(json, path);
-        return pathElements.length == 0 || jsonTemp == null ? null : (boolean) jsonTemp.get(pathElements[pathElements.length - 1]);
+        if (pathElements.length == 0 || jsonTemp == null) {
+            return false;
+        }
+        Object value = jsonTemp.get(pathElements[pathElements.length - 1]);
+        return value != null && (boolean) value;
     }
 
     private static JSONObject getSomethingFromJson(JSONObject json, String path) {

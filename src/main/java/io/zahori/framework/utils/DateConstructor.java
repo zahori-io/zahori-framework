@@ -56,6 +56,7 @@ public class DateConstructor {
     private static final boolean[] FORMAT_Locale = { false, false, false, false, false, true };
     private static final Locale[] LOCALES = { new Locale("en", "UK"), new Locale("es", "ES") };
 
+    @SuppressWarnings("PMD.EmptyCatchBlock") // Expected - trying multiple date formats until one works
     public static Date formatDate(String fecha, String locale) {
         Date fechaFormated = null;
         if (!fecha.isEmpty()) {
@@ -67,6 +68,7 @@ public class DateConstructor {
                     formatoFecha.setLenient(false);
                     fechaFormated = formatoFecha.parse(fecha);
                 } catch (ParseException e) {
+                    // Intentionally empty - continue trying other formats
                 }
             }
         }
@@ -107,12 +109,7 @@ public class DateConstructor {
     public static boolean compare(String fecha1, String fecha2, String locale) {
         Date fechaFormated1 = DateConstructor.formatDate(fecha1, locale);
         Date fechaFormated2 = DateConstructor.formatDate(fecha2, locale);
-        boolean control = false;
-        if ((fechaFormated1 != null) && (fechaFormated2 != null) && fechaFormated1.equals(fechaFormated2)) {
-            control = true;
-        }
-
-        return control;
+        return (fechaFormated1 != null) && fechaFormated1.equals(fechaFormated2);
     }
 
     public static String getDayNow() {
@@ -240,7 +237,7 @@ public class DateConstructor {
     }
 
     public static String nowWithDefaultFormat(String pattern, String numDays){
-        return LocalDate.now().plusDays(Long.valueOf(numDays)).format(DateTimeFormatter.ofPattern(pattern));
+        return LocalDate.now().plusDays(Long.parseLong(numDays)).format(DateTimeFormatter.ofPattern(pattern));
     }
 
 }

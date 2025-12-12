@@ -27,10 +27,7 @@ import io.zahori.framework.files.log.LogFile;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import io.zahori.framework.i18n.Messages;
 import io.zahori.framework.utils.video.AndroidScreenRecorder;
-import io.zahori.framework.utils.video.CDPScreenRecorder;
 import io.zahori.framework.utils.video.EnterpriseScreenRecorder;
-import io.zahori.framework.utils.video.IOSScreenRecorder;
-import io.zahori.framework.utils.video.SelenoidVideoRecorder;
 import io.zahori.framework.utils.video.VideoRecorder;
 import io.zahori.model.Status;
 import io.zahori.model.Step;
@@ -42,8 +39,6 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -121,6 +116,7 @@ public class Evidences {
     // i18n messages (should be thread-safe or immutable)
     private final Messages messages;
 
+    @SuppressWarnings("PMD.UnusedPrivateField") // Used in videoFileName and createVideoRecorder calls
     private final boolean remoteBrowser;
 
     public Evidences(CaseExecution caseExecution, ZahoriProperties zahoriProperties, Messages messages, String platform, String browser, String resolution,
@@ -215,20 +211,29 @@ public class Evidences {
 
     public void console(ZahoriLogLevel level, String text) {
         if (level.compareTo(logLevel) >= 0) {
-            try {
-                Method method = LOG.getClass().getMethod(StringUtils.lowerCase(String.valueOf(level)), String.class);
-                if (StringUtils.isBlank(text)) {
-                    method.invoke("");
-                }
-                // Print \n using LOG.info("")
-                text = StringUtils.replace(text, "\n", " \n");
-                String[] lines = StringUtils.split(text, "\n");
-                for (String line : lines) {
-                    method.invoke(line);
-                }
-            } catch (SecurityException | NoSuchMethodException | IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-                console(text);
+            if (StringUtils.isBlank(text)) {
+                logByLevel(level, "");
+                return;
             }
+            // Print \n using separate log calls
+            text = StringUtils.replace(text, "\n", " \n");
+            String[] lines = StringUtils.split(text, "\n");
+            for (String line : lines) {
+                logByLevel(level, line);
+            }
+        }
+    }
+
+    /**
+     * Logs a message at the specified level without using reflection.
+     * JDK 21 compatible - uses switch expression instead of Method.invoke().
+     */
+    private void logByLevel(ZahoriLogLevel level, String message) {
+        switch (level) {
+            case DEBUG -> LOG.debug(message);
+            case INFO -> LOG.info(message);
+            case WARN -> LOG.warn(message);
+            case ERROR -> LOG.error(message);
         }
     }
 

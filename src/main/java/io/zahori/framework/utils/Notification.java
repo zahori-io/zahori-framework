@@ -192,7 +192,7 @@ public class Notification {
 
         // Constructor
         DataModel(List<Map<String, String>> data) {
-            if (data.isEmpty() || (data == null)) {
+            if ((data == null) || data.isEmpty()) {
                 this.dataTable = new Object[0][0];
             } else {
                 this.dataTable = new Object[data.size()][data.get(0).size()];
