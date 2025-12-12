@@ -28,6 +28,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.Dimension;
 import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
@@ -131,38 +132,34 @@ public abstract class AbstractDriver implements Driver {
      * navegador.
      */
     private void setZahoriPropertiesBrowserOptions(AbstractDriverOptions<?> options) {
+        ZahoriProperties props = new ZahoriProperties();
 
         if (options instanceof ChromeOptions chromeOptions) {
-            Map<String, String> extraPreferences = new ZahoriProperties().getBrowserPreferencesToBeAdded("chrome");
-            for (String extraPrefKey : extraPreferences.keySet()) {
-                String extraPrefValue = extraPreferences.get(extraPrefKey);
-                String argument = StringUtils.isEmpty(extraPrefValue) ? extraPrefKey : extraPrefKey + "=" + extraPrefValue;
-                chromeOptions.addArguments(argument);
-            }
+            addChromiumArguments(chromeOptions::addArguments, props.getBrowserPreferencesToBeAdded("chrome"));
+        } else if (options instanceof EdgeOptions edgeOptions) {
+            addChromiumArguments(edgeOptions::addArguments, props.getBrowserPreferencesToBeAdded("edge"));
+        } else if (options instanceof FirefoxOptions firefoxOptions) {
+            addFirefoxPreferences(firefoxOptions, props.getBrowserPreferencesToBeAdded("firefox"));
         }
+    }
 
-        if (options instanceof EdgeOptions edgeOptions) {
-            Map<String, String> extraPreferences = new ZahoriProperties().getBrowserPreferencesToBeAdded("edge");
-            for (String extraPrefKey : extraPreferences.keySet()) {
-                String extraPrefValue = extraPreferences.get(extraPrefKey);
-                String argument = StringUtils.isEmpty(extraPrefValue) ? extraPrefKey : extraPrefKey + "=" + extraPrefValue;
-                edgeOptions.addArguments(argument);
-            }
-        }
+    private void addChromiumArguments(java.util.function.Consumer<String> addArgument, Map<String, String> preferences) {
+        preferences.forEach((key, value) -> {
+            String argument = StringUtils.isEmpty(value) ? key : key + "=" + value;
+            addArgument.accept(argument);
+        });
+    }
 
-        if (options instanceof FirefoxOptions firefoxOptions) {
-            Map<String, String> extraPreferences = new ZahoriProperties().getBrowserPreferencesToBeAdded("firefox");
-            for (String extraPrefKey : extraPreferences.keySet()) {
-                String extraPrefValue = extraPreferences.get(extraPrefKey);
-                if (isBoolean(extraPreferences.get(extraPrefKey))) {
-                    firefoxOptions.addPreference(extraPrefKey, Boolean.valueOf(extraPrefValue));
-                } else if (isNumeric(extraPrefValue)) {
-                    firefoxOptions.addPreference(extraPrefKey, Integer.valueOf(extraPrefValue));
-                } else {
-                    firefoxOptions.addPreference(extraPrefKey, extraPrefValue);
-                }
+    private void addFirefoxPreferences(FirefoxOptions options, Map<String, String> preferences) {
+        preferences.forEach((key, value) -> {
+            if (isBoolean(value)) {
+                options.addPreference(key, Boolean.valueOf(value));
+            } else if (isNumeric(value)) {
+                options.addPreference(key, Integer.valueOf(value));
+            } else {
+                options.addPreference(key, value);
             }
-        }
+        });
     }
 
     /**
@@ -174,6 +171,29 @@ public abstract class AbstractDriver implements Driver {
      */
     protected void configureWebDriver(WebDriver webDriver, Browsers browsers) {
         ((RemoteWebDriver) webDriver).setFileDetector(new LocalFileDetector());
+    }
+
+    /**
+     * Configura el tamano de la ventana del navegador.
+     *
+     * @param driver El WebDriver
+     * @param browsers La configuracion del navegador
+     */
+    protected void resizeWindow(WebDriver driver, Browsers browsers) {
+        String resolution = browsers.getScreenResolution();
+        if (StringUtils.isNotBlank(resolution) && resolution.contains("x")) {
+            try {
+                int width = Integer.parseInt(resolution.split("x")[0]);
+                int height = Integer.parseInt(resolution.split("x")[1]);
+                driver.manage().window().setSize(new Dimension(width, height));
+                LOG.debug("Ventana configurada: {}x{}", width, height);
+            } catch (NumberFormatException e) {
+                LOG.warn("Resolucion invalida '{}', maximizando ventana", resolution);
+                driver.manage().window().maximize();
+            }
+        } else {
+            driver.manage().window().maximize();
+        }
     }
 
     /**

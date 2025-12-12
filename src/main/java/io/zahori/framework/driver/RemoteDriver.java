@@ -34,7 +34,6 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
@@ -127,29 +126,8 @@ public class RemoteDriver extends AbstractDriver {
 
         // Configuracion para navegadores web remotos
         ((RemoteWebDriver) webDriver).setFileDetector(new LocalFileDetector());
-        configureWindowSize(webDriver, browsers);
-    }
-
-    /**
-     * Configura el tamano de la ventana del navegador.
-     */
-    private void configureWindowSize(WebDriver driver, Browsers browsers) {
-        driver.manage().window().setPosition(new Point(0, 0));
-
-        String resolution = browsers.getScreenResolution();
-        if (StringUtils.isNotBlank(resolution) && resolution.contains("x")) {
-            try {
-                int width = Integer.parseInt(resolution.split("x")[0]);
-                int height = Integer.parseInt(resolution.split("x")[1]);
-                driver.manage().window().setSize(new Dimension(width, height));
-                LOG.debug("Ventana configurada: {}x{}", width, height);
-            } catch (NumberFormatException e) {
-                LOG.warn("Resolucion invalida '{}', maximizando ventana", resolution);
-                driver.manage().window().maximize();
-            }
-        } else {
-            driver.manage().window().maximize();
-        }
+        webDriver.manage().window().setPosition(new Point(0, 0));
+        resizeWindow(webDriver, browsers);
     }
 
     @Override
