@@ -64,7 +64,7 @@ public class GetCSVtoObject {
             InputStream resourceAsStream = GetCSVtoObject.class.getClassLoader()
                     .getResourceAsStream(FilenameUtils.normalize(ruta));
 
-            in = new InputStreamReader(new BOMInputStream(resourceAsStream), ENCODING);
+            in = new InputStreamReader(BOMInputStream.builder().setInputStream(resourceAsStream).get(), ENCODING);
 
             parser = new CSVParser(in, CSVFormat.Builder.create().setDelimiter(SEPARADOR).build());
 
@@ -95,7 +95,7 @@ public class GetCSVtoObject {
             InputStream resourceAsStream = GetCSVtoObject.class.getClassLoader()
                     .getResourceAsStream(FilenameUtils.normalize(ruta));
 
-            in = new InputStreamReader(new BOMInputStream(resourceAsStream), ENCODING);
+            in = new InputStreamReader(BOMInputStream.builder().setInputStream(resourceAsStream).get(), ENCODING);
 
             parser = new CSVParser(in, CSVFormat.Builder.create().setDelimiter(SEPARADOR).build());
 

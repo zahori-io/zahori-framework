@@ -55,6 +55,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -331,7 +332,7 @@ public class TestContext {
                 failTest(errorMessage);
             } else {
                 logWarn(errorMessage);
-                Pause.pause(1);
+                Pause.sleep(Duration.ofSeconds(1));
                 stopRemoteTunnel();
                 startRemoteTunnel();
             }
@@ -1142,8 +1143,8 @@ public class TestContext {
         int switchRetries = 0;
         while (StringUtils.contains(context, "NATIVE") && switchRetries <= timeoutFindElement) {
             switchRetries++;
-            Pause.pause(1);
-            System.out.println("Waiting 1 second to find a webview...");
+            Pause.sleep(Duration.ofSeconds(1));
+            logDebug("Waiting 1 second to find a webview...");
 
             switchToMobileWebContext(contextName);
             context = getCurrentContext();
@@ -1270,7 +1271,7 @@ public class TestContext {
                 // logInfo("getting page source...");
                 sourceCode = driver.getPageSource();
             } catch (Exception e) {
-                Pause.pause(1);
+                Pause.sleep(Duration.ofSeconds(1));
             }
         }
         // logInfo("page source -> {} ", sourceCode);

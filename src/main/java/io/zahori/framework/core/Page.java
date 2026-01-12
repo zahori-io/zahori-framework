@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -128,7 +129,7 @@ public class Page implements Serializable {
                     return true;
                 }
             }
-            Pause.pause(1);
+            Pause.sleep(Duration.ofSeconds(1));
             secondsWaiting++;
         }
 
@@ -137,7 +138,7 @@ public class Page implements Serializable {
     }
 
     public int numberOfModalWindowsOpen(int waitSeconds) {
-        Pause.pause(waitSeconds);
+        Pause.sleep(Duration.ofSeconds(waitSeconds));
         Set<String> modalWindows = this.driver.getWindowHandles();
         return modalWindows.size() - 1;
     }
@@ -167,7 +168,7 @@ public class Page implements Serializable {
                     return;
                 }
             }
-            Pause.pause(1);
+            Pause.sleep(Duration.ofSeconds(1));
             secondsWaiting++;
         }
 
@@ -189,7 +190,7 @@ public class Page implements Serializable {
                     }
                 }
             }
-            Pause.pause(1);
+            Pause.sleep(Duration.ofSeconds(1));
             secondsWaiting++;
         }
 

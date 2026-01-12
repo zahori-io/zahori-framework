@@ -23,6 +23,7 @@ package io.zahori.framework.utils.selenium4;
  * #L%
  */
 
+import io.zahori.framework.utils.selenium4.BiDiNetworkUtils;
 import io.zahori.framework.utils.selenium4.BiDiNetworkUtils.CapturedRequest;
 import io.zahori.framework.utils.selenium4.BiDiNetworkUtils.CapturedResponse;
 import org.junit.jupiter.api.BeforeEach;

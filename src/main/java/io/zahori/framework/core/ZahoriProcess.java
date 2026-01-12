@@ -90,13 +90,11 @@ public abstract class ZahoriProcess extends BaseProcess {
             caseExecution = super.runProcess(caseExecution, processRegistration, getServerUrl(), remote, selenoidUrl);
             return new ResponseEntity<>(caseExecution, HttpStatus.OK);
         } catch (Exception e) {
-            e.printStackTrace();
-            LOG.error(e.getMessage());
+            LOG.error("Error running process: {}", e.getMessage(), e);
             caseExecution.setNotes(e.getMessage());
             return new ResponseEntity<>(caseExecution, HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Error e) {
-            e.printStackTrace();
-            LOG.error(e.getMessage());
+            LOG.error("Fatal error running process: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
             caseExecution.setNotes(e.getClass().getSimpleName() + ": " + e.getMessage());
             return new ResponseEntity<>(caseExecution, HttpStatus.INTERNAL_SERVER_ERROR);
         }

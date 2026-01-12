@@ -34,14 +34,18 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import javax.activation.FileTypeMap;
+import jakarta.activation.FileTypeMap;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 
 public class TestLink {
+
+    private static final Logger LOG = LogManager.getLogger(TestLink.class);
 
     private TestLinkAPI api;
     private String projectName;
@@ -116,12 +120,11 @@ public class TestLink {
     }
 
     private URL getTestlinkURL(String url) {
-
         URL testlinkURL = null;
         try {
             testlinkURL = new URL(url);
         } catch (MalformedURLException mue) {
-            mue.printStackTrace(System.err);
+            LOG.error("Invalid TestLink URL: {}", url, mue);
         }
         return testlinkURL;
     }

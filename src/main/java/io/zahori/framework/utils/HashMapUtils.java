@@ -41,6 +41,14 @@ public class HashMapUtils {
         this.map = paramMap;
     }
 
+    /**
+     * Obtiene un valor del mapa usando notacion de punto para acceso anidado.
+     * Ejemplo: "level1.level2.key" accede a map.get("level1").get("level2").get("key")
+     *
+     * @param string clave con notacion de punto
+     * @return valor encontrado o null
+     */
+    @SuppressWarnings("unchecked") // Safe: estructura conocida de Map<String, Object> anidados
     public Object getValue(String string) {
         String[] levels = string.split(CHAR_SPLIT);
 
@@ -50,11 +58,18 @@ public class HashMapUtils {
 
             int i = 1;
             while (i < (levels.length - 1)) {
-                object = ((HashMap<String, Object>) object).get(levels[i]);
+                if (object instanceof Map) {
+                    object = ((Map<String, Object>) object).get(levels[i]);
+                } else {
+                    return null;
+                }
                 i++;
             }
 
-            return ((HashMap<String, Object>) object).get(levels[i]);
+            if (object instanceof Map) {
+                return ((Map<String, Object>) object).get(levels[i]);
+            }
+            return null;
 
         } else {
             if (levels.length == 1) {

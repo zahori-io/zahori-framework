@@ -47,13 +47,11 @@ import org.openqa.selenium.logging.LogType;
  * Ejemplo de uso:
  * <pre>
  * // Capturar todos los logs de consola
- * BrowserLogCapture.startCapturing(driver);
+ * BrowserLogCapture logCapture = new BrowserLogCapture(driver);
+ * logCapture.startCapturing();
  * // ... ejecutar acciones ...
- * List<String> logs = BrowserLogCapture.getLogs(driver);
- * BrowserLogCapture.stopCapturing(driver);
- *
- * // Listener en tiempo real
- * BrowserLogCapture.onConsoleLog(driver, log -> System.out.println("JS: " + log));
+ * List&lt;String&gt; logs = logCapture.getLogs();
+ * logCapture.stopCapturing();
  * </pre>
  *
  * Navegadores soportados:
@@ -66,11 +64,24 @@ public final class BrowserLogCapture {
     private static final Logger LOG = LogManager.getLogger(BrowserLogCapture.class);
 
     // Almacen de logs capturados por driver
-    private static final List<String> capturedLogs = Collections.synchronizedList(new ArrayList<>());
-    private static LogInspector activeLogInspector;
+    private final List<String> capturedLogs = Collections.synchronizedList(new ArrayList<>());
+    private LogInspector activeLogInspector;
+    private final WebDriver driver;
 
-    private BrowserLogCapture() {
-        // Utility class
+    /**
+     * Crea una nueva instancia de BrowserLogCapture.
+     *
+     * @param driver WebDriver a monitorizar
+     */
+    public BrowserLogCapture(WebDriver driver) {
+        this.driver = driver;
+    }
+
+    /**
+     * Constructor por defecto (requiere llamar a los metodos con driver).
+     */
+    public BrowserLogCapture() {
+        this.driver = null;
     }
 
     /**
@@ -87,10 +98,18 @@ public final class BrowserLogCapture {
     /**
      * Inicia la captura de logs de consola del navegador.
      * Los logs se almacenan internamente y pueden recuperarse con getLogs().
+     */
+    public void startCapturing() {
+        startCapturing(this.driver);
+    }
+
+    /**
+     * Inicia la captura de logs de consola del navegador.
+     * Los logs se almacenan internamente y pueden recuperarse con getLogs().
      *
      * @param driver WebDriver
      */
-    public static void startCapturing(WebDriver driver) {
+    public void startCapturing(WebDriver driver) {
         capturedLogs.clear();
 
         if (supportsBiDi(driver)) {
@@ -114,10 +133,17 @@ public final class BrowserLogCapture {
 
     /**
      * Detiene la captura de logs.
+     */
+    public void stopCapturing() {
+        stopCapturing(this.driver);
+    }
+
+    /**
+     * Detiene la captura de logs.
      *
      * @param driver WebDriver
      */
-    public static void stopCapturing(WebDriver driver) {
+    public void stopCapturing(WebDriver driver) {
         if (activeLogInspector != null) {
             try {
                 activeLogInspector.close();
@@ -132,10 +158,19 @@ public final class BrowserLogCapture {
     /**
      * Obtiene los logs capturados durante la sesion.
      *
+     * @return Lista de mensajes de log
+     */
+    public List<String> getLogs() {
+        return getLogs(this.driver);
+    }
+
+    /**
+     * Obtiene los logs capturados durante la sesion.
+     *
      * @param driver WebDriver
      * @return Lista de mensajes de log
      */
-    public static List<String> getLogs(WebDriver driver) {
+    public List<String> getLogs(WebDriver driver) {
         // Si hay logs capturados via BiDi, devolverlos
         if (!capturedLogs.isEmpty()) {
             return new ArrayList<>(capturedLogs);
@@ -148,11 +183,21 @@ public final class BrowserLogCapture {
     /**
      * Obtiene logs de un nivel especifico.
      *
+     * @param level nivel minimo de log
+     * @return Lista filtrada de logs
+     */
+    public List<String> getLogs(LogLevel level) {
+        return getLogs(this.driver, level);
+    }
+
+    /**
+     * Obtiene logs de un nivel especifico.
+     *
      * @param driver WebDriver
      * @param level nivel minimo de log
      * @return Lista filtrada de logs
      */
-    public static List<String> getLogs(WebDriver driver, LogLevel level) {
+    public List<String> getLogs(WebDriver driver, LogLevel level) {
         List<String> allLogs = getLogs(driver);
         if (level == LogLevel.ALL) {
             return allLogs;
@@ -166,11 +211,29 @@ public final class BrowserLogCapture {
     /**
      * Obtiene solo los errores JavaScript del navegador.
      *
+     * @return Lista de errores
+     */
+    public List<String> getErrors() {
+        return getErrors(this.driver);
+    }
+
+    /**
+     * Obtiene solo los errores JavaScript del navegador.
+     *
      * @param driver WebDriver
      * @return Lista de errores
      */
-    public static List<String> getErrors(WebDriver driver) {
+    public List<String> getErrors(WebDriver driver) {
         return getLogs(driver, LogLevel.ERROR);
+    }
+
+    /**
+     * Verifica si hay errores JavaScript en la consola.
+     *
+     * @return true si hay errores
+     */
+    public boolean hasJavaScriptErrors() {
+        return hasJavaScriptErrors(this.driver);
     }
 
     /**
@@ -179,8 +242,17 @@ public final class BrowserLogCapture {
      * @param driver WebDriver
      * @return true si hay errores
      */
-    public static boolean hasJavaScriptErrors(WebDriver driver) {
+    public boolean hasJavaScriptErrors(WebDriver driver) {
         return !getErrors(driver).isEmpty();
+    }
+
+    /**
+     * Registra un listener para logs de consola en tiempo real (BiDi).
+     *
+     * @param consumer callback que recibe cada mensaje de log
+     */
+    public void onConsoleLog(Consumer<String> consumer) {
+        onConsoleLog(this.driver, consumer);
     }
 
     /**
@@ -189,7 +261,7 @@ public final class BrowserLogCapture {
      * @param driver WebDriver
      * @param consumer callback que recibe cada mensaje de log
      */
-    public static void onConsoleLog(WebDriver driver, Consumer<String> consumer) {
+    public void onConsoleLog(WebDriver driver, Consumer<String> consumer) {
         if (!supportsBiDi(driver)) {
             LOG.warn("BiDi no soportado por este driver - listener no registrado");
             return;
@@ -212,10 +284,19 @@ public final class BrowserLogCapture {
     /**
      * Registra un listener solo para errores JavaScript (BiDi).
      *
+     * @param consumer callback que recibe cada error
+     */
+    public void onJavaScriptError(Consumer<String> consumer) {
+        onJavaScriptError(this.driver, consumer);
+    }
+
+    /**
+     * Registra un listener solo para errores JavaScript (BiDi).
+     *
      * @param driver WebDriver
      * @param consumer callback que recibe cada error
      */
-    public static void onJavaScriptError(WebDriver driver, Consumer<String> consumer) {
+    public void onJavaScriptError(WebDriver driver, Consumer<String> consumer) {
         if (!supportsBiDi(driver)) {
             LOG.warn("BiDi no soportado por este driver - listener no registrado");
             return;
@@ -237,8 +318,15 @@ public final class BrowserLogCapture {
     /**
      * Limpia los logs capturados.
      */
-    public static void clearLogs() {
+    public void clearLogs() {
         capturedLogs.clear();
+    }
+
+    /**
+     * Imprime todos los logs capturados al Logger.
+     */
+    public void printLogs() {
+        printLogs(this.driver);
     }
 
     /**
@@ -246,7 +334,7 @@ public final class BrowserLogCapture {
      *
      * @param driver WebDriver
      */
-    public static void printLogs(WebDriver driver) {
+    public void printLogs(WebDriver driver) {
         List<String> logs = getLogs(driver);
         if (logs.isEmpty()) {
             LOG.info("No hay logs de navegador capturados");
@@ -263,7 +351,7 @@ public final class BrowserLogCapture {
     /**
      * Obtiene logs via DevTools/LogType (metodo legacy para Chrome).
      */
-    private static List<String> getLogsViaDevTools(WebDriver driver) {
+    private List<String> getLogsViaDevTools(WebDriver driver) {
         List<String> logs = new ArrayList<>();
 
         try {
@@ -284,7 +372,7 @@ public final class BrowserLogCapture {
     /**
      * Verifica si el driver soporta WebDriver BiDi.
      */
-    private static boolean supportsBiDi(WebDriver driver) {
+    private boolean supportsBiDi(WebDriver driver) {
         // Firefox y Chrome/Edge modernos soportan BiDi
         return driver instanceof FirefoxDriver
                 || driver instanceof ChromeDriver
@@ -294,7 +382,7 @@ public final class BrowserLogCapture {
     /**
      * Verifica si un log coincide con el nivel especificado.
      */
-    private static boolean matchesLevel(String log, LogLevel level) {
+    private boolean matchesLevel(String log, LogLevel level) {
         String upperLog = log.toUpperCase();
         return switch (level) {
             case ERROR -> upperLog.contains("[ERROR]") || upperLog.contains("[SEVERE]");
@@ -303,5 +391,19 @@ public final class BrowserLogCapture {
             case DEBUG -> upperLog.contains("[DEBUG]") || upperLog.contains("[FINE]");
             case ALL -> true;
         };
+    }
+
+    // ==================== Static Factory Methods ====================
+
+    /**
+     * Metodo estatico para iniciar captura (compatibilidad hacia atras).
+     *
+     * @param driver WebDriver
+     * @return BrowserLogCapture iniciado
+     */
+    public static BrowserLogCapture start(WebDriver driver) {
+        BrowserLogCapture capture = new BrowserLogCapture(driver);
+        capture.startCapturing();
+        return capture;
     }
 }

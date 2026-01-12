@@ -23,6 +23,7 @@ package io.zahori.framework.utils.selenium4;
  * #L%
  */
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,8 +33,6 @@ import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.Pdf;
 import org.openqa.selenium.PrintsPage;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chromium.ChromiumDriver;
-import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.print.PageMargin;
 import org.openqa.selenium.print.PageSize;
 import org.openqa.selenium.print.PrintOptions;
@@ -99,9 +98,9 @@ public final class PrintToPDFUtils {
      *
      * @param driver WebDriver (Chrome, Edge o Firefox)
      * @param outputPath ruta del archivo PDF de salida
-     * @return Path del archivo generado
+     * @return File del archivo generado
      */
-    public static Path printToPDF(WebDriver driver, String outputPath) {
+    public static File printToPDF(WebDriver driver, String outputPath) {
         return printToPDF(driver, outputPath, createDefaultOptions());
     }
 
@@ -111,9 +110,9 @@ public final class PrintToPDFUtils {
      * @param driver WebDriver (Chrome, Edge o Firefox)
      * @param outputPath ruta del archivo PDF de salida
      * @param options opciones de impresion
-     * @return Path del archivo generado
+     * @return File del archivo generado
      */
-    public static Path printToPDF(WebDriver driver, String outputPath, PrintOptions options) {
+    public static File printToPDF(WebDriver driver, String outputPath, PrintOptions options) {
         if (!supportsPrint(driver)) {
             throw new UnsupportedOperationException("El driver no soporta PrintsPage: " + driver.getClass().getSimpleName());
         }
@@ -132,7 +131,7 @@ public final class PrintToPDFUtils {
 
             Files.write(path, pdfBytes);
             LOG.info("PDF generado: {} ({} bytes)", outputPath, pdfBytes.length);
-            return path;
+            return path.toFile();
         } catch (IOException e) {
             throw new RuntimeException("Error escribiendo PDF: " + outputPath, e);
         }

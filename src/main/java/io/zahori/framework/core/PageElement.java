@@ -219,7 +219,7 @@ public class PageElement {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds())));
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
             while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement)) {
-                Pause.pause();
+                Pause.sleep(Duration.ofMillis(Pause.LONGSLEEPTIME));
                 initWebElement();
             }
             webElement.clear();
@@ -710,7 +710,7 @@ public class PageElement {
         try {
             Chronometer chrono = new Chronometer();
             while (!isVisibleWithoutWait() && chrono.getElapsedSeconds() < maxSecondsWaiting) {
-                Pause.pauseMillis(500);
+                Pause.sleep(Duration.ofMillis(500));
             }
             return isVisibleWithoutWait();
         } catch (final Exception e) {
