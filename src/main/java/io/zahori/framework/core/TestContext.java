@@ -1111,7 +1111,9 @@ public class TestContext {
                 // For Webviews and browser contexts (CHROMIUM, WEBVIEW_org.mozilla.firefox, ...)
                 logInfo("switching to context: {}", context);
                 androidDriver.context(context);
-                return;
+                if (StringUtils.isNotBlank(getPageSource())) {
+                    return;
+                }
             }
         }
         logInfo("Webview not found: {}", contextName);
@@ -1136,7 +1138,9 @@ public class TestContext {
                 // For Webviews and Safari contexts
                 logInfo("switching to context: {}", context);
                 iOSDriver.context(context);
-                return;
+                if (StringUtils.isNotBlank(getPageSource())) {
+                    return;
+                }
             }
         }
         logInfo("Webview not found: {}", contextName);
