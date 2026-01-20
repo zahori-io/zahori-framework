@@ -34,10 +34,10 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.Credentials;
 import org.openqa.selenium.HasAuthentication;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.Proxy;
-import org.openqa.selenium.UsernameAndPassword;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 import org.openqa.selenium.remote.Augmenter;
@@ -49,6 +49,7 @@ import org.openqa.selenium.remote.http.ClientConfig;
 
 import java.net.URI;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Driver remoto para Selenium Grid, Selenoid, BrowserStack, etc.
@@ -170,7 +171,7 @@ public class RemoteDriver extends AbstractDriver {
         }
 
         // Obtener credenciales y predicado
-        UsernameAndPassword credentials = ProxyAuthConfig.getCredentials();
+        Supplier<Credentials> credentials = ProxyAuthConfig.getCredentials();
         Predicate<URI> uriPredicate = ProxyAuthConfig.getUriPredicate();
 
         if (credentials == null || uriPredicate == null) {
@@ -180,7 +181,7 @@ public class RemoteDriver extends AbstractDriver {
 
         // Registrar autenticación
         if (driver instanceof HasAuthentication hasAuth) {
-            hasAuth.register(uriPredicate, () -> credentials);
+            hasAuth.register(uriPredicate, credentials);
             LOG.info("Autenticación de proxy registrada para: {}", ProxyAuthConfig.getHost());
         } else {
             LOG.warn("Driver no soporta HasAuthentication. Tipo: {}. " +

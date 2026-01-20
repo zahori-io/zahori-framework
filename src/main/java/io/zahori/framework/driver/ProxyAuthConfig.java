@@ -28,10 +28,12 @@ import io.zahori.framework.security.ZahoriCipher;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.Credentials;
 import org.openqa.selenium.UsernameAndPassword;
 
 import java.net.URI;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Configuración centralizada para proxy HTTP (autenticado y no autenticado).
@@ -220,9 +222,11 @@ public final class ProxyAuthConfig {
      * Usado por HasAuthentication.register() para responder a desafíos
      * de autenticación del proxy.
      *
-     * @return credenciales de usuario y contraseña, o null si no hay autenticación
+     * Nota: UsernameAndPassword.of() devuelve Supplier&lt;Credentials&gt; en Selenium 4.x
+     *
+     * @return supplier de credenciales, o null si no hay autenticación
      */
-    public static UsernameAndPassword getCredentials() {
+    public static Supplier<Credentials> getCredentials() {
         ProxyAuthConfig config = getInstance();
         if (!config.isAuthenticationRequiredInternal()) {
             return null;

@@ -25,9 +25,9 @@ package io.zahori.framework.driver;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.Credentials;
 import org.openqa.selenium.HasAuthentication;
 import org.openqa.selenium.Proxy;
-import org.openqa.selenium.UsernameAndPassword;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -43,6 +43,7 @@ import org.openqa.selenium.safari.SafariOptions;
 
 import java.net.URI;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * Driver local usando Selenium Manager nativo (Selenium 4.6+).
@@ -124,7 +125,7 @@ public class LocalDriver extends AbstractDriver {
         }
 
         // Obtener credenciales y predicado
-        UsernameAndPassword credentials = ProxyAuthConfig.getCredentials();
+        Supplier<Credentials> credentials = ProxyAuthConfig.getCredentials();
         Predicate<URI> uriPredicate = ProxyAuthConfig.getUriPredicate();
 
         if (credentials == null || uriPredicate == null) {
@@ -135,7 +136,7 @@ public class LocalDriver extends AbstractDriver {
         // Verificar soporte de HasAuthentication
         if (driver instanceof HasAuthentication hasAuth) {
             try {
-                hasAuth.register(uriPredicate, () -> credentials);
+                hasAuth.register(uriPredicate, credentials);
                 LOG.info("Autenticación de proxy registrada para {} -> {}",
                          browserName, ProxyAuthConfig.getHost());
             } catch (Exception e) {
