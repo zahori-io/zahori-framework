@@ -34,26 +34,39 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.openqa.selenium.HasAuthentication;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.Proxy;
+import org.openqa.selenium.UsernameAndPassword;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.AbstractDriverOptions;
+import org.openqa.selenium.remote.Augmenter;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.HttpCommandExecutor;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.remote.http.ClientConfig;
 
+import java.net.URI;
+import java.util.function.Predicate;
+
 /**
  * Driver remoto para Selenium Grid, Selenoid, BrowserStack, etc.
  *
  * Usa RemoteWebDriver nativo de Selenium (sin WebDriverManager).
+ * Soporta autenticación de proxy HTTP 407 mediante Augmenter + HasAuthentication.
  *
  * Configuracion en zahori.properties:
  * - zahori.selenoid.enableVNC=true|false (default: true)
  * - zahori.selenoid.enableVideo=true|false (default: false)
  * - zahori.selenoid.enableLog=true|false (default: false)
  * - zahori.remote.timeout=3600 (segundos para creacion del driver)
+ * - zahori.test.execution.proxy.ip=host (opcional)
+ * - zahori.test.execution.proxy.port=8080 (opcional)
+ * - zahori.test.execution.proxy.user=user (opcional, para proxy autenticado)
+ * - zahori.test.execution.proxy.password=ENCRYPTED (opcional, cifrado con ZahoriCipher)
+ *
+ * @since 2.0.0 - Añadido soporte para proxy autenticado via Augmenter
  */
 public class RemoteDriver extends AbstractDriver {
 
@@ -91,6 +104,16 @@ public class RemoteDriver extends AbstractDriver {
 
     /**
      * Crea driver remoto usando RemoteWebDriver nativo de Selenium.
+     *
+     * ORDEN DE OPERACIONES CRÍTICO para evitar ClassCastException:
+     * 1. Crear rawDriver (RemoteWebDriver)
+     * 2. Configurar setFileDetector en rawDriver (ANTES de augment)
+     * 3. Aumentar el driver con Augmenter para BiDi capabilities
+     * 4. Registrar credenciales de proxy en driver aumentado (si es necesario)
+     *
+     * @param browsers configuración del navegador
+     * @param proxy configuración del proxy (puede ser null)
+     * @return WebDriver aumentado con soporte HasAuthentication
      */
     private WebDriver createRemoteWebDriver(Browsers browsers, Proxy proxy) {
         AbstractDriverOptions<?> options = getOptions(browsers, proxy);
@@ -105,7 +128,65 @@ public class RemoteDriver extends AbstractDriver {
 
         HttpCommandExecutor executor = new HttpCommandExecutor(clientConfig);
 
-        return new RemoteWebDriver(executor, options);
+        // PASO 1: Crear driver RAW
+        RemoteWebDriver rawDriver = new RemoteWebDriver(executor, options);
+        LOG.debug("RemoteWebDriver raw creado para sesion: {}", rawDriver.getSessionId());
+
+        // PASO 2: Configurar FileDetector en RAW driver (ANTES de augment)
+        // Esto evita ClassCastException al intentar cast del driver aumentado
+        rawDriver.setFileDetector(new LocalFileDetector());
+        LOG.debug("LocalFileDetector configurado en raw driver");
+
+        // PASO 3: Aumentar driver con capacidades BiDi
+        // Augmenter añade dinámicamente interfaces como HasAuthentication
+        WebDriver augmentedDriver = new Augmenter().augment(rawDriver);
+        LOG.debug("Driver aumentado con Augmenter. Tipo: {}", augmentedDriver.getClass().getName());
+
+        // PASO 4: Registrar autenticación de proxy (solo si está configurada)
+        registerProxyAuthentication(augmentedDriver);
+
+        return augmentedDriver;
+    }
+
+    /**
+     * Registra las credenciales de autenticación del proxy en el driver.
+     *
+     * Solo se registra si:
+     * - ProxyAuthConfig indica que hay autenticación requerida
+     * - El driver soporta HasAuthentication
+     *
+     * Usa HasAuthentication.register() para responder automáticamente
+     * a desafíos HTTP 407 (Proxy Authentication Required).
+     *
+     * @param driver driver aumentado con soporte HasAuthentication
+     */
+    private void registerProxyAuthentication(WebDriver driver) {
+        // Verificar si hay autenticación configurada
+        if (!ProxyAuthConfig.isAuthenticationRequired()) {
+            if (ProxyAuthConfig.isProxyEnabled()) {
+                LOG.debug("Proxy configurado sin autenticación");
+            }
+            return;
+        }
+
+        // Obtener credenciales y predicado
+        UsernameAndPassword credentials = ProxyAuthConfig.getCredentials();
+        Predicate<URI> uriPredicate = ProxyAuthConfig.getUriPredicate();
+
+        if (credentials == null || uriPredicate == null) {
+            LOG.warn("Credenciales de proxy incompletas, omitiendo registro de autenticación");
+            return;
+        }
+
+        // Registrar autenticación
+        if (driver instanceof HasAuthentication hasAuth) {
+            hasAuth.register(uriPredicate, () -> credentials);
+            LOG.info("Autenticación de proxy registrada para: {}", ProxyAuthConfig.getHost());
+        } else {
+            LOG.warn("Driver no soporta HasAuthentication. Tipo: {}. " +
+                     "La autenticación de proxy 407 no funcionará.",
+                     driver.getClass().getName());
+        }
     }
 
     /**
@@ -124,8 +205,9 @@ public class RemoteDriver extends AbstractDriver {
             return;
         }
 
-        // Configuracion para navegadores web remotos
-        ((RemoteWebDriver) webDriver).setFileDetector(new LocalFileDetector());
+        // NOTA: setFileDetector ya se llamó en createRemoteWebDriver
+        // antes del augment para evitar ClassCastException.
+        // Aquí solo configuramos posición y tamaño de ventana.
         webDriver.manage().window().setPosition(new Point(0, 0));
         resizeWindow(webDriver, browsers);
     }
