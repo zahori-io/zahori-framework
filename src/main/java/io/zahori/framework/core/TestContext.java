@@ -626,6 +626,10 @@ public class TestContext {
     public Browser getBrowser() {
         return browser;
     }
+    
+    public BrowserMobProxy getBrowserMobProxy() {
+        return browserMobProxy;
+    }
 
     public WebDriver getHostDriver() {
         return this.hostDriver;

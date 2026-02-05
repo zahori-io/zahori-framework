@@ -52,14 +52,15 @@ public class BrowserMobProxy {
     }
 
     public void start() {
-        // Add headers
-        if (zahoriProperties.isAddHeadersEnabled()) {
-            overwriteHeaders(zahoriProperties.getHeadersToBeAdded());
+        if (isStarted()) {
+            return;
         }
+
+        proxy.start(); // random port
 
         // Black list
         if (zahoriProperties.isBlackListEnabled()) {
-            addBlackLists(zahoriProperties.getBlackList());
+            addBlackListUrls(zahoriProperties.getBlackList());
         }
 
         // Set HAR capture types
@@ -67,21 +68,30 @@ public class BrowserMobProxy {
             setHarCaptureTypes();
         }
 
-        proxy.start(); // random port
-    }
-
-    public void stop() {
-        if (proxy != null) {
-            try {
-                proxy.stop();
-            } catch (Exception e) {
-                // TODO
-            }
+        // Add headers (después de iniciar el proxy para evitar problemas con SSL/TLS)
+        if (zahoriProperties.isAddHeadersEnabled()) {
+            addHeaders(zahoriProperties.getHeadersToBeAdded());
         }
     }
 
+    public void stop() {
+        if (!isStarted()) {
+            return;
+        }
+
+        try {
+            proxy.stop();
+        } catch (Exception e) {
+            // TODO
+        }
+    }
+
+    public boolean isStarted() {
+        return proxy != null && proxy.isStarted();
+    }
+
     public void startHarCapture(String tag) {
-        if (!zahoriProperties.isHarEnabled()) {
+        if (!isStarted() || !zahoriProperties.isHarEnabled()) {
             return;
         }
 
@@ -89,7 +99,7 @@ public class BrowserMobProxy {
     }
 
     public void stopHarCapture(File file) throws IOException {
-        if (!zahoriProperties.isHarEnabled()) {
+        if (!isStarted() || !zahoriProperties.isHarEnabled()) {
             return;
         }
 
@@ -109,14 +119,25 @@ public class BrowserMobProxy {
     }
 
     public int getPort() {
+        if (!isStarted()) {
+            return 0;
+        }
         return proxy.getPort();
     }
 
     public Har getHarLog() {
+        if (!isStarted()) {
+            return null;
+        }
+
         return proxy.getHar();
     }
 
     public void overwriteHeaders(Map<String, String> headers) {
+        if (!isStarted()) {
+            return;
+        }
+
         if (!headers.isEmpty()) {
             proxy.addRequestFilter((request, contents, messageInfo) -> {
                 for (Map.Entry<String, String> header : headers.entrySet()) {
@@ -127,25 +148,60 @@ public class BrowserMobProxy {
         }
     }
 
+    public void overwriteHeader(String headerName, String headerValue) {
+        if (!isStarted()) {
+            return;
+        }
+
+        proxy.addRequestFilter((request, contents, messageInfo) -> {
+            request.headers().set(headerName, headerValue);
+            return null; // importante: devolver null para continuar la cadena de filtros
+        });
+    }
+
     public void addHeaders(Map<String, String> headers) {
+        if (!isStarted()) {
+            return;
+        }
+
         proxy.addHeaders(headers);
     }
 
     public void addHeader(String headerName, String headerValue) {
+        if (!isStarted()) {
+            return;
+        }
+
         proxy.addHeader(headerName, headerValue);
     }
 
-    public void addBlackLists(Map<String, String> blackList) {
+    public void addBlackListUrl(String url) {
+        if (!isStarted()) {
+            return;
+        }
+
+        if (StringUtils.isNotBlank(url)) {
+            proxy.blacklistRequests(".*" + url + ".*", 200);
+        }
+    }
+
+    public void addBlackListUrls(Map<String, String> blackList) {
+        if (!isStarted()) {
+            return;
+        }
+
         if (!blackList.isEmpty()) {
             for (String url : blackList.values()) {
-                if (StringUtils.isNotBlank(url)) {
-                    proxy.blacklistRequests(".*" + url + ".*", 200);
-                }
+                addBlackListUrl(url);
             }
         }
     }
 
     public void setHarCaptureTypes() {
+        if (!isStarted()) {
+            return;
+        }
+
         // Request capture options
         if (zahoriProperties.isHarRequestHeadersEnabled()) {
             proxy.enableHarCaptureTypes(CaptureType.REQUEST_HEADERS);
@@ -198,6 +254,10 @@ public class BrowserMobProxy {
     }
 
     public Har filterHar(String urlFilter, String methodFilter, String contentTypeFilter) {
+        if (!isStarted()) {
+            return null;
+        }
+
         Set<String> allowedUrls = parseFilterValues(urlFilter);
         Set<String> allowedMethods = parseFilterValues(methodFilter);
         Set<String> allowedContentTypes = parseFilterValues(contentTypeFilter);
