@@ -85,7 +85,26 @@ public class ZahoriProperties {
     }
 
     public String getProperty(String propertyName) {
-        return StringUtils.trim(prop.getProperty(propertyName));
+        String propertyValue = prop.getProperty(propertyName);
+
+        if (StringUtils.isBlank(propertyValue)) {
+            return "";
+        }
+        String propertyValueTrimmed = propertyValue.trim();
+
+        // Verify if the value contains the syntax that indicates the value should be read from an environment variable: ${VAR_NAME}
+        if (propertyValueTrimmed.startsWith("${") && propertyValueTrimmed.endsWith("}")) {
+            String environmentVariableName = propertyValueTrimmed.substring(2, propertyValueTrimmed.length() - 1);
+
+            String environmentVariableValue = System.getenv(environmentVariableName);
+
+            if (StringUtils.isBlank(environmentVariableValue)) {
+                return "";
+            }
+            return environmentVariableValue;
+        }
+
+        return propertyValueTrimmed;
     }
 
     public String getIEDriverName() {
