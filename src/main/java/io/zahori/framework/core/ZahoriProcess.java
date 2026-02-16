@@ -111,6 +111,7 @@ public abstract class ZahoriProcess extends BaseProcess {
 
         // Register process in server
         ProcessRegistration processRegistration = new ProcessRegistration(name, clientId, teamId, procTypeId);
+        processRegistration.setRemote(remote);
         ResponseEntity<ProcessRegistration> processRegistrationResponse = new RestTemplate()
                 .postForEntity(baseUrl + BaseProcess.ZAHORI_SERVER_PROCESS_REGISTRATION_URL, processRegistration, ProcessRegistration.class);
 

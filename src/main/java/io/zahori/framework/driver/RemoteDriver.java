@@ -162,10 +162,10 @@ public class RemoteDriver extends AbstractDriver {
      * @param driver driver aumentado con soporte HasAuthentication
      */
     private void registerProxyAuthentication(WebDriver driver) {
-        // Verificar si hay autenticación configurada
-        if (!ProxyAuthConfig.isAuthenticationRequired()) {
-            if (ProxyAuthConfig.isProxyEnabled()) {
-                LOG.debug("Proxy configurado sin autenticación");
+        // Verificar si el proxy está habilitado para navegador y requiere autenticación
+        if (!ProxyAuthConfig.isProxyBrowserEnabled() || !ProxyAuthConfig.isAuthenticationRequired()) {
+            if (ProxyAuthConfig.isProxyBrowserEnabled()) {
+                LOG.debug("Proxy configurado sin autenticación para navegador");
             }
             return;
         }

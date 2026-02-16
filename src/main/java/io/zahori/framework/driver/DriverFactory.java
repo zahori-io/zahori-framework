@@ -81,9 +81,9 @@ public class DriverFactory implements AbstractFactory<WebDriver> {
      * @return proxy configurado o el original
      */
     private Proxy ensureProxyConfiguration(Proxy proxy) {
-        // Si no hay proxy configurado en zahori.properties, usar el proporcionado (o null)
-        if (!ProxyAuthConfig.isProxyEnabled()) {
-            LOG.debug("Proxy no configurado en zahori.properties");
+        // Si no hay proxy configurado o está deshabilitado para navegador, usar el proporcionado (o null)
+        if (!ProxyAuthConfig.isProxyBrowserEnabled()) {
+            LOG.debug("Proxy no configurado o deshabilitado para navegador");
             return proxy;
         }
 

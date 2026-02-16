@@ -494,6 +494,32 @@ public class ZahoriProperties {
         return getProperty("zahori.test.execution.proxy.password");
     }
 
+    /**
+     * Indica si se debe inyectar el proxy en el navegador Selenium.
+     * Por defecto true si hay proxy configurado.
+     * Configurar a false para desactivar proxy en navegador pero mantenerlo en HTTP clients.
+     *
+     * @return true si el proxy debe aplicarse al navegador
+     */
+    public boolean isProxyBrowserEnabled() {
+        String value = getProperty("zahori.test.execution.proxy.browser.enabled");
+        // Por defecto true si no está configurado (backward compatible)
+        return value == null || Boolean.parseBoolean(value);
+    }
+
+    /**
+     * Indica si se debe usar el proxy en clientes HTTP (Xray Cloud, etc.).
+     * Por defecto true si hay proxy configurado.
+     * Configurar a false para desactivar proxy en HTTP clients pero mantenerlo en navegador.
+     *
+     * @return true si el proxy debe aplicarse a HTTP clients
+     */
+    public boolean isProxyHttpClientEnabled() {
+        String value = getProperty("zahori.test.execution.proxy.httpclient.enabled");
+        // Por defecto true si no está configurado (backward compatible)
+        return value == null || Boolean.parseBoolean(value);
+    }
+
     public String getDownloadPath() {
         return getProperty("webdriver.downloadpath");
     }

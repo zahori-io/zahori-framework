@@ -3,7 +3,7 @@
 	
     <groupId>io.zahori</groupId>
     <artifactId>zahori-framework</artifactId>
-    <version>0.2.26_appium-SNAPSHOT</version>
+    <version>0.2.35-appium</version>
     <packaging>jar</packaging>
     <name>zahori-framework</name>
 
@@ -56,6 +56,8 @@
         <skip.unit.tests>true</skip.unit.tests>
 
         <!-- Selenium-Appium compatibility matrix: https://github.com/appium/java-client#add-appium-java-client-to-your-test-framework -->
+        <!-- Appium 10.0.0 requiere Selenium 4.35.0+ (LocationContext eliminado en 4.35.0) -->
+        <!-- Appium 10.0.0 ya NO usa LocationContext - compatible con Selenium 4.35+ -->
         <selenium.version>4.38.0</selenium.version>
         <appium.version>10.0.0</appium.version>
 
@@ -63,7 +65,7 @@
         <poi.version>5.3.0</poi.version>
         <jackson.version>2.18.2</jackson.version>
         <log4j.version>2.24.3</log4j.version>
-        <guava.version>33.4.0-jre</guava.version>
+        <guava.version>33.5.0-jre</guava.version>
         <byte-buddy.version>1.15.10</byte-buddy.version>
         <opentelemetry.version>1.45.0</opentelemetry.version>
         <httpclient5.version>5.4.1</httpclient5.version>
@@ -91,6 +93,18 @@
         <url>https://github.com/zahori-io/zahori-framework.git</url>
         <tag>v${project.version}</tag>
     </scm>
+
+    <!-- Central Portal uses central-publishing-maven-plugin, not maven-deploy-plugin -->
+    <!-- This dummy distributionManagement satisfies Maven validation but is not used -->
+    <!-- Real publishing is done by central-publishing-maven-plugin in release profile -->
+<!--     <distributionManagement>
+        <repository>
+            <id>central</id>
+            <name>Maven Central (via Central Publishing Plugin)</name>
+        
+            <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
+    </distributionManagement> -->
 
     <build>
         <plugins>
@@ -354,7 +368,8 @@
                 <version>${selenium.version}</version>
             </dependency>
 
-            <!-- Convergence fix: selenium-manager and selenium-os -->
+            <!-- Convergence fix: ALL Selenium modules to same version -->
+            <!-- Appium 10.0.0 brings Selenium 4.25.0 transitives - must override ALL -->
             <dependency>
                 <groupId>org.seleniumhq.selenium</groupId>
                 <artifactId>selenium-manager</artifactId>
@@ -363,6 +378,11 @@
             <dependency>
                 <groupId>org.seleniumhq.selenium</groupId>
                 <artifactId>selenium-os</artifactId>
+                <version>${selenium.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.seleniumhq.selenium</groupId>
+                <artifactId>selenium-json</artifactId>
                 <version>${selenium.version}</version>
             </dependency>
 
@@ -507,6 +527,34 @@
                         <groupId>log4j</groupId>
                         <artifactId>log4j</artifactId>
                     </exclusion>
+                    <!-- Convergence fix: use pdfbox-io 3.0.1 from pdfbox instead of 3.0.6 -->
+                    <exclusion>
+                        <groupId>org.apache.pdfbox</groupId>
+                        <artifactId>pdfbox-io</artifactId>
+                    </exclusion>
+                    <!-- Exclude commons-logging in favor of jcl-over-slf4j bridge -->
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <!-- Convergence fix: docx4j-core exclusion for pdfbox-io and commons-logging -->
+            <dependency>
+                <groupId>org.docx4j</groupId>
+                <artifactId>docx4j-core</artifactId>
+                <version>11.5.8</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.pdfbox</groupId>
+                        <artifactId>pdfbox-io</artifactId>
+                    </exclusion>
+                    <!-- Exclude commons-logging in favor of jcl-over-slf4j bridge -->
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
                 </exclusions>
             </dependency>
 
@@ -547,10 +595,11 @@
                 </exclusions>
             </dependency>
 
+            <!-- Gson 2.11.0+ required for Selenium 4.x (Strictness class) -->
             <dependency>
                 <groupId>com.google.code.gson</groupId>
                 <artifactId>gson</artifactId>
-                <version>2.10.1</version>
+                <version>2.11.0</version>
             </dependency>
 
             <dependency>
@@ -563,6 +612,13 @@
                         <artifactId>commons-logging</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <!-- Convergence fix: pdfbox-io aligned with pdfbox (docx4j brings 3.0.6) -->
+            <dependency>
+                <groupId>org.apache.pdfbox</groupId>
+                <artifactId>pdfbox-io</artifactId>
+                <version>3.0.1</version>
             </dependency>
 
             <!-- Convergence fix: fontbox version aligned with pdfbox -->
@@ -675,7 +731,7 @@
             <dependency>
                 <groupId>io.zahori</groupId>
                 <artifactId>zahori-model</artifactId>
-                <version>0.1.8</version>
+                <version>0.1.9</version>
             </dependency>
 
             <!-- Merge .mp4 video files [AndroidScreenRecorder.java] -->
@@ -859,10 +915,17 @@
                 <artifactId>xom</artifactId>
                 <version>1.3.9</version>
             </dependency>
+            <!-- Jakarta Activation API (replacement for javax.activation) -->
             <dependency>
-                <groupId>javax.activation</groupId>
-                <artifactId>javax.activation-api</artifactId>
-                <version>1.2.0</version>
+                <groupId>jakarta.activation</groupId>
+                <artifactId>jakarta.activation-api</artifactId>
+                <version>2.1.3</version>
+            </dependency>
+            <!-- Angus Activation - Jakarta Activation implementation -->
+            <dependency>
+                <groupId>org.eclipse.angus</groupId>
+                <artifactId>angus-activation</artifactId>
+                <version>2.0.2</version>
             </dependency>
             <dependency>
                 <groupId>com.sikulix</groupId>
@@ -1017,6 +1080,12 @@
             <artifactId>selenium-support</artifactId>
         </dependency>
 
+        <!-- IE Driver - used directly in BrowserFactory -->
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-ie-driver</artifactId>
+        </dependency>
+
         <!-- WebDriverManager REMOVED - Using native Selenium Manager (4.6+) -->
 
         <dependency>
@@ -1028,7 +1097,13 @@
             <groupId>org.apache.httpcomponents.client5</groupId>
             <artifactId>httpclient5</artifactId>
         </dependency>
-        
+
+        <!-- HTTP Core 5 - used directly for HTTP operations -->
+        <dependency>
+            <groupId>org.apache.httpcomponents.core5</groupId>
+            <artifactId>httpcore5</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
@@ -1109,6 +1184,12 @@
             <artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
         </dependency>
 
+        <!-- docx4j core - used directly for document manipulation -->
+        <dependency>
+            <groupId>org.docx4j</groupId>
+            <artifactId>docx4j-core</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.javers</groupId>
             <artifactId>javers-core</artifactId>
@@ -1136,6 +1217,11 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
+        </dependency>
+        <!-- Jackson annotations - used directly for @JsonProperty etc -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
         </dependency>
 
         <dependency>
@@ -1177,6 +1263,12 @@
             <artifactId>log4j-core</artifactId>
         </dependency>
 
+        <!-- Bridge commons-logging to SLF4J (replaces banned commons-logging) -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+        </dependency>
+
         <!-- Dependencia de Log4j2 SLF4J Binding (opcional) -->
         <!--        <dependency>
             <groupId>org.apache.logging.log4j</groupId>
@@ -1193,9 +1285,14 @@
                 <artifactId>xmlbeans</artifactId>
         </dependency>-->
 
+        <!-- Jakarta Activation (replaces javax.activation) -->
         <dependency>
-            <groupId>javax.activation</groupId>
-            <artifactId>javax.activation-api</artifactId>
+            <groupId>jakarta.activation</groupId>
+            <artifactId>jakarta.activation-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.angus</groupId>
+            <artifactId>angus-activation</artifactId>
         </dependency>
 
         <!--		<dependency>
@@ -1309,6 +1406,11 @@
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-params</artifactId>
             <scope>test</scope>
         </dependency>
@@ -1343,15 +1445,17 @@
             </properties>
         </profile>
 
-        <!-- JDK 21 Profile: Full features + Virtual Threads ready -->
+        <!-- JDK 21 Profile: Compila con release=17 para compatibilidad hacia atras -->
+        <!-- Bytecode 61 (JDK 17) funciona en JDK 17, 18, 19, 20, 21, 22... -->
         <profile>
             <id>jdk21</id>
             <activation>
                 <jdk>[21,)</jdk>
             </activation>
             <properties>
-                <maven.compiler.release>21</maven.compiler.release>
-                <jdk21.features.enabled>true</jdk21.features.enabled>
+                <!-- FORZAR release=17 para compatibilidad con proyectos JDK 17 -->
+                <maven.compiler.release>17</maven.compiler.release>
+                <jdk21.features.enabled>false</jdk21.features.enabled>
                 <!-- Additional JPMS opens for JDK 21 stricter encapsulation -->
                 <surefire.jpms.args>
                     --add-opens java.base/java.lang.invoke=ALL-UNNAMED
@@ -1427,6 +1531,19 @@
 
         <profile>
             <id>release</id>
+            <!-- Plugin repos for release (bypass corporate Nexus for Central plugins) -->
+            <pluginRepositories>
+                <pluginRepository>
+                    <id>central-plugins</id>
+                    <url>https://repo.maven.apache.org/maven2</url>
+                    <releases>
+                        <enabled>true</enabled>
+                    </releases>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                </pluginRepository>
+            </pluginRepositories>
             <build>
                 <plugins>
                     <plugin>
@@ -1458,30 +1575,42 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-release-plugin</artifactId>
-                        <version>3.0.1</version>
+                        <version>3.1.1</version>
                         <configuration>
                             <autoVersionSubmodules>true</autoVersionSubmodules>
                             <useReleaseProfile>false</useReleaseProfile>
                             <releaseProfiles>release</releaseProfiles>
                             <goals>deploy</goals>
+                            <!-- Best practices 2025 -->
+                            <tagNameFormat>v@{project.version}</tagNameFormat>
+                            <signTag>true</signTag>
+                            <scmCommentPrefix>[release] </scmCommentPrefix>
                         </configuration>
                     </plugin>
-                    
+
+                    <!-- ================================================== -->
+                    <!-- MAVEN CENTRAL PUBLISHING (New Portal - 2024+)      -->
+                    <!-- Replaces legacy OSSRH/Nexus Staging                -->
+                    <!-- Requires: settings.xml with <server id="central">  -->
+                    <!-- ================================================== -->
+
                     <plugin>
-                        <groupId>org.sonatype.central</groupId>
-                        <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.8.0</version>
-                        <extensions>true</extensions>
-                        <configuration>
+                      <groupId>org.sonatype.central</groupId>
+                      <artifactId>central-publishing-maven-plugin</artifactId>
+                      <version>0.8.0</version>
+                      <extensions>true</extensions>
+                      <configuration>
                             <publishingServerId>central</publishingServerId>
                             <autoPublish>true</autoPublish>
                             <waitUntil>published</waitUntil>
-                        </configuration>
+                      </configuration>
                     </plugin>
+
+                    <!-- Source JAR (required for Central) -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.3.0</version>
+                        <version>3.3.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -1491,12 +1620,22 @@
                             </execution>
                         </executions>
                     </plugin>
+
+                    <!-- Javadoc JAR (required for Central) -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.6.3</version>
+                        <version>3.11.2</version>
                         <configuration>
                             <javadocExecutable>${java.home}/bin/javadoc</javadocExecutable>
+                            <!-- Fail on error but allow missing docs -->
+                            <failOnError>true</failOnError>
+                            <failOnWarnings>false</failOnWarnings>
+                            <doclint>none</doclint>
+                            <!-- JDK 17+ requires additional exports for some libs -->
+                            <additionalJOptions>
+                                <additionalJOption>-J--add-exports=java.base/sun.nio.ch=ALL-UNNAMED</additionalJOption>
+                            </additionalJOptions>
                         </configuration>
                         <executions>
                             <execution>
@@ -1507,16 +1646,59 @@
                             </execution>
                         </executions>
                     </plugin>
+
+                    <!-- GPG Signing (required for Central) -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.7</version>
+                        <configuration>
+                            <!-- Use Windows native GPG (Gpg4win) -->
+                            <executable>C:\Program Files (x86)\GnuPG\bin\gpg.exe</executable>
+                            <!-- Explicit key ID for zahori.io panel -->
+                            <keyname>120751DF4A973FED</keyname>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
                                 <phase>verify</phase>
                                 <goals>
                                     <goal>sign</goal>
+                                </goals>
+                                <configuration>
+                                    <!-- Batch mode for CI/CD and non-interactive builds -->
+                                    <gpgArguments>
+                                        <arg>--batch</arg>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- Flatten POM (removes parent, cleans for Central) -->
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>flatten-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <configuration>
+                            <updatePomFile>true</updatePomFile>
+                            <flattenMode>ossrh</flattenMode>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>flatten</id>
+                                <phase>process-resources</phase>
+                                <goals>
+                                    <goal>flatten</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>flatten-clean</id>
+                                <phase>clean</phase>
+                                <goals>
+                                    <goal>clean</goal>
                                 </goals>
                             </execution>
                         </executions>
@@ -1584,10 +1766,60 @@
                                     <outputXML>true</outputXML>
                                     <ignoreNonCompile>true</ignoreNonCompile>
                                     <ignoredUnusedDeclaredDependencies>
-                                        <!-- Drivers JDBC, reflexion, runtime -->
-                                        <ignoredUnusedDeclaredDependency>org.springframework.boot:spring-boot-devtools</ignoredUnusedDeclaredDependency>
+                                        <!-- Spring Boot starters - provide auto-configuration at runtime -->
+                                        <ignoredUnusedDeclaredDependency>org.springframework.boot:spring-boot-starter</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.springframework.boot:spring-boot-starter-web</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.springframework.boot:spring-boot-starter-actuator</ignoredUnusedDeclaredDependency>
                                         <ignoredUnusedDeclaredDependency>org.springframework.boot:spring-boot-starter-log4j2</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.springframework.boot:spring-boot-devtools</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.springframework.cloud:spring-cloud-starter-consul-discovery</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.springframework.cloud:spring-cloud-starter-loadbalancer</ignoredUnusedDeclaredDependency>
+                                        <!-- Selenium umbrella - brings all browser drivers -->
+                                        <ignoredUnusedDeclaredDependency>org.seleniumhq.selenium:selenium-java</ignoredUnusedDeclaredDependency>
+                                        <!-- JAXB runtime implementation -->
+                                        <ignoredUnusedDeclaredDependency>org.docx4j:docx4j-JAXB-ReferenceImpl</ignoredUnusedDeclaredDependency>
+                                        <!-- Logging runtime -->
+                                        <ignoredUnusedDeclaredDependency>org.apache.logging.log4j:log4j-core</ignoredUnusedDeclaredDependency>
+                                        <!-- Native access libraries - used via reflection -->
+                                        <ignoredUnusedDeclaredDependency>com.github.jnr:jnr-ffi</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>com.github.jnr:jffi</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>net.java.dev.jna:jna</ignoredUnusedDeclaredDependency>
+                                        <!-- ASM bytecode manipulation - used by frameworks at runtime -->
+                                        <ignoredUnusedDeclaredDependency>org.ow2.asm:asm</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.ow2.asm:asm-util</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.ow2.asm:asm-commons</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.ow2.asm:asm-tree</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.ow2.asm:asm-analysis</ignoredUnusedDeclaredDependency>
+                                        <!-- Media/document processing - runtime codecs -->
+                                        <ignoredUnusedDeclaredDependency>com.googlecode.mp4parser:isoparser</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>com.twelvemonkeys.imageio:imageio-webp</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.apache.pdfbox:pdfbox</ignoredUnusedDeclaredDependency>
+                                        <ignoredUnusedDeclaredDependency>org.apache.ant:ant</ignoredUnusedDeclaredDependency>
+                                        <!-- Config parsing - used by Spring Boot auto-config -->
+                                        <ignoredUnusedDeclaredDependency>org.yaml:snakeyaml</ignoredUnusedDeclaredDependency>
+                                        <!-- DNS operations - runtime utility -->
+                                        <ignoredUnusedDeclaredDependency>dnsjava:dnsjava</ignoredUnusedDeclaredDependency>
+                                        <!-- JUnit umbrella -->
+                                        <ignoredUnusedDeclaredDependency>org.junit.jupiter:junit-jupiter</ignoredUnusedDeclaredDependency>
+                                        <!-- SLF4J bridge for commons-logging (replaces banned commons-logging) -->
+                                        <ignoredUnusedDeclaredDependency>org.slf4j:jcl-over-slf4j</ignoredUnusedDeclaredDependency>
                                     </ignoredUnusedDeclaredDependencies>
+                                    <ignoredUsedUndeclaredDependencies>
+                                        <!-- Spring transitives from starters - intentionally not declared -->
+                                        <ignoredUsedUndeclaredDependency>org.springframework:spring-core</ignoredUsedUndeclaredDependency>
+                                        <ignoredUsedUndeclaredDependency>org.springframework:spring-context</ignoredUsedUndeclaredDependency>
+                                        <ignoredUsedUndeclaredDependency>org.springframework:spring-beans</ignoredUsedUndeclaredDependency>
+                                        <ignoredUsedUndeclaredDependency>org.springframework:spring-web</ignoredUsedUndeclaredDependency>
+                                        <ignoredUsedUndeclaredDependency>org.springframework.boot:spring-boot</ignoredUsedUndeclaredDependency>
+                                        <ignoredUsedUndeclaredDependency>org.springframework.cloud:spring-cloud-consul-discovery</ignoredUsedUndeclaredDependency>
+                                        <ignoredUsedUndeclaredDependency>org.springframework.cloud:spring-cloud-commons</ignoredUsedUndeclaredDependency>
+                                        <!-- SLF4J from spring-boot-starter-log4j2 -->
+                                        <ignoredUsedUndeclaredDependency>org.slf4j:slf4j-api</ignoredUsedUndeclaredDependency>
+                                        <!-- Consul API from spring-cloud-consul -->
+                                        <ignoredUsedUndeclaredDependency>com.ecwid.consul:consul-api</ignoredUsedUndeclaredDependency>
+                                        <!-- docx4j transitives -->
+                                        <ignoredUsedUndeclaredDependency>org.docx4j:docx4j-openxml-objects</ignoredUsedUndeclaredDependency>
+                                    </ignoredUsedUndeclaredDependencies>
                                 </configuration>
                             </execution>
                         </executions>

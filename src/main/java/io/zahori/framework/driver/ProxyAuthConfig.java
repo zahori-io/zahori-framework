@@ -77,6 +77,8 @@ public final class ProxyAuthConfig {
     private final int proxyPort;
     private final String proxyUser;
     private final String proxyPassword;
+    private final boolean browserEnabled;
+    private final boolean httpClientEnabled;
 
     private ProxyAuthConfig() {
         ZahoriProperties props = new ZahoriProperties();
@@ -85,6 +87,8 @@ public final class ProxyAuthConfig {
         this.proxyHost = props.getProxyIP();
         this.proxyPort = props.getProxyPort();
         this.proxyUser = props.getProxyUser();
+        this.browserEnabled = props.isProxyBrowserEnabled();
+        this.httpClientEnabled = props.isProxyHttpClientEnabled();
 
         // Password cifrado - decodificar con ZahoriCipher
         String encodedPassword = props.getProxyEncodedPassword();
@@ -137,6 +141,7 @@ public final class ProxyAuthConfig {
     private void logConfiguration() {
         if (isProxyEnabledInternal()) {
             LOG.info("Proxy configurado: {}:{}", proxyHost, proxyPort);
+            LOG.info("Proxy habilitado - navegador: {}, HTTP clients: {}", browserEnabled, httpClientEnabled);
             if (isAuthenticationRequiredInternal()) {
                 LOG.info("Autenticación de proxy habilitada para usuario: {}", proxyUser);
             } else {
@@ -172,6 +177,40 @@ public final class ProxyAuthConfig {
      */
     public static boolean isProxyEnabled() {
         return getInstance().isProxyEnabledInternal();
+    }
+
+    /**
+     * Indica si el proxy debe aplicarse al navegador Selenium.
+     *
+     * <p>Configurable via zahori.properties:</p>
+     * <pre>
+     * zahori.test.execution.proxy.browser.enabled=false
+     * </pre>
+     *
+     * <p>Por defecto true si hay proxy configurado.</p>
+     *
+     * @return true si el proxy debe inyectarse en el navegador
+     */
+    public static boolean isProxyBrowserEnabled() {
+        ProxyAuthConfig config = getInstance();
+        return config.isProxyEnabledInternal() && config.browserEnabled;
+    }
+
+    /**
+     * Indica si el proxy debe aplicarse a clientes HTTP (Xray Cloud, etc.).
+     *
+     * <p>Configurable via zahori.properties:</p>
+     * <pre>
+     * zahori.test.execution.proxy.httpclient.enabled=true
+     * </pre>
+     *
+     * <p>Por defecto true si hay proxy configurado.</p>
+     *
+     * @return true si el proxy debe usarse en HTTP clients
+     */
+    public static boolean isProxyHttpClientEnabled() {
+        ProxyAuthConfig config = getInstance();
+        return config.isProxyEnabledInternal() && config.httpClientEnabled;
     }
 
     /**
@@ -217,7 +256,7 @@ public final class ProxyAuthConfig {
     }
 
     /**
-     * Obtiene las credenciales para autenticación HTTP 407.
+     * Obtiene las credenciales para autenticación HTTP 407 (Selenium).
      *
      * Usado por HasAuthentication.register() para responder a desafíos
      * de autenticación del proxy.
@@ -232,6 +271,32 @@ public final class ProxyAuthConfig {
             return null;
         }
         return UsernameAndPassword.of(config.proxyUser, config.proxyPassword);
+    }
+
+    /**
+     * Obtiene el usuario del proxy.
+     *
+     * Usado por clientes HTTP (Apache HttpClient, etc.) para autenticación.
+     *
+     * @return usuario del proxy, o null si no hay autenticación configurada
+     */
+    public static String getProxyUser() {
+        ProxyAuthConfig config = getInstance();
+        return config.isAuthenticationRequiredInternal() ? config.proxyUser : null;
+    }
+
+    /**
+     * Obtiene la contraseña decodificada del proxy.
+     *
+     * Usado por clientes HTTP (Apache HttpClient, etc.) para autenticación.
+     * La contraseña se almacena cifrada en zahori.properties y se decodifica
+     * automáticamente usando ZahoriCipher.
+     *
+     * @return contraseña decodificada del proxy, o null si no hay autenticación
+     */
+    public static String getProxyPassword() {
+        ProxyAuthConfig config = getInstance();
+        return config.isAuthenticationRequiredInternal() ? config.proxyPassword : null;
     }
 
     /**

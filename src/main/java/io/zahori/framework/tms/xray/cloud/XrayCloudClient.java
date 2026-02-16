@@ -24,6 +24,7 @@ package io.zahori.framework.tms.xray.cloud;
  */
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.zahori.framework.core.TestContext;
+import io.zahori.framework.driver.ProxyAuthConfig;
 import io.zahori.framework.tms.xray.cloud.model.XrayCloudError;
 import io.zahori.framework.tms.xray.cloud.model.XrayCloudEvidence;
 import io.zahori.framework.tms.xray.cloud.model.XrayCloudReport;
@@ -41,9 +42,23 @@ import java.util.List;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import javax.net.ssl.SSLContext;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.client5.http.ssl.TrustAllStrategy;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
 import org.apache.hc.core5.util.Timeout;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -204,14 +219,71 @@ public class XrayCloudClient {
         return testCaseIds.toString();
     }
 
+    /**
+     * Crea un RestTemplate con timeout y soporte opcional para proxy autenticado.
+     *
+     * <p>Lee la configuración de proxy desde ProxyAuthConfig (zahori.properties):</p>
+     * <ul>
+     *   <li>Sin proxy: conexión directa a Xray Cloud</li>
+     *   <li>Proxy sin auth: solo host:port</li>
+     *   <li>Proxy con auth (407): host:port + usuario/password</li>
+     * </ul>
+     *
+     * <p>Cuando hay proxy configurado, se desactiva la verificación SSL para
+     * soportar proxies corporativos que hacen MITM/SSL inspection.</p>
+     *
+     * @return RestTemplate configurado con timeout y proxy (si aplica)
+     */
     private RestTemplate createRestTemplateWithTimeout() {
-        CloseableHttpClient httpClient = HttpClients.custom()
+        var httpClientBuilder = HttpClients.custom()
                 .setDefaultRequestConfig(RequestConfig.custom()
                         .setConnectionRequestTimeout(Timeout.ofSeconds(TIMEOUT))
                         .setResponseTimeout(Timeout.ofSeconds(TIMEOUT))
-                        .build())
-                .build();
+                        .build());
 
+        // Configurar proxy si está habilitado para HTTP clients
+        if (ProxyAuthConfig.isProxyHttpClientEnabled()) {
+            HttpHost proxyHost = new HttpHost(ProxyAuthConfig.getHost(), ProxyAuthConfig.getPort());
+            httpClientBuilder.setProxy(proxyHost);
+            LOG.debug("Xray Cloud HTTP client: proxy configurado -> {}:{}",
+                      ProxyAuthConfig.getHost(), ProxyAuthConfig.getPort());
+
+            // Configurar SSL trust-all para proxies corporativos con MITM/SSL inspection
+            try {
+                SSLContext sslContext = SSLContextBuilder.create()
+                        .loadTrustMaterial(null, TrustAllStrategy.INSTANCE)
+                        .build();
+
+                HttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
+                        .setSSLSocketFactory(SSLConnectionSocketFactoryBuilder.create()
+                                .setSslContext(sslContext)
+                                .setHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                                .build())
+                        .build();
+
+                httpClientBuilder.setConnectionManager(connectionManager);
+                LOG.info("Xray Cloud HTTP client: SSL verification deshabilitada (proxy MITM)");
+            } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
+                LOG.warn("Xray Cloud HTTP client: no se pudo configurar SSL trust-all: {}", e.getMessage());
+            }
+
+            // Configurar autenticación del proxy si es requerida
+            if (ProxyAuthConfig.isAuthenticationRequired()) {
+                BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                credentialsProvider.setCredentials(
+                        new AuthScope(proxyHost),
+                        new UsernamePasswordCredentials(
+                                ProxyAuthConfig.getProxyUser(),
+                                ProxyAuthConfig.getProxyPassword().toCharArray()
+                        )
+                );
+                httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                LOG.info("Xray Cloud HTTP client: autenticación de proxy configurada para usuario '{}'",
+                         ProxyAuthConfig.getProxyUser());
+            }
+        }
+
+        CloseableHttpClient httpClient = httpClientBuilder.build();
         return new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient));
     }
 }

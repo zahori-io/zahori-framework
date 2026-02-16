@@ -116,9 +116,9 @@ public class LocalDriver extends AbstractDriver {
      * @param browserName nombre del navegador para logging
      */
     private void registerProxyAuthentication(WebDriver driver, String browserName) {
-        // Verificar si hay autenticación configurada
-        if (!ProxyAuthConfig.isAuthenticationRequired()) {
-            if (ProxyAuthConfig.isProxyEnabled()) {
+        // Verificar si el proxy está habilitado para navegador y requiere autenticación
+        if (!ProxyAuthConfig.isProxyBrowserEnabled() || !ProxyAuthConfig.isAuthenticationRequired()) {
+            if (ProxyAuthConfig.isProxyBrowserEnabled()) {
                 LOG.debug("Proxy configurado sin autenticación para {}", browserName);
             }
             return;
