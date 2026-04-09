@@ -108,7 +108,7 @@ public class Browser {
         createDriver();
         driver.get(url);
         testContext.logInfo(LOADING_PAGE + url);
-        setZoomTo100();
+//        setZoomTo100();
     }
 
     public void reloadPage() {
@@ -144,14 +144,14 @@ public class Browser {
         }
 
         testContext.logInfo(LOADING_PAGE + url);
-        setZoomTo100();
+//        setZoomTo100();
     }
 
     public void loadPageWithCertificate(String url, int numCertificate) {
         driver.get(url);
         testContext.logInfo(LOADING_PAGE + url);
         selectCertificate(numCertificate);
-        setZoomTo100();
+//        setZoomTo100();
     }
 
     private void createDriver() {
