@@ -161,7 +161,7 @@ public abstract class BaseProcess {
             testContext.logStepPassed("Case failed! but retries are enabled, rerunning case... (Retry " + testContext.retries + " of " + testContext.getMaxRetries() + ")");
 
             if (testContext.getBrowser() != null) {
-                testContext.getBrowser().closeWithoutProcessKill();
+                testContext.getBrowser().close();
             }
 
             testContext.createDriver();

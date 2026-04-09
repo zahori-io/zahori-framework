@@ -83,14 +83,6 @@ public class Browser {
     }
 
     public void close() {
-        close(true);
-    }
-
-    public void closeWithoutProcessKill() {
-        close(false);
-    }
-
-    private void close(boolean killProcess) {
         try {
             if (allDrivers.keySet().isEmpty()) {
                 if (driver != null) {
@@ -110,12 +102,6 @@ public class Browser {
         }
 
         driver = null;
-
-        if (StringUtils.equalsIgnoreCase(PLATFORM_WINDOWS, testContext.platform) && killProcess) {
-            killProcess("IEDriverServer*");
-            killProcess("chromedriver*");
-            killProcess("WerFault.exe");
-        }
     }
 
     public void loadPage(String url) {
