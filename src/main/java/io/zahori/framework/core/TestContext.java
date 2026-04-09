@@ -164,6 +164,14 @@ public class TestContext {
         if (StringUtils.containsIgnoreCase(caseExecution.getConfiguration().getName(), "ios")) {
             return "IOS";
         }
+        if (StringUtils.containsIgnoreCase(caseExecution.getConfiguration().getName(), "windows")) {
+            return "windows";
+        }
+        if (StringUtils.containsIgnoreCase(caseExecution.getConfiguration().getName(), "OS X")
+                || StringUtils.containsIgnoreCase(caseExecution.getConfiguration().getName(), "OSX")
+                || StringUtils.containsIgnoreCase(caseExecution.getConfiguration().getName(), "MAC")) {
+            return "osx";
+        }
         return "LINUX";
     }
 

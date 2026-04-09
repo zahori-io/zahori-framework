@@ -73,6 +73,20 @@ public class CapabilitiesBuilder {
                         continue;
                     }
                 }
+                if (StringUtils.startsWithIgnoreCase(key, "windows.")) {
+                    if ("windows".equalsIgnoreCase(platform)) {
+                        key = key.replaceFirst("windows.", StringUtils.EMPTY);
+                    } else {
+                        continue;
+                    }
+                }
+                if (StringUtils.startsWithIgnoreCase(key, "osx.")) {
+                    if ("osx".equalsIgnoreCase(platform)) {
+                        key = key.replaceFirst("osx.", StringUtils.EMPTY);
+                    } else {
+                        continue;
+                    }
+                }
 
                 // Separar la clave por los puntos (.) para determinar la jerarquía
                 String[] keyParts = key.split("\\.");
@@ -108,6 +122,16 @@ public class CapabilitiesBuilder {
         }
         if (StringUtils.contains(capabilityValue, "{caseName}")) {
             capabilityValue = StringUtils.replace(capabilityValue, "{caseName}", browsers.getTestName());
+        }
+        if (StringUtils.contains(capabilityValue, "{resolution}")) {
+            String[] resolutionValues = StringUtils.split(browsers.getScreenResolution(), "x");
+            String resolution;
+            if (resolutionValues != null && resolutionValues.length >= 2) {
+                resolution = resolutionValues[0] + "x" + resolutionValues[1];
+            } else {
+                resolution = browsers.getScreenResolution();
+            }
+            capabilityValue = StringUtils.replace(capabilityValue, "{resolution}", resolution);
         }
 
         return capabilityValue;
