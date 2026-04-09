@@ -170,12 +170,8 @@ public class Browser {
 
     private void createDriver() {
         if (driver == null) {
-            if (StringUtils.equalsIgnoreCase(PLATFORM_WINDOWS, testContext.platform)) {
-                killProcess("WerFault.exe");
-            }
-
             Browsers browsers = new Browsers().withName(testContext.browserName).withBits(testContext.bits).withPlatform(testContext.platform)
-                    .withVersion(testContext.version).withScreenResolution(testContext.resolution).withRemote(testContext.remote)
+                    .withVersion(testContext.browserVersion).withScreenResolution(testContext.resolution).withRemote(testContext.remote)
                     .withTestName(testContext.testCaseName).withRemoteUrl(testContext.remoteUrl).withCaseExecution(testContext.caseExecutionId)
                     .withExecution(testContext.caseExecution.getExecutionId())
                     .withPageLoadTimeout(testContext.timeoutFindElement.longValue()) // TODO

@@ -95,8 +95,8 @@ public class TestContext {
     public WebDriver hostDriver;
     public String platform;
     public String browserName;
+    public String browserVersion;
     public String bits;
-    public String version;
     public String resolution;
     public String remote;
     public String remoteUrl;
@@ -150,7 +150,7 @@ public class TestContext {
         platform = getPlatform(); // TODO
         bits = "32"; // TODO
         browserName = caseExecution.getBrowser() == null ? "" : caseExecution.getBrowser().getBrowserName().toUpperCase();
-        version = StringUtils.isBlank(caseExecution.getBrowser().getVersion()) ? caseExecution.getBrowser().getDefaultVersion()
+        browserVersion = StringUtils.isBlank(caseExecution.getBrowser().getVersion()) ? caseExecution.getBrowser().getDefaultVersion()
                 : caseExecution.getBrowser().getVersion();
         resolution = StringUtils.isBlank(caseExecution.getScreenResolution()) ? DEFAULT_SCREEN_RESOLUTION
                 : caseExecution.getScreenResolution() + DEFAULT_BIT_DEPTH;
@@ -296,7 +296,7 @@ public class TestContext {
         evidences.insertTextInDocs("zahori.testInfo.execution.environment", caseExecution.getConfiguration().getEnvironmentName());
         evidences.insertTextInDocs("zahori.testInfo.execution.url", caseExecution.getConfiguration().getEnvironmentUrl());
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.name", browserName);
-        evidences.insertTextInDocs("zahori.testInfo.execution.browser.version", version);
+        evidences.insertTextInDocs("zahori.testInfo.execution.browser.version", browserVersion);
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.resolution", resolution);
         evidences.insertTextInDocs("zahori.testInfo.execution.evidences.path", evidences.getPath());
 
@@ -308,7 +308,7 @@ public class TestContext {
         logInfo("zahori.testInfo.execution.environment", caseExecution.getConfiguration().getEnvironmentName());
         logInfo("zahori.testInfo.execution.url", caseExecution.getConfiguration().getEnvironmentUrl());
         logInfo("zahori.testInfo.execution.browser.name", browserName);
-        logInfo("zahori.testInfo.execution.browser.version", version);
+        logInfo("zahori.testInfo.execution.browser.version", browserVersion);
         logInfo("zahori.testInfo.execution.browser.resolution", resolution);
         String txtEvidencesPathProperty = "zahori.testInfo.execution.evidences.path";
         String evidencesPath = getMessage(txtEvidencesPathProperty);
@@ -626,7 +626,7 @@ public class TestContext {
     public Browser getBrowser() {
         return browser;
     }
-    
+
     public BrowserMobProxy getBrowserMobProxy() {
         return browserMobProxy;
     }
@@ -867,7 +867,7 @@ public class TestContext {
         json.put("executionDate", getDate(testId));
         json.put("platform", platform);
         json.put("browserName", browserName);
-        json.put("browserVersion", version);
+        json.put("browserVersion", browserVersion);
         json.put("bits", bits);
         json.put("durationSeconds", getTestDuration());
         json.put("executionNotes", executionNotes);
