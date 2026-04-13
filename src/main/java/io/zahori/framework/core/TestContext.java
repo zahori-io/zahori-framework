@@ -984,28 +984,34 @@ public class TestContext {
             return;
         }
 
-        getPageSource();
-        ArrayList<String> windowHandles = new ArrayList<>(this.driver.getWindowHandles());
-        logInfo("WindowHandles: {}", windowHandles.toString());
+        int secondsWaiting = 1;
+        while (secondsWaiting <= timeoutFindElement) {
 
-        for (int i = windowHandles.size() - 1; i >= 0; i--) {
-            String windowHandle = windowHandles.get(i);
-            try {
-                logInfo("switching to windowHandle: {}", windowHandle);
+            getPageSource();
+            ArrayList<String> windowHandles = new ArrayList<>(this.driver.getWindowHandles());
+            logInfo("WindowHandles: {}", windowHandles.toString());
 
-                if (isMobileNativeApp()) {
-                    switchToWebContext("WEBVIEW_" + windowHandle);
+            for (int i = windowHandles.size() - 1; i >= 0; i--) {
+                String windowHandle = windowHandles.get(i);
+                try {
+                    logInfo("switching to windowHandle: {}", windowHandle);
+
+                    if (isMobileNativeApp()) {
+                        switchToWebContext("WEBVIEW_" + windowHandle);
+                    }
+
+                    this.driver.switchTo().window(windowHandle);
+                    getPageSource();
+
+                    if (StringUtils.containsIgnoreCase(this.driver.getCurrentUrl().trim(), url.trim())) {
+                        return;
+                    }
+                } catch (Exception e) {
+                    logError("Error switchToWindowWithUrl({}): {}", url, e.getMessage());
                 }
-
-                this.driver.switchTo().window(windowHandle);
-                getPageSource();
-
-                if (StringUtils.contains(this.driver.getCurrentUrl().trim().toLowerCase(), url.trim().toLowerCase())) {
-                    return;
-                }
-            } catch (Exception e) {
-                logError("Error switchToWindowWithUrl({}): {}", url, e.getMessage());
             }
+            Pause.pause(1);
+            secondsWaiting++;
         }
 
         throw new RuntimeException("Window containing url '" + url + "' not found");
@@ -1022,28 +1028,34 @@ public class TestContext {
             return;
         }
 
-        getPageSource();
-        ArrayList<String> windowHandles = new ArrayList<>(this.driver.getWindowHandles());
-        logInfo("WindowHandles: {}", windowHandles.toString());
+        int secondsWaiting = 1;
+        while (secondsWaiting <= timeoutFindElement) {
 
-        for (int i = windowHandles.size() - 1; i >= 0; i--) {
-            String windowHandle = windowHandles.get(i);
-            try {
-                logInfo("switching to windowHandle: {}", windowHandle);
+            getPageSource();
+            ArrayList<String> windowHandles = new ArrayList<>(this.driver.getWindowHandles());
+            logInfo("WindowHandles: {}", windowHandles.toString());
 
-                if (isMobileNativeApp()) {
-                    switchToWebContext("WEBVIEW_" + windowHandle);
+            for (int i = windowHandles.size() - 1; i >= 0; i--) {
+                String windowHandle = windowHandles.get(i);
+                try {
+                    logInfo("switching to windowHandle: {}", windowHandle);
+
+                    if (isMobileNativeApp()) {
+                        switchToWebContext("WEBVIEW_" + windowHandle);
+                    }
+
+                    this.driver.switchTo().window(windowHandle);
+                    getPageSource();
+
+                    if (StringUtils.containsIgnoreCase(this.driver.getTitle().trim(), title.trim())) {
+                        return;
+                    }
+                } catch (Exception e) {
+                    logError("Error switchToWindowWithUrl({}): {}", title, e.getMessage());
                 }
-
-                this.driver.switchTo().window(windowHandle);
-                getPageSource();
-
-                if (StringUtils.contains(this.driver.getCurrentUrl().trim().toLowerCase(), title.trim().toLowerCase())) {
-                    return;
-                }
-            } catch (Exception e) {
-                logError("Error switchToWindowWithUrl({}): {}", title, e.getMessage());
             }
+            Pause.pause(1);
+            secondsWaiting++;
         }
 
         throw new RuntimeException("Window containing title '" + title + "' not found");
