@@ -340,6 +340,7 @@ public class Evidences {
                 File screenShotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
                 savePngFileAsJpg(screenShotFile, screenshotJpgFilePath);
             } catch (Exception e) {
+                e.printStackTrace();
                 String error = "Error creating screenshot: " + e.getMessage();
                 console(ZahoriLogLevel.ERROR, error);
                 insertTextInLogFile(ZahoriLogLevel.ERROR, error);
