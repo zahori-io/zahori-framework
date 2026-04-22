@@ -127,7 +127,7 @@ public class XrayCloudClient {
 
         reportInfo.setStartDate(startDate);
         reportInfo.setFinishDate(endDate);
-        testReport.setInfo(reportInfo);
+//        testReport.setInfo(reportInfo);
 
         // Test
         XrayCloudTest test = new XrayCloudTest();
