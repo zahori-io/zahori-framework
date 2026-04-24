@@ -103,6 +103,7 @@ public class WebDriverBrowserSelenium {
 
         if (!(driver instanceof AndroidDriver)) { // pageLoadTimeout is not implemented yet for AndroidDriver
             driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(browsers.getPageLoadTimeout()));
+            driver.manage().timeouts().scriptTimeout(Duration.ofSeconds(browsers.getImplicitlyWait()));
         }
         driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(browsers.getImplicitlyWait()));
     }
