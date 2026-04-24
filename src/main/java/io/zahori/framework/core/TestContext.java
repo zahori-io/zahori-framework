@@ -70,6 +70,7 @@ import net.lightbody.bmp.client.ClientUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.openqa.selenium.Capabilities;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -978,8 +979,8 @@ public class TestContext {
         // getPageSource();
 
         // logInfo("getting current url...");
-        String currentUrl = this.driver.getCurrentUrl();
-        logInfo("currentUrl: {}", currentUrl);
+        String currentUrl = getCurrentUrl();
+
         if (StringUtils.containsIgnoreCase(currentUrl, url)) {
             return;
         }
@@ -1003,7 +1004,7 @@ public class TestContext {
                     this.driver.switchTo().window(windowHandle);
                     getPageSource();
 
-                    if (StringUtils.containsIgnoreCase(this.driver.getCurrentUrl().trim(), url.trim())) {
+                    if (StringUtils.containsIgnoreCase(getCurrentUrl().trim(), url.trim())) {
                         return;
                     }
                 } catch (Exception e) {
@@ -1023,7 +1024,7 @@ public class TestContext {
 
         // logInfo("getting current title...");
         String currentTitle = this.driver.getTitle();
-        logInfo("currentUrl: {}", currentTitle);
+        logInfo("currentTitle: {}", currentTitle);
         if (StringUtils.containsIgnoreCase(currentTitle, title)) {
             return;
         }
@@ -1048,6 +1049,7 @@ public class TestContext {
                     getPageSource();
 
                     if (StringUtils.containsIgnoreCase(this.driver.getTitle().trim(), title.trim())) {
+                        logInfo("currentTitle: {}", currentTitle);
                         return;
                     }
                 } catch (Exception e) {
@@ -1222,4 +1224,16 @@ public class TestContext {
         return sourceCode;
     }
 
+    public String getCurrentUrl() {
+        String currentUrl;
+        if (isMobileDriver()) {
+            currentUrl = (String) ((JavascriptExecutor) driver).executeScript("return window.location.href;");
+            logInfo("getCurrentUrl (javascript): {}", currentUrl);
+        } else {
+            currentUrl = this.driver.getCurrentUrl();
+            logInfo("getCurrentUrl: {}", currentUrl);
+        }
+
+        return currentUrl;
+    }
 }
