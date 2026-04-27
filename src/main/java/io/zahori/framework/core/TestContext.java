@@ -995,12 +995,11 @@ public class TestContext {
             for (int i = windowHandles.size() - 1; i >= 0; i--) {
                 String windowHandle = windowHandles.get(i);
                 try {
-                    logInfo("switching to windowHandle: {}", windowHandle);
-
                     if (isMobileNativeApp()) {
                         switchToWebContext("WEBVIEW_" + windowHandle);
                     }
 
+                    logInfo("switching to windowHandle: {}", windowHandle);
                     this.driver.switchTo().window(windowHandle);
                     getPageSource();
 
@@ -1039,12 +1038,11 @@ public class TestContext {
             for (int i = windowHandles.size() - 1; i >= 0; i--) {
                 String windowHandle = windowHandles.get(i);
                 try {
-                    logInfo("switching to windowHandle: {}", windowHandle);
-
                     if (isMobileNativeApp()) {
                         switchToWebContext("WEBVIEW_" + windowHandle);
                     }
 
+                    logInfo("switching to windowHandle: {}", windowHandle);
                     this.driver.switchTo().window(windowHandle);
                     getPageSource();
 
@@ -1227,13 +1225,22 @@ public class TestContext {
     public String getCurrentUrl() {
         String currentUrl;
         if (isMobileDriver()) {
-            currentUrl = (String) ((JavascriptExecutor) driver).executeScript("return window.location.href;");
-            logInfo("getCurrentUrl (javascript): {}", currentUrl);
-        } else {
-            currentUrl = this.driver.getCurrentUrl();
-            logInfo("getCurrentUrl: {}", currentUrl);
+            try {
+                currentUrl = (String) ((JavascriptExecutor) driver).executeScript("return window.location.href;");
+                logInfo("getCurrentUrl (javascript): {}", currentUrl);
+                return currentUrl;
+            } catch (Exception e) {
+                logError("getCurrentUrl (javascript): {}", e.getMessage());
+            }
         }
 
-        return currentUrl;
+        try {
+            currentUrl = this.driver.getCurrentUrl();
+            logInfo("getCurrentUrl: {}", currentUrl);
+            return currentUrl;
+        } catch (Exception e) {
+            logError("getCurrentUrl: {}", e.getMessage());
+        }
+        return "";
     }
 }
