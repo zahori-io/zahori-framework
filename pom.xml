@@ -43,7 +43,7 @@
         <skip.integration.tests>false</skip.integration.tests>
         <skip.unit.tests>true</skip.unit.tests>
         <selenium.version>4.16.1</selenium.version>
-        <poi.version>5.2.5</poi.version>
+        <poi.version>5.4.0</poi.version>
         <jackson.version>2.16.0</jackson.version>
         <log4j.version>2.22.0</log4j.version>
 
