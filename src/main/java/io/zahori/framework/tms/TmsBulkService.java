@@ -25,6 +25,7 @@ package io.zahori.framework.tms;
 import io.zahori.model.process.CaseExecution;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -36,14 +37,9 @@ public class TmsBulkService {
     }
 
     public static void addCaseExecution(CaseExecution caseExecution) {
-        if (!executionCases.containsKey(caseExecution.getExecutionId())) {
-            List<CaseExecution> cases = new ArrayList<>();
-            cases.add(caseExecution);
-
-            executionCases.put(caseExecution.getExecutionId(), cases);
-        } else {
-            executionCases.get(caseExecution.getExecutionId()).add(caseExecution);
-        }
+        executionCases
+                .computeIfAbsent(caseExecution.getExecutionId(), k -> new CopyOnWriteArrayList<>())
+                .add(caseExecution);
     }
 
     public static boolean isExecutionCompleted(Long executionId) {

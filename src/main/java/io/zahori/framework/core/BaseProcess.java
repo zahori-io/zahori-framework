@@ -47,6 +47,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -189,17 +190,27 @@ public abstract class BaseProcess {
             LOG.error("Error on process teardown: {}", e.getMessage());
         } finally {
             if (testContext != null) {
-                // do asynchronously:
-                new Thread(() -> {
+                final TestContext ctx = testContext;
+                LOG.info("Async teardown starting for case {} (executionId={})", caseExecution.getCaseExecutionId(), caseExecution.getExecutionId());
+                CompletableFuture.runAsync(() -> {
+                    LOG.info("Async teardown: adding case {} to TmsBulkService", caseExecution.getCaseExecutionId());
                     TmsBulkService.addCaseExecution(caseExecution);
-                    uploadResultsToTms(testContext);
-
-                    if (TmsBulkService.isExecutionCompleted(caseExecution.getExecutionId())) {
+                    LOG.info("Async teardown: uploading results to TMS for case {}", caseExecution.getCaseExecutionId());
+                    uploadResultsToTms(ctx);
+                    LOG.info("Async teardown: TMS upload complete for case {}", caseExecution.getCaseExecutionId());
+                }).thenRun(() -> {
+                    boolean completed = TmsBulkService.isExecutionCompleted(caseExecution.getExecutionId());
+                    LOG.info("Async teardown: execution {} completed={}", caseExecution.getExecutionId(), completed);
+                    if (completed) {
                         List<CaseExecution> caseExecutions = TmsBulkService.getCaseExecutions(caseExecution.getExecutionId());
+                        LOG.info("Async teardown: deleting {} evidence directories for execution {}", caseExecutions.size(), caseExecution.getExecutionId());
                         deleteEvidenceDirectory(caseExecutions);
                         TmsBulkService.removeExecution(caseExecution.getExecutionId());
                     }
-                }).start();
+                }).exceptionally(ex -> {
+                    LOG.error("Error in async teardown for case {}: {}", caseExecution.getCaseExecutionId(), ex.getMessage(), ex);
+                    return null;
+                });
             }
         }
     }
@@ -291,6 +302,7 @@ public abstract class BaseProcess {
         caseExecution.setSteps(getStepsString(steps));
 
         String uploadUrl = serverUrl + "/evidence/?path=" + encodeUrl(evidencePath);
+        LOG.info("Uploading evidences to: {} (evidencePath={})", uploadUrl, evidencePath);
         uploadEvidences(testContext, caseExecution, test, uploadUrl);
         uploadAttachments(testContext.getAttachments(), uploadUrl);
         setCaseExecutionAttachments(caseExecution, testContext.getAttachments(), evidencePath);
@@ -324,9 +336,10 @@ public abstract class BaseProcess {
 
     private String getEvidencePath(TestContext testContext, ProcessRegistration processRegistration) {
         final String pathSeparator = "/";
+        String uniqueSegment = testContext.testId + "-" + testContext.caseExecutionId;
         return processRegistration.getClientId() + pathSeparator + processRegistration.getTeamId() + pathSeparator + processRegistration.getName()
                 + pathSeparator + testContext.testCaseName + pathSeparator + testContext.platform + pathSeparator
-                + StringUtils.upperCase(testContext.browserName) + pathSeparator + testContext.resolution + pathSeparator + testContext.testId + pathSeparator;
+                + StringUtils.upperCase(testContext.browserName) + pathSeparator + testContext.resolution + pathSeparator + uniqueSegment + pathSeparator;
     }
 
     private void updateStepAttachmentUrl(Step step, String artifactRelativePath) {
@@ -364,6 +377,8 @@ public abstract class BaseProcess {
         Path evidenceFile = Paths.get(normalizePath(resultsDir + filePath));
         if (Files.exists(evidenceFile)) {
             uploadEvidence(url, evidenceFile.toString());
+        } else {
+            LOG.warn("Evidence file not found, skipping upload: {}", evidenceFile);
         }
     }
 
@@ -411,37 +426,44 @@ public abstract class BaseProcess {
 
     private void uploadEvidence(String url, String filePath) {
         String charset = "UTF-8";
-        String boundary = Long.toHexString(System.currentTimeMillis()); // Just generate some unique random value.
-        String crlf = "\r\n"; // Line separator required by multipart/form-data.
+        String boundary = Long.toHexString(System.currentTimeMillis());
+        String crlf = "\r\n";
         File file = new File(filePath);
 
-        URLConnection connection = null;
+        LOG.debug("Uploading evidence: {} -> {}", file.getName(), url);
+
+        HttpURLConnection connection = null;
         try {
-            connection = new URL(url).openConnection();
+            connection = (HttpURLConnection) new URL(url).openConnection();
             connection.setDoOutput(true);
+            connection.setInstanceFollowRedirects(false);
             connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
         } catch (Exception e) {
-            LOG.error("Error uploading evidence file '{}': {}", filePath, e.getMessage());
+            LOG.error("Error opening connection for evidence '{}': {}", filePath, e.getMessage(), e);
+            return;
         }
 
-        try (OutputStream output = connection.getOutputStream(); PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, charset), true);) {
-            // Send binary file.
+        try (OutputStream output = connection.getOutputStream(); PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, charset), true)) {
             writer.append("--" + boundary).append(crlf);
             writer.append("Content-Disposition: form-data; name=\"file\"; filename=\"" + file + "\"").append(crlf);
             writer.append("Content-Type: " + URLConnection.guessContentTypeFromName(file.getName())).append(crlf);
             writer.append("Content-Transfer-Encoding: binary").append(crlf);
             writer.append(crlf).flush();
             Files.copy(file.toPath(), output);
-            output.flush(); // Important before continuing with writer!
-            writer.append(crlf).flush(); // crlf is important! It indicates end of boundary.
+            output.flush();
+            writer.append(crlf).flush();
 
-            // End of multipart/form-data.
             writer.append("--" + boundary + "--").append(crlf).flush();
 
-            int responseCode = ((HttpURLConnection) connection).getResponseCode();
-            LOG.info("Upload evidence file '{}' -> {}", file.getName(), Integer.valueOf(responseCode)); // Should be 200
+            int responseCode = connection.getResponseCode();
+            if (responseCode >= 200 && responseCode < 300) {
+                LOG.info("Upload OK '{}' -> {}", file.getName(), responseCode);
+            } else {
+                String responseBody = new String(connection.getErrorStream() != null ? connection.getErrorStream().readAllBytes() : new byte[0]);
+                LOG.error("Upload FAILED '{}' -> {} body={}", file.getName(), responseCode, responseBody);
+            }
         } catch (Exception e) {
-            LOG.error("Error uploading evidence file '{}': {}", filePath, e.getMessage());
+            LOG.error("Error uploading evidence '{}': {}", filePath, e.getMessage(), e);
         }
     }
 

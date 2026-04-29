@@ -132,9 +132,10 @@ public class Evidences {
             processPath = processRegistration.getClientId() + File.separator + processRegistration.getTeamId() + File.separator + processRegistration.getName()
                     + File.separator;
         }
+        String uniqueSegment = testId + "-" + caseExecution.getCaseExecutionId();
         path = zahoriProperties.getResultsDir() + processPath + caseExecution.getCas().getName() + File.separator
                 + (!StringUtils.isBlank(platform) ? platform + File.separator : "") + (!StringUtils.isBlank(browser) ? browser + File.separator : "")
-                + (!StringUtils.isBlank(resolution) ? resolution + File.separator : "") + testId + File.separator;
+                + (!StringUtils.isBlank(resolution) ? resolution + File.separator : "") + uniqueSegment + File.separator;
         prepareDirectory(new File(path));
 
         caseExecution.setEvidencesPath(path);

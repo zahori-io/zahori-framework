@@ -90,10 +90,23 @@ public abstract class ZahoriProcess extends BaseProcess {
             caseExecution = super.runProcess(caseExecution, processRegistration, getServerUrl(), remote, selenoidUrl);
             return new ResponseEntity<>(caseExecution, HttpStatus.OK);
         } catch (Exception e) {
+            // Framework-level exception escaped BaseProcess.runProcess (which normally
+            // handles its own failures). Return 200 with a canonical FAILED body so the
+            // zahori-server's SemaphoreDispatcher can classify the case as TEST_FAILURE
+            // (parsed from the body via WebClient.bodyToMono) rather than WORKER_ERROR
+            // (the fallback it uses for 5xx responses, whose body WebClient discards).
+            // The HTTP 200 means "I have an outcome to report"; the body's status=FAILED
+            // and notes=<reason> carry the actual verdict. Error is still logged here.
             LOG.error("Error running process: {}", e.getMessage(), e);
+            caseExecution.setStatus("FAILED");
             caseExecution.setNotes(e.getMessage());
-            return new ResponseEntity<>(caseExecution, HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(caseExecution, HttpStatus.OK);
         } catch (Error e) {
+            // Throwable.Error (OutOfMemory, StackOverflow, class-loading failures, ...)
+            // means the JVM itself is in a bad state. Returning 5xx here is honest:
+            // "I cannot reliably tell you the test outcome." The server's dispatcher
+            // will classify this as WORKER_ERROR via the WebClient 5xx error-chain,
+            // which is the correct categorisation for an unresponsive worker.
             LOG.error("Fatal error running process: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
             caseExecution.setNotes(e.getClass().getSimpleName() + ": " + e.getMessage());
             return new ResponseEntity<>(caseExecution, HttpStatus.INTERNAL_SERVER_ERROR);
