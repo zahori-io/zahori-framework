@@ -43,7 +43,6 @@ import io.zahori.framework.files.properties.ZahoriProperties;
 import io.zahori.framework.i18n.Messages;
 import io.zahori.framework.robot.UtilsRobot;
 import io.zahori.framework.tms.TmsService;
-import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Notification;
 import io.zahori.framework.utils.Pause;
 import io.zahori.framework.utils.WebdriverUtils;
@@ -59,12 +58,17 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import net.lightbody.bmp.client.ClientUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -74,6 +78,7 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class TestContext {
 
@@ -103,6 +108,7 @@ public class TestContext {
     public String remoteUrl;
     public String appiumService;
     public int retries = 0;
+    private Map<String, Object> data = new HashMap<>();
 
     // Properties
     public ZahoriProperties zahoriProperties;
@@ -940,7 +946,15 @@ public class TestContext {
             ((AndroidDriver) driver).hideKeyboard();
         }
         if (isIOSDriver()) {
-            ((IOSDriver) driver).hideKeyboard();
+            try {
+                ((IOSDriver) driver).hideKeyboard();
+            } catch (Exception e) {
+                PageElement okButtonOnKeyboard = new PageElement(new Page(this), "OK/Done button on keyboard",
+                        Locator.xpath("(//*[@name='Done' or @name='OK'])[1]"));
+                if (okButtonOnKeyboard.isVisibleWithoutWait()) {
+                    okButtonOnKeyboard.clickNonVisible();
+                }
+            }
         }
     }
 
@@ -989,9 +1003,8 @@ public class TestContext {
         while (secondsWaiting <= timeoutFindElement) {
 
             getPageSource();
-            ArrayList<String> windowHandles = new ArrayList<>(this.driver.getWindowHandles());
-            logInfo("WindowHandles: {}", windowHandles.toString());
 
+            List<String> windowHandles = new ArrayList<>(getWindowHandles());
             for (int i = windowHandles.size() - 1; i >= 0; i--) {
                 String windowHandle = windowHandles.get(i);
                 try {
@@ -1007,7 +1020,7 @@ public class TestContext {
                         return;
                     }
                 } catch (Exception e) {
-                    logError("Error switchToWindowWithUrl({}): {}", url, e.getMessage());
+                    logError("Error on switchToWindowWithUrl({}): {}", url, e.getMessage());
                 }
             }
             Pause.pause(1);
@@ -1017,6 +1030,19 @@ public class TestContext {
         throw new RuntimeException("Window containing url '" + url + "' not found");
     }
 
+    public Set<String> getWindowHandles() {
+        Set<String> windowHandles = new HashSet<>();
+        try {
+            getPageSource();
+            windowHandles = this.driver.getWindowHandles();
+            logInfo("getWindowHandles: {}", windowHandles.toString());
+        } catch (Exception e) {
+            logError("getWindowHandles: {}", e.getMessage());
+        }
+        return windowHandles;
+    }
+
+    // TODO
     public void switchToWindowWithTitle(String title) {
         logInfo("switching to window with title: {}", title);
         // getPageSource();
@@ -1031,10 +1057,7 @@ public class TestContext {
         int secondsWaiting = 1;
         while (secondsWaiting <= timeoutFindElement) {
 
-            getPageSource();
-            ArrayList<String> windowHandles = new ArrayList<>(this.driver.getWindowHandles());
-            logInfo("WindowHandles: {}", windowHandles.toString());
-
+            List<String> windowHandles = new ArrayList<>(getWindowHandles());
             for (int i = windowHandles.size() - 1; i >= 0; i--) {
                 String windowHandle = windowHandles.get(i);
                 try {
@@ -1061,7 +1084,65 @@ public class TestContext {
         throw new RuntimeException("Window containing title '" + title + "' not found");
     }
 
+    public void switchToWebviewWithUrl(String url) {
+        if (!isMobileNativeApp()) {
+            logWarn("method switchToWebviewWithUrl is only supported for native apps, use instead method switchToWindowWithUrl");
+            return;
+        }
+
+        logInfo("switching to webview with url: {}", url);
+
+        int secondsWaiting = 1;
+        while (secondsWaiting <= timeoutFindElement) {
+
+            List<String> webContexts = new ArrayList<>(getWebContexts());
+            for (int i = webContexts.size() - 1; i >= 0; i--) {
+                String webContext = webContexts.get(i);
+                switchToWebContext(webContext);
+
+                List<String> windowHandles = new ArrayList<>(this.driver.getWindowHandles());
+                for (int j = windowHandles.size() - 1; j >= 0; j--) {
+                    String windowHandle = windowHandles.get(j);
+
+                    try {
+
+                        logInfo("switching to windowHandle: {}", windowHandle);
+                        this.driver.switchTo().window(windowHandle);
+                        getPageSource();
+
+                        if (StringUtils.containsIgnoreCase(getCurrentUrl().trim(), url.trim())) {
+                            return;
+                        }
+                    } catch (Exception e) {
+                        logError("Error on switchToWebViewWithUrl({}): {}", url, e.getMessage());
+                    }
+                }
+            }
+            logInfo("switching to windowHandle, waiting for 1 second...");
+            Pause.pause(1);
+            secondsWaiting++;
+        }
+
+        throw new RuntimeException("webview containing url '" + url + "' not found");
+    }
+
+    public String getCurrentContext() {
+        try {
+            if (isAndroidDriver()) {
+                return ((AndroidDriver) driver).getContext();
+            }
+            if (isIOSDriver()) {
+                return ((IOSDriver) driver).getContext();
+            }
+        } catch (Exception e) {
+            logError("getCurrentContext error: {}", e.getMessage());
+            return "";
+        }
+        throw new RuntimeException("Method getCurrentContext() only supported for AndroidDriver and IOSDriver");
+    }
+
     public void switchToNativeContext() {
+        logInfo("switchToNativeContext");
         if (isAndroidDriver()) {
             AndroidDriver androidDriver = (AndroidDriver) driver;
             androidDriver.context("NATIVE_APP");
@@ -1089,19 +1170,10 @@ public class TestContext {
             switchToMobileWebContext(contextName);
             context = getCurrentContext();
         }
-        if (StringUtils.contains(context, "NATIVE")) {
-            logStepFailedWithScreenshot("Webview not found");
-        }
-    }
 
-    public String getCurrentContext() {
-        if (isAndroidDriver()) {
-            return ((AndroidDriver) driver).getContext();
+        if (StringUtils.contains(context, "NATIVE")) {
+            throw new RuntimeException("Webview " + contextName + " not found");
         }
-        if (isIOSDriver()) {
-            return ((IOSDriver) driver).getContext();
-        }
-        throw new RuntimeException("Method getCurrentContext() only supported for AndroidDriver and IOSDriver");
     }
 
     private void switchToMobileWebContext(String contextName) {
@@ -1117,76 +1189,95 @@ public class TestContext {
     }
 
     private void switchToWebContextAndroid(AndroidDriver androidDriver, String contextName) {
-        logInfo("switchToWebContextAndroid({})", contextName);
-        getPageSource();
-        // logInfo("getContextHandles...");
-        ArrayList<String> contexts = new ArrayList<>(androidDriver.getContextHandles());
-        logInfo("getContextHandles: {}", contexts.toString());
-
-        for (int i = contexts.size() - 1; i >= 0; i--) {
-            String context = contexts.get(i);
-
-            if (StringUtils.isNotBlank(contextName) && context.equalsIgnoreCase(contextName)) {
-                logInfo("switching to context: {}", context);
-                androidDriver.context(context);
-                return;
+        if (StringUtils.isNotBlank(contextName)) {
+            try {
+                logInfo("switching to context: {}", contextName);
+                androidDriver.context(contextName);
+                getCurrentUrl();
+            } catch (Exception e) {
+                logError("Error switching to context {}: {}", contextName, e.getMessage());
             }
-            if (StringUtils.isBlank(contextName) && !context.contains("NATIVE")) {
+            return;
+        }
+
+        List<String> webContexts = getWebContexts();
+        for (String context : webContexts) {
+
+            // switch to first available context (no error and not empty source)
+            try {
                 // For Webviews and browser contexts (CHROMIUM, WEBVIEW_org.mozilla.firefox, ...)
                 logInfo("switching to context: {}", context);
                 androidDriver.context(context);
-                if (StringUtils.isNotBlank(getPageSource())) {
+
+                if (StringUtils.isNotBlank(getCurrentUrl()) && StringUtils.isNotBlank(getPageSource())) {
                     return;
                 }
+            } catch (Exception e) {
+                logError("Error switching to context {}: {}", contextName, e.getMessage());
             }
         }
-        logInfo("Webview not found: {}", contextName);
+
+        // webview not found or invalid, switch back to native context
+        switchToNativeContext();
     }
 
     private void switchToWebContextIOS(IOSDriver iOSDriver, String contextName) {
-        logInfo("switchToWebContextIOS({})", contextName);
-        getPageSource();
-        // logInfo("getContextHandles...");
-        ArrayList<String> contexts = new ArrayList<>(iOSDriver.getContextHandles());
-        logInfo("getContextHandles: {}", contexts.toString());
-
-        for (int i = contexts.size() - 1; i >= 0; i--) {
-            String context = contexts.get(i);
-
-            if (StringUtils.isNotBlank(contextName) && context.equalsIgnoreCase(contextName)) {
-                logInfo("switching to context: {}", context);
-                iOSDriver.context(context);
-                return;
+        if (StringUtils.isNotBlank(contextName)) {
+            try {
+                logInfo("switching to context: {}", contextName);
+                iOSDriver.context(contextName);
+                getCurrentUrl();
+            } catch (Exception e) {
+                logError("Error switching to context {}: {}", contextName, e.getMessage());
             }
-            if (StringUtils.isBlank(contextName) && !context.contains("NATIVE")) {
-                // For Webviews and Safari contexts
+            return;
+        }
+
+        List<String> webContexts = getWebContexts();
+        for (String context : webContexts) {
+
+            // switch to first available context (no error and not empty source)
+            try {
+                // For Webviews and browser contexts (CHROMIUM, WEBVIEW_org.mozilla.firefox, ...)
                 logInfo("switching to context: {}", context);
                 iOSDriver.context(context);
-                if (StringUtils.isNotBlank(getPageSource())) {
+
+                if (StringUtils.isNotBlank(getCurrentUrl()) && StringUtils.isNotBlank(getPageSource())) {
                     return;
                 }
+            } catch (Exception e) {
+                logError("Error switching to context {}: {}", contextName, e.getMessage());
             }
         }
-        logInfo("Webview not found: {}", contextName);
+
+        // webview not found or invalid, switch back to native context
+        switchToNativeContext();
     }
 
     public List<String> getWebContexts() {
         List<String> webContexts = new ArrayList<>();
-        if (isAndroidDriver()) {
-            AndroidDriver androidDriver = (AndroidDriver) driver;
-            webContexts = getWebContextsAndroid(androidDriver);
+        try {
+            getPageSource();
+
+            if (isAndroidDriver()) {
+                AndroidDriver androidDriver = (AndroidDriver) driver;
+                webContexts = getWebContextsAndroid(androidDriver);
+            }
+            if (isIOSDriver()) {
+                IOSDriver iosDriver = (IOSDriver) driver;
+                webContexts = getWebContextsIOS(iosDriver);
+            }
+        } catch (Exception e) {
+            logError("getWebContexts error: {} ", e.getMessage());
         }
-        if (isIOSDriver()) {
-            IOSDriver iosDriver = (IOSDriver) driver;
-            webContexts = getWebContextsIOS(iosDriver);
-        }
-        logInfo("getWebContexts -> {} ", webContexts.toString());
+
+        logInfo("getWebContexts: {} ", webContexts.toString());
         return webContexts;
     }
 
     private List<String> getWebContextsAndroid(AndroidDriver androidDriver) {
         List<String> webContexts = new ArrayList<>();
-        ArrayList<String> contexts = new ArrayList<>(androidDriver.getContextHandles());
+        Set<String> contexts = androidDriver.getContextHandles();
         for (String context : contexts) {
             if (context.contains("WEBVIEW")) {
                 webContexts.add(context);
@@ -1197,7 +1288,7 @@ public class TestContext {
 
     private List<String> getWebContextsIOS(IOSDriver iOSDriver) {
         List<String> webContexts = new ArrayList<>();
-        ArrayList<String> contexts = new ArrayList<>(iOSDriver.getContextHandles());
+        Set<String> contexts = iOSDriver.getContextHandles();
         for (String context : contexts) {
             if (context.contains("WEBVIEW")) {
                 webContexts.add(context);
@@ -1209,38 +1300,71 @@ public class TestContext {
     public String getPageSource() {
         String sourceCode = "";
 
-        Chronometer crono = new Chronometer();
-        while (StringUtils.isBlank(sourceCode) && crono.getElapsedSeconds() < timeoutFindElement) {
+        int maxRetries = 5;
+        int retry = 1;
+        while (StringUtils.isBlank(sourceCode) && retry <= maxRetries) {
             try {
+                retry++;
                 // logInfo("getting page source...");
                 sourceCode = driver.getPageSource();
             } catch (Exception e) {
-                Pause.pause(1);
+                logError("getPageSource error: {} ", e.getMessage());
             }
+            Pause.pause(1);
         }
         // logInfo("page source -> {} ", sourceCode);
         return sourceCode;
     }
 
     public String getCurrentUrl() {
-        String currentUrl;
+        String currentUrl = "";
         if (isMobileDriver()) {
             try {
                 currentUrl = (String) ((JavascriptExecutor) driver).executeScript("return window.location.href;");
                 logInfo("getCurrentUrl (javascript): {}", currentUrl);
                 return currentUrl;
             } catch (Exception e) {
-                logError("getCurrentUrl (javascript): {}", e.getMessage());
+                logError("getCurrentUrl (javascript) error: {}", e.getMessage());
+                try {
+                    LinkedHashMap currentUrlMap = (LinkedHashMap) ((JavascriptExecutor) driver).executeScript("return window.location.href;");
+                    logInfo("getCurrentUrl (javascript): {}", currentUrlMap.toString());
+                } catch (Exception ex) {
+                    logError("getCurrentUrl (javascript) error: {}", ex.getMessage());
+                }
             }
         }
 
         try {
-            currentUrl = this.driver.getCurrentUrl();
+            currentUrl = new WebDriverWait(driver, Duration.ofSeconds(timeoutFindElement))
+                    .until(d -> {
+                        String currenturl = d.getCurrentUrl();
+                        return (currenturl != null && !currenturl.isEmpty()) ? currenturl : "";
+                    });
+
             logInfo("getCurrentUrl: {}", currentUrl);
             return currentUrl;
         } catch (Exception e) {
-            logError("getCurrentUrl: {}", e.getMessage());
+            logError("getCurrentUrl error: {}", e.getMessage());
         }
-        return "";
+
+        logInfo("getCurrentUrl: {}", currentUrl);
+        return currentUrl;
     }
+
+    public Map<String, Object> getData() {
+        return data;
+    }
+
+    public void setData(Map<String, Object> data) {
+        this.data = data;
+    }
+
+    public Object getData(String key) {
+        return data.get(key);
+    }
+
+    public void setData(String key, Object data) {
+        this.data.put(key, data);
+    }
+
 }

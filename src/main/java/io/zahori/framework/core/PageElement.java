@@ -150,7 +150,11 @@ public class PageElement {
         webElement = findElement();
         try {
             if (scroll) {
-                scroll();
+                try {
+                    scroll();
+                } catch (final Exception ex) {
+                    testContext.logWarn("Unable to scroll to {}: {}", this.toString(), getErrorMessage(ex));
+                }
             }
 
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds())));
@@ -290,40 +294,40 @@ public class PageElement {
      */
     public void clearJavascript() {
         initWebElement();
-        
+
         JavascriptExecutor jsExecutor = (JavascriptExecutor) testContext.driver;
         jsExecutor.executeScript("arguments[0].value = ''", this.webElement);
         jsExecutor.executeScript("arguments[0].dispatchEvent(new Event('input'))", this.webElement);
     }
-    
+
     public void triggerInputEvent() {
         initWebElement();
-        
+
         JavascriptExecutor jsExecutor = (JavascriptExecutor) testContext.driver;
         jsExecutor.executeScript("arguments[0].dispatchEvent(new Event('input'))", this.webElement);
     }
-    
+
     public void triggerChangeEvent() {
         initWebElement();
-        
+
         JavascriptExecutor jsExecutor = (JavascriptExecutor) testContext.driver;
         jsExecutor.executeScript("arguments[0].dispatchEvent(new Event('change'))", this.webElement);
     }
-    
+
     public void triggerBlurEvent() {
         initWebElement();
-        
+
         JavascriptExecutor jsExecutor = (JavascriptExecutor) testContext.driver;
         jsExecutor.executeScript("arguments[0].dispatchEvent(new Event('blur'))", this.webElement);
     }
-    
+
     public void triggerFocusEvent() {
         initWebElement();
-        
+
         JavascriptExecutor jsExecutor = (JavascriptExecutor) testContext.driver;
         jsExecutor.executeScript("arguments[0].dispatchEvent(new Event('focus'))", this.webElement);
     }
-    
+
     /**
      * Use clear() method instead of clearInput(). clearInput will be removed in
      * future versions
@@ -606,7 +610,7 @@ public class PageElement {
             throw new RuntimeException("Unable to get DOM property '" + property + "' " + this + ": " + e.getMessage());
         }
     }
-    
+
     public String getDomAttribute(String attribute) {
         webElement = findElement();
         try {
@@ -617,7 +621,7 @@ public class PageElement {
             throw new RuntimeException("Unable to get DOM attribute '" + attribute + "' " + this + ": " + e.getMessage());
         }
     }
-    
+
     public void sendKeys(Keys keys) {
         webElement = findElement();
         webElement.sendKeys(keys);
@@ -658,7 +662,7 @@ public class PageElement {
             return false;
         }
     }
-        
+
     public boolean isPresent(int maxSecondsWaiting) {
         try {
             final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(maxSecondsWaiting));
@@ -678,7 +682,7 @@ public class PageElement {
             return false;
         }
     }
-    
+
     public void validateIsVisible() {
         validateIsPresent();
 
