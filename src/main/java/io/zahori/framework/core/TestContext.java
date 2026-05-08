@@ -1279,7 +1279,7 @@ public class TestContext {
         List<String> webContexts = new ArrayList<>();
         Set<String> contexts = androidDriver.getContextHandles();
         for (String context : contexts) {
-            if (context.contains("WEBVIEW")) {
+            if (!context.contains("NATIVE")) {
                 webContexts.add(context);
             }
         }
@@ -1290,7 +1290,7 @@ public class TestContext {
         List<String> webContexts = new ArrayList<>();
         Set<String> contexts = iOSDriver.getContextHandles();
         for (String context : contexts) {
-            if (context.contains("WEBVIEW")) {
+            if (!context.contains("NATIVE")) {
                 webContexts.add(context);
             }
         }
