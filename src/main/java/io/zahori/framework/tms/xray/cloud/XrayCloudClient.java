@@ -88,9 +88,9 @@ public class XrayCloudClient {
             } else {
                 ObjectMapper mapper = new ObjectMapper();
                 XrayCloudError error = mapper.readValue(responseBody, XrayCloudError.class);
-                throw new IOException(error.getError());
+                throw new Exception(error.getError());
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("TMS: Login to Xray Cloud: KO -> " + e.getMessage());
         }
     }
@@ -115,19 +115,22 @@ public class XrayCloudClient {
         XrayCloudReport testReport = new XrayCloudReport();
         testReport.setTestExecutionKey(testExecutionId);
 
-        // Info
-        XrayCloudReportInfo reportInfo = new XrayCloudReportInfo();
-        // reportInfo.setProject("XXX");
-        reportInfo.setTestPlanKey(testPlanId);
-        reportInfo.setSummary(testExecutionSummary);
-
         ZonedDateTime startDateZoned = LocalDateTime.parse(startDateText, DateTimeFormatter.ofPattern(TestContext.DATE_FORMAT)).atZone(ZoneId.systemDefault());
         String startDate = startDateZoned.format(DateTimeFormatter.ofPattern(XRAY_API_DATEFORMAT));
         String endDate = ZonedDateTime.now().format(DateTimeFormatter.ofPattern(XRAY_API_DATEFORMAT));
 
-        reportInfo.setStartDate(startDate);
-        reportInfo.setFinishDate(endDate);
-//        testReport.setInfo(reportInfo);
+        // Info
+        if (StringUtils.isBlank(testExecutionId)) {
+            XrayCloudReportInfo reportInfo = new XrayCloudReportInfo();
+            // reportInfo.setProject("XXX");
+            reportInfo.setTestPlanKey(testPlanId);
+            reportInfo.setSummary(testExecutionSummary);
+
+            reportInfo.setStartDate(startDate);
+            reportInfo.setFinishDate(endDate);
+
+            testReport.setInfo(reportInfo);
+        }
 
         // Test
         XrayCloudTest test = new XrayCloudTest();
@@ -146,7 +149,7 @@ public class XrayCloudClient {
                     testEvidence.setFilename(String.valueOf(Paths.get(evidencePath).getFileName()));
                     //testEvidence.setContentType("image/png");
                     test.addEvidence(testEvidence);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     LOG.warn("TMS: Error encoding (base64) evidence file: {}", e.getMessage());
                 }
             }
@@ -182,9 +185,9 @@ public class XrayCloudClient {
                 LOG.info("TMS: Test report uploaded to Xray Cloud! {}", getTestCaseIds(testReport));
             } else {
                 XrayCloudError error = new ObjectMapper().readValue(response.getBody(), XrayCloudError.class);
-                throw new IOException(error.getError());
+                throw new Exception(error.getError());
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("TMS: Error uploading test report to Xray Cloud " + getTestCaseIds(testReport) + " -> " + e.getMessage());
         }
     }
