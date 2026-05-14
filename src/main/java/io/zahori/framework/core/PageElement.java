@@ -177,7 +177,7 @@ public class PageElement {
             JavascriptExecutor executor = (JavascriptExecutor) driver;
             executor.executeScript("arguments[0].scrollIntoView({block: \"center\", behavior: \"auto\"});", webElement);
             executor.executeScript("arguments[0].click()", webElement);
-            testContext.logInfo("Click (through javascript) on " + this);
+            testContext.logInfo("Click (javascript) on " + this);
         } catch (final Exception e) {
             throw new RuntimeException("Unable to click on " + this + getErrorMessage(e));
         }

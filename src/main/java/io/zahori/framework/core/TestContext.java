@@ -1002,19 +1002,12 @@ public class TestContext {
         int secondsWaiting = 1;
         while (secondsWaiting <= timeoutFindElement) {
 
-            getPageSource();
-
             List<String> windowHandles = new ArrayList<>(getWindowHandles());
             for (int i = windowHandles.size() - 1; i >= 0; i--) {
                 String windowHandle = windowHandles.get(i);
                 try {
-                    if (isMobileNativeApp()) {
-                        switchToWebContext("WEBVIEW_" + windowHandle);
-                    }
-
                     logInfo("switching to windowHandle: {}", windowHandle);
                     this.driver.switchTo().window(windowHandle);
-                    getPageSource();
 
                     if (StringUtils.containsIgnoreCase(getCurrentUrl().trim(), url.trim())) {
                         return;
@@ -1030,6 +1023,18 @@ public class TestContext {
         throw new RuntimeException("Window containing url '" + url + "' not found");
     }
 
+    public String getCurrentWindowHandle() {
+        String currentWindowHandle = "";
+        try {
+            currentWindowHandle = this.driver.getWindowHandle();
+            logInfo("getCurrentWindowHandle: {}", currentWindowHandle);
+            return currentWindowHandle;
+        } catch (Exception e) {
+            logError("getCurrentWindowHandle: {}", e.getMessage());
+        }
+        return currentWindowHandle;
+    }
+
     public Set<String> getWindowHandles() {
         Set<String> windowHandles = new HashSet<>();
         try {
@@ -1040,6 +1045,11 @@ public class TestContext {
             logError("getWindowHandles: {}", e.getMessage());
         }
         return windowHandles;
+    }
+
+    public void switchToWindowHandle(String windowHandle) {
+        logInfo("switchToWindowHandle: {}", windowHandle);
+        driver.switchTo().window(windowHandle);
     }
 
     // TODO
@@ -1061,13 +1071,8 @@ public class TestContext {
             for (int i = windowHandles.size() - 1; i >= 0; i--) {
                 String windowHandle = windowHandles.get(i);
                 try {
-                    if (isMobileNativeApp()) {
-                        switchToWebContext("WEBVIEW_" + windowHandle);
-                    }
-
                     logInfo("switching to windowHandle: {}", windowHandle);
                     this.driver.switchTo().window(windowHandle);
-                    getPageSource();
 
                     if (StringUtils.containsIgnoreCase(this.driver.getTitle().trim(), title.trim())) {
                         logInfo("currentTitle: {}", currentTitle);
@@ -1108,7 +1113,6 @@ public class TestContext {
 
                         logInfo("switching to windowHandle: {}", windowHandle);
                         this.driver.switchTo().window(windowHandle);
-                        getPageSource();
 
                         if (StringUtils.containsIgnoreCase(getCurrentUrl().trim(), url.trim())) {
                             return;
@@ -1158,6 +1162,11 @@ public class TestContext {
     }
 
     public void switchToWebContext(String contextName) {
+        if (StringUtils.startsWithIgnoreCase(contextName, "NATIVE")) {
+            switchToNativeContext();
+            return;
+        }
+
         switchToMobileWebContext(contextName);
 
         String context = getCurrentContext();
@@ -1185,7 +1194,7 @@ public class TestContext {
             IOSDriver iosDriver = (IOSDriver) driver;
             switchToWebContextIOS(iosDriver, contextName);
         }
-        getPageSource();
+        //getPageSource();
     }
 
     private void switchToWebContextAndroid(AndroidDriver androidDriver, String contextName) {
@@ -1193,7 +1202,7 @@ public class TestContext {
             try {
                 logInfo("switching to context: {}", contextName);
                 androidDriver.context(contextName);
-                getCurrentUrl();
+                // getCurrentUrl();
             } catch (Exception e) {
                 logError("Error switching to context {}: {}", contextName, e.getMessage());
             }
@@ -1226,7 +1235,7 @@ public class TestContext {
             try {
                 logInfo("switching to context: {}", contextName);
                 iOSDriver.context(contextName);
-                getCurrentUrl();
+                // getCurrentUrl();
             } catch (Exception e) {
                 logError("Error switching to context {}: {}", contextName, e.getMessage());
             }
@@ -1300,42 +1309,45 @@ public class TestContext {
     public String getPageSource() {
         String sourceCode = "";
 
-        int maxRetries = 5;
-        int retry = 1;
-        while (StringUtils.isBlank(sourceCode) && retry <= maxRetries) {
-            try {
-                retry++;
-                // logInfo("getting page source...");
-                sourceCode = driver.getPageSource();
-            } catch (Exception e) {
-                logError("getPageSource error: {} ", e.getMessage());
-            }
-            Pause.pause(1);
+        try {
+            sourceCode = driver.getPageSource();
+        } catch (Exception e) {
+            logError("getPageSource error: {} ", e.getMessage());
         }
         // logInfo("page source -> {} ", sourceCode);
         return sourceCode;
     }
 
     public String getCurrentUrl() {
+        if (StringUtils.startsWithIgnoreCase(getCurrentContext(), "NATIVE")) {
+            return "";
+        }
+
         String currentUrl = "";
+
         if (isMobileDriver()) {
+            Object currentUrlObject = null;
             try {
-                currentUrl = (String) ((JavascriptExecutor) driver).executeScript("return window.location.href;");
+                currentUrlObject = ((JavascriptExecutor) driver).executeScript("return window.location.href;");
+                currentUrl = (String) currentUrlObject;
                 logInfo("getCurrentUrl (javascript): {}", currentUrl);
                 return currentUrl;
-            } catch (Exception e) {
-                logError("getCurrentUrl (javascript) error: {}", e.getMessage());
+            } catch (Exception ex) {
                 try {
-                    LinkedHashMap currentUrlMap = (LinkedHashMap) ((JavascriptExecutor) driver).executeScript("return window.location.href;");
-                    logInfo("getCurrentUrl (javascript): {}", currentUrlMap.toString());
-                } catch (Exception ex) {
-                    logError("getCurrentUrl (javascript) error: {}", ex.getMessage());
+                    // Parse error
+                    if (currentUrlObject instanceof LinkedHashMap currentUrlMap) {
+                        logError("getCurrentUrl (javascript): {}", currentUrlMap.toString());
+                    }
+                } catch (Exception exc) {
+                    logError("getCurrentUrl (javascript) error: {}", exc.getMessage());
+                } finally {
+                    return "";
                 }
             }
         }
 
         try {
-            currentUrl = new WebDriverWait(driver, Duration.ofSeconds(timeoutFindElement))
+            currentUrl = new WebDriverWait(driver, Duration.ofSeconds(5))
                     .until(d -> {
                         String currenturl = d.getCurrentUrl();
                         return (currenturl != null && !currenturl.isEmpty()) ? currenturl : "";
@@ -1345,6 +1357,7 @@ public class TestContext {
             return currentUrl;
         } catch (Exception e) {
             logError("getCurrentUrl error: {}", e.getMessage());
+
         }
 
         logInfo("getCurrentUrl: {}", currentUrl);
