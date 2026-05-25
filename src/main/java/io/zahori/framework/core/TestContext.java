@@ -541,6 +541,48 @@ public class TestContext {
         return step;
     }
 
+    public void logBrowserStackStatus() {
+        try {
+            if (!StringUtils.containsIgnoreCase(remoteUrl, "browserstack")) {
+                return;
+            }
+
+            if (driver == null) {
+                logWarn("BrowserStack status not set: driver is null");
+                return;
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            JavascriptExecutor jse = (JavascriptExecutor) driver;
+
+            // Setting name of the test
+            ObjectNode setNamePayload = mapper.createObjectNode();
+            setNamePayload.put("action", "setSessionName");
+
+            ObjectNode setNameArgs = mapper.createObjectNode();
+            setNameArgs.put("name", String.valueOf(caseExecution.getCas().getName()));
+            setNamePayload.set("arguments", setNameArgs);
+
+            jse.executeScript("browserstack_executor: " + mapper.writeValueAsString(setNamePayload));
+
+            // Setting the status of test as 'passed' or 'failed'
+            ObjectNode setStatusPayload = mapper.createObjectNode();
+            setStatusPayload.put("action", "setSessionStatus");
+
+            String status = testPassed ? "passed" : "failed";
+            String reason = StringUtils.defaultString(executionNotes);
+            ObjectNode setStatusArgs = mapper.createObjectNode();
+            setStatusArgs.put("status", status);
+            setStatusArgs.put("reason", reason);
+            setStatusPayload.set("arguments", setStatusArgs);
+
+            jse.executeScript("browserstack_executor: " + mapper.writeValueAsString(setStatusPayload));
+
+        } catch (Exception e) {
+            logWarn("Error setting session status in BrowserStack: {}", e.getMessage());
+        }
+    }
+
     private Step logStepWithScreenshot(String status, String description, String... descriptionArgs) {
         Step step = new Step(null, String.valueOf(testSteps.size() + 1), status, description);
         step.setDescriptionArgs(descriptionArgs);
@@ -747,7 +789,7 @@ public class TestContext {
         }
 
         // BrowserMob proxy
-        browserMobProxy = new BrowserMobProxy(zahoriProperties);
+        browserMobProxy = new BrowserMobProxy(zahoriProperties, this);
         browserMobProxy.start();
         browserMobProxy.startHarCapture(this.caseExecution.getCas().getName());
 
@@ -761,6 +803,7 @@ public class TestContext {
         seleniumProxy.setSslProxy(hostAndPort);
 
         logInfo("Defined selenium proxy at {}", hostAndPort);
+        logInfo("### Proxy selenium {}-{}-{}, hostAndPort {}", caseExecutionId, browserName, resolution, hostAndPort);
 
         return seleniumProxy;
     }
@@ -768,8 +811,8 @@ public class TestContext {
     public void stopBrowserMobProxy() {
         if (browserMobProxy != null) {
             try {
-                saveHarLog();
                 browserMobProxy.stop();
+                saveHarLog();
             } catch (Exception e) {
                 logWarn("Error stopping selenium proxy: {}", e.getMessage());
             }

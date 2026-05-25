@@ -24,6 +24,7 @@ package io.zahori.framework.core;
  */
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import static io.zahori.framework.core.PageElement.ERROR;
 import io.zahori.framework.exception.ZahoriException;
 import io.zahori.framework.exception.ZahoriPassedException;
 import io.zahori.framework.tms.TmsBulkService;
@@ -113,9 +114,6 @@ public abstract class BaseProcess {
 
             return testContext;
         } catch (Exception e) {
-            if (testContext != null) {
-                testContext.stopRemoteTunnel();
-            }
             e.printStackTrace();
             throw new ZahoriException("", "Error initializing case: " + e.getMessage());
         }
@@ -137,7 +135,6 @@ public abstract class BaseProcess {
         } catch (final Exception e) {
             manageException(testContext, caseExecution, e);
         } finally {
-            testContext.stopRemoteTunnel();
             testContext.stopChronometer();
             testContext.writeSteps2Json();
             testContext.logInfo("Test Finished: " + testContext.testCaseName);
@@ -190,6 +187,8 @@ public abstract class BaseProcess {
                 testContext.stopVideo();
 
                 if (testContext.getBrowser() != null) {
+                    testContext.logBrowserStackStatus(); // Log test result on BrowserStack
+                    testContext.stopRemoteTunnel(); // Stop BrowserStack local tunnel
                     testContext.getBrowser().close();
                 }
             }
@@ -250,7 +249,7 @@ public abstract class BaseProcess {
             testContext.logError(e.getMessage());
         }
 
-        caseExecution.setNotes(e.getMessage());
+        caseExecution.setNotes(getErrorMessage(e));
         caseExecution.setStatus("FAILED");
         return updateCaseExecution(testContext, caseExecution, serverUrl, processRegistration);
     }
@@ -479,5 +478,25 @@ public abstract class BaseProcess {
             properties.put("eureka.instance.preferIpAddress", "false");
         }
         return properties;
+    }
+
+    private String getErrorMessage(Exception exception) {
+        return ERROR + removeSeleniumDriverInfo(removeSeleniumSystemInfo(removeSeleniumBuildInfo(removeSeleniumSessionInfo(exception.getMessage()))));
+    }
+
+    private String removeSeleniumDriverInfo(String error) {
+        return StringUtils.substringBefore(error, "Driver info:");
+    }
+
+    private String removeSeleniumSystemInfo(String error) {
+        return StringUtils.substringBefore(error, "System info:");
+    }
+
+    private String removeSeleniumSessionInfo(String error) {
+        return StringUtils.substringBefore(error, "(Session info:");
+    }
+
+    private String removeSeleniumBuildInfo(String error) {
+        return StringUtils.substringBefore(error, "Build info:");
     }
 }

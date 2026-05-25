@@ -22,6 +22,7 @@ package io.zahori.framework.driver.browserfactory;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import io.zahori.framework.core.TestContext;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import java.io.File;
 import java.io.IOException;
@@ -43,9 +44,11 @@ public class BrowserMobProxy {
 
     private ZahoriProperties zahoriProperties;
     private BrowserMobProxyServer proxy;
+    private TestContext testContext;
 
-    public BrowserMobProxy(ZahoriProperties zahoriProperties) {
+    public BrowserMobProxy(ZahoriProperties zahoriProperties, TestContext testContext) {
         this.zahoriProperties = zahoriProperties;
+        this.testContext = testContext;
 
         proxy = new BrowserMobProxyServer();
         proxy.setTrustAllServers(true);
@@ -72,15 +75,19 @@ public class BrowserMobProxy {
         if (zahoriProperties.isAddHeadersEnabled()) {
             addHeaders(zahoriProperties.getHeadersToBeAdded());
         }
+
+        testContext.logInfo("### Proxy started {}-{}-{}, port {}", testContext.caseExecutionId, testContext.browserName, testContext.resolution, String.valueOf(proxy.getPort()));
     }
 
     public void stop() {
-        if (!isStarted()) {
+        if (!isStarted() || isStopped()) {
             return;
         }
 
         try {
             proxy.stop();
+            testContext.logInfo("### Proxy sttoped {}-{}-{}, port {}", testContext.caseExecutionId, testContext.browserName, testContext.resolution, String.valueOf(proxy.getPort()));
+            isStopped();
         } catch (Exception e) {
             // TODO
         }
@@ -88,6 +95,10 @@ public class BrowserMobProxy {
 
     public boolean isStarted() {
         return proxy != null && proxy.isStarted();
+    }
+
+    public boolean isStopped() {
+        return proxy != null && proxy.isStopped();
     }
 
     public void startHarCapture(String tag) {
