@@ -665,22 +665,17 @@ public class PageElement {
 
     public boolean isPresent(int maxSecondsWaiting) {
         try {
-            final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(maxSecondsWaiting));
-            wait.until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(maxSecondsWaiting));
             return driver.findElement(locator.getBy()) != null;
         } catch (final Exception e) {
             return false;
+        } finally {
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(testContext.timeoutFindElement));
         }
     }
 
     public boolean isPresentWithoutWait() {
-        try {
-            final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(0L));
-            wait.until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
-            return driver.findElement(locator.getBy()) != null;
-        } catch (final Exception e) {
-            return false;
-        }
+        return isPresent(0);
     }
 
     public void validateIsVisible() {
