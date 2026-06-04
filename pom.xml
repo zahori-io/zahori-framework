@@ -3,7 +3,7 @@
 	
     <groupId>io.zahori</groupId>
     <artifactId>zahori-framework</artifactId>
-    <version>0.2.25.15_appium-SNAPSHOT</version>
+    <version>0.2.25.15_appium</version>
     <packaging>jar</packaging>
     <name>zahori-framework</name>
 
