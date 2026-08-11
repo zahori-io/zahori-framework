@@ -23,6 +23,7 @@ package io.zahori.framework.driver.browserfactory;
  * #L%
  */
 import io.appium.java_client.android.AndroidDriver;
+import io.zahori.framework.core.ExecutionTarget;
 import io.zahori.framework.driver.DriverFactory;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import java.lang.reflect.InvocationTargetException;
@@ -70,23 +71,7 @@ public class WebDriverBrowserSelenium {
     public WebDriver getWebDriver() {
         WebDriver driver = null;
 
-        String testName = browsers.getTestName();
-
         try {
-            /*DesiredCapabilities caps = new CapsBrowserSelenium(browsers).getCapsByNavigator();
-            if (proxy != null) {
-                caps.setCapability(CapabilityType.PROXY, proxy);
-            }
-
-            // ElasTest Capabilities
-            caps.setCapability("live", true);
-            caps.setCapability("testName", testName);
-
-            // Zahori Capabilities
-            if (!StringUtils.isEmpty(browsers.getCaseExecutionId()))
-                caps.setCapability("name", browsers.getCaseExecutionId());*/
-
-            //driver = getDriver(caps);
             driver = new DriverFactory().create(browsers, proxy);
             setProperties(driver, browsers);
 
@@ -120,7 +105,9 @@ public class WebDriverBrowserSelenium {
 
         WebDriver driver = null;
         try {
-            Map<String, String> extraPreferences = new ZahoriProperties().getBrowserPreferencesToBeAdded(navega.getName());
+            Map<String, String> extraPreferences = new ZahoriProperties(
+                    navega == null ? ExecutionTarget.of(null, null) : ExecutionTarget.of(navega.getEnvironmentName(), navega.getPlatform()))
+                    .getBrowserPreferencesToBeAdded(navega.getName());
             if (StringUtils.equalsIgnoreCase("chrome", navega.getName())) {
                 ChromeOptions options = new ChromeOptions();
                 for (String pref : extraPreferences.keySet()) {
@@ -147,7 +134,8 @@ public class WebDriverBrowserSelenium {
         if (isWindowsPlatform(currentPlatform)) {
             caps.setPlatform(Platform.WINDOWS);
         }*/
-        ZahoriProperties zahoriProperties = new ZahoriProperties();
+        ZahoriProperties zahoriProperties = new ZahoriProperties(
+                navega == null ? ExecutionTarget.of(null, null) : ExecutionTarget.of(navega.getEnvironmentName(), navega.getPlatform()));
 
         Map<String, String> extraPreferences = zahoriProperties.getBrowserPreferencesToBeAdded(navega.getName());
 

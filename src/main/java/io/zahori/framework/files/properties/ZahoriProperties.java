@@ -22,6 +22,7 @@ package io.zahori.framework.files.properties;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import io.zahori.framework.core.ExecutionTarget;
 import io.zahori.framework.evidences.Evidences.ZahoriLogLevel;
 import io.zahori.framework.exception.ZahoriException;
 import io.zahori.framework.security.ZahoriCipher;
@@ -35,52 +36,132 @@ import java.util.Properties;
 import java.util.Set;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class ZahoriProperties {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ZahoriProperties.class);
 
     private static final String RESULTS_DIR = "target/test-results/";
     private static final String ZAHORI_TEST_BROWSERPREFS_ADD = "zahori.test.browser.preferences.add";
     private static final String ZAHORI_TEST_CAPABILITIES_ADD = "zahori.test.capabilities.add";
     private static final String DOT = ".";
+    private static final String BASE_PROPERTIES_FILE = "zahori.properties";
+    private static final String ENVIRONMENT_PROPERTIES_PREFIX = "zahori-";
+    private static final String ENVIRONMENT_PROPERTIES_SUFFIX = ".properties";
 
     private final Properties prop;
     private Configuration configuration;
 
     private static final String TXT_PROP_TESTCASE_TIMEOUT = "zahori.test.execution.timeout.testcase";
 
+    /**
+     * Loads zahori.properties and, if the configuration carries an environment name, overlays
+     * any matching zahori-&lt;environment&gt;.properties found in the classpath on top of it.
+     * Platform-specific overrides are not applied through this constructor (no platform is
+     * known here) — use {@link #ZahoriProperties(ExecutionTarget)} when the platform is
+     * available.
+     * <p>
+     * This is orthogonal to the grid provider (BrowserStack bstack:options / Selenoid
+     * selenoid:options / local Appium) dimension already resolved by key prefixing in
+     * {@code getExtraCapabilities()} / {@code getBrowserPreferencesToBeAdded()}: the environment
+     * overlay only decides which VALUE a key has, never which provider it applies to.
+     */
     public ZahoriProperties(Configuration configuration) {
-        this();
+        this(ExecutionTarget.of(configuration == null ? null : configuration.getEnvironmentName(), null));
         this.configuration = configuration;
     }
 
-    public ZahoriProperties() {
+    /**
+     * Loads zahori.properties (common, environment-agnostic properties) and, if present in the
+     * classpath, overlays environment specific files on top of it. No platform-specific overlay
+     * is applied through this constructor — use {@link #ZahoriProperties(ExecutionTarget)} when
+     * the platform is available.
+     */
+    public ZahoriProperties(String environmentName) {
+        this(ExecutionTarget.of(environmentName, null));
+    }
 
+    /**
+     * Loads zahori.properties (common, environment-agnostic properties) and, if present in the
+     * classpath, overlays environment- and platform-specific files on top of it, following the
+     * same "most specific wins" convention Spring Boot uses for profiles:
+     * <ol>
+     * <li>zahori-&lt;generic environment id&gt;.properties (e.g. environment "STG - Web" -&gt;
+     * zahori-stg.properties)</li>
+     * <li>zahori-&lt;full environment id&gt;.properties (e.g. zahori-stg-web.properties)</li>
+     * <li>zahori-&lt;full environment id&gt;-&lt;platform&gt;.properties (e.g.
+     * zahori-stg-web-android.properties) — only when a platform is known</li>
+     * </ol>
+     * All three files are optional; when none exist (e.g. processes that don't opt into
+     * per-environment properties), behavior is identical to {@link #ZahoriProperties()} — full
+     * backward compatibility with existing processes that ship a single zahori.properties. Only
+     * the keys that actually change for that environment/platform need to be declared in the
+     * overlay file.
+     */
+    public ZahoriProperties(ExecutionTarget target) {
         prop = new Properties();
-        InputStream input = null;
-        try {
+        loadPropertiesFile(BASE_PROPERTIES_FILE, true);
+        loadEnvironmentOverrides(target == null ? ExecutionTarget.of(null, null) : target);
+    }
 
-            input = SystemPropertiesUtils.class.getClassLoader().getResourceAsStream("zahori.properties");
+    public ZahoriProperties() {
+        this((String) null);
+    }
 
-            // load properties file
-            prop.load(input);
+    /**
+     * Associates a {@link Configuration} so that the handful of getters that prefer values
+     * coming from it (timeout, TMS credentials...) over the properties file can use it. Optional
+     * — callers that only need the merged properties (e.g. capability/preference lookups keyed
+     * off an {@link ExecutionTarget}) can leave this unset.
+     */
+    public void setConfiguration(Configuration configuration) {
+        this.configuration = configuration;
+    }
 
-            // display list of properties
-            /*
-             * if (LOG.isDebugEnabled()) { Enumeration e = prop.propertyNames();
-             * LOG.debug("Project properties:"); while (e.hasMoreElements()) { String key =
-             * e.nextElement().toString(); LOG.debug("- " + key + "=" +
-             * prop.getProperty(key)); } }
-             */
-        } catch (Exception e) {
-            throw new RuntimeException("ERROR loading zahorí properties file: " + e.getMessage());
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    throw new RuntimeException("ERROR loading zahorí properties file: " + e.getMessage());
+    private void loadEnvironmentOverrides(ExecutionTarget target) {
+        String environmentId = target.environment();
+        if (StringUtils.isBlank(environmentId)) {
+            return;
+        }
+
+        String genericId = StringUtils.substringBefore(environmentId, "-");
+        if (!StringUtils.equals(genericId, environmentId)) {
+            loadPropertiesFile(ENVIRONMENT_PROPERTIES_PREFIX + genericId + ENVIRONMENT_PROPERTIES_SUFFIX, false);
+        }
+        loadPropertiesFile(ENVIRONMENT_PROPERTIES_PREFIX + environmentId + ENVIRONMENT_PROPERTIES_SUFFIX, false);
+
+        String platform = target.platform();
+        if (StringUtils.isNotBlank(platform)) {
+            loadPropertiesFile(ENVIRONMENT_PROPERTIES_PREFIX + environmentId + "-" + platform + ENVIRONMENT_PROPERTIES_SUFFIX, false);
+        }
+    }
+
+    /**
+     * Loads a properties file from the classpath into {@link #prop}, merging it on top of
+     * whatever was already loaded (later values win, same semantics as calling
+     * {@link Properties#load(InputStream)} repeatedly on the same instance).
+     *
+     * @param mandatory when {@code true}, a missing file throws (used for the base
+     * zahori.properties, same behavior as before this change); when {@code false}, a missing
+     * file is silently skipped (used for optional per-environment overlays).
+     */
+    private void loadPropertiesFile(String fileName, boolean mandatory) {
+        try (InputStream input = SystemPropertiesUtils.class.getClassLoader().getResourceAsStream(fileName)) {
+            if (input == null) {
+                if (mandatory) {
+                    throw new RuntimeException(
+                            "ERROR loading zahorí properties file: Can't find file " + fileName + " in classpath. Please create it using one of the templates");
                 }
+                return;
             }
+            prop.load(input);
+            if (!mandatory) {
+                LOG.info("Loaded environment properties overrides from {}", fileName);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("ERROR loading zahorí properties file '" + fileName + "': " + e.getMessage());
         }
     }
 

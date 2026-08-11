@@ -22,6 +22,7 @@ package io.zahori.framework.driver;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import io.zahori.framework.core.ExecutionTarget;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import java.util.Map;
@@ -90,7 +91,7 @@ public abstract class AbstractDriver implements Driver {
             - none	Ready State=Any	--> Does not block WebDriver at all
          */
         options.setPageLoadStrategy(PageLoadStrategy.EAGER);
-        setZahoriPropertiesBrowserOptions(options);
+        setZahoriPropertiesBrowserOptions(options, browsers);
 
         // Set capabilities defined in zahori.properties starting with key: zahori.test.capabilities.add.
         DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilities(browsers);
@@ -107,10 +108,13 @@ public abstract class AbstractDriver implements Driver {
      * @param options Objeto AbstractDriverOptions para agregar opciones del
      * navegador.
      */
-    private void setZahoriPropertiesBrowserOptions(AbstractDriverOptions<?> options) {
+    private void setZahoriPropertiesBrowserOptions(AbstractDriverOptions<?> options, Browsers browsers) {
+
+        ZahoriProperties zahoriProperties = new ZahoriProperties(
+                browsers == null ? ExecutionTarget.of(null, null) : ExecutionTarget.of(browsers.getEnvironmentName(), browsers.getPlatform()));
 
         if (options instanceof ChromeOptions chromeOptions) {
-            Map<String, String> extraPreferences = new ZahoriProperties().getBrowserPreferencesToBeAdded("chrome");
+            Map<String, String> extraPreferences = zahoriProperties.getBrowserPreferencesToBeAdded("chrome");
             for (String extraPrefKey : extraPreferences.keySet()) {
                 String extraPrefValue = extraPreferences.get(extraPrefKey);
                 String argument = StringUtils.isEmpty(extraPrefValue) ? extraPrefKey : extraPrefKey + "=" + extraPrefValue;
@@ -119,7 +123,7 @@ public abstract class AbstractDriver implements Driver {
         }
 
         if (options instanceof EdgeOptions edgeOptions) {
-            Map<String, String> extraPreferences = new ZahoriProperties().getBrowserPreferencesToBeAdded("edge");
+            Map<String, String> extraPreferences = zahoriProperties.getBrowserPreferencesToBeAdded("edge");
             for (String extraPrefKey : extraPreferences.keySet()) {
                 String extraPrefValue = extraPreferences.get(extraPrefKey);
                 String argument = StringUtils.isEmpty(extraPrefValue) ? extraPrefKey : extraPrefKey + "=" + extraPrefValue;
@@ -128,7 +132,7 @@ public abstract class AbstractDriver implements Driver {
         }
 
         if (options instanceof FirefoxOptions firefoxOptions) {
-            Map<String, String> extraPreferences = new ZahoriProperties().getBrowserPreferencesToBeAdded("firefox");
+            Map<String, String> extraPreferences = zahoriProperties.getBrowserPreferencesToBeAdded("firefox");
             for (String extraPrefKey : extraPreferences.keySet()) {
                 String extraPrefValue = extraPreferences.get(extraPrefKey);
                 if (isBoolean(extraPreferences.get(extraPrefKey))) {

@@ -110,6 +110,9 @@ public class TestContext {
     public int retries = 0;
     private Map<String, Object> data = new HashMap<>();
 
+    // Single source of truth for "where" this execution runs (environment/platform/grid provider)
+    public ExecutionTarget executionTarget;
+
     // Properties
     public ZahoriProperties zahoriProperties;
     public ProjectProperties projectProperties;
@@ -155,6 +158,7 @@ public class TestContext {
         testCaseName = caseExecution.getCas().getName();
         caseExecutionId = String.valueOf(caseExecution.getCaseExecutionId());
         platform = getPlatform(); // TODO
+        executionTarget = ExecutionTarget.of(caseExecution.getConfiguration() == null ? null : caseExecution.getConfiguration().getEnvironmentName(), platform);
         bits = "32"; // TODO
         browserName = caseExecution.getBrowser() == null ? "" : caseExecution.getBrowser().getBrowserName().toUpperCase();
         browserVersion = StringUtils.isBlank(caseExecution.getBrowser().getVersion()) ? caseExecution.getBrowser().getDefaultVersion()
@@ -189,7 +193,8 @@ public class TestContext {
         SystemPropertiesUtils.loadSystemProperties();
 
         // Load properties files: zahorí and project specific
-        zahoriProperties = new ZahoriProperties(caseExecution.getConfiguration());
+        zahoriProperties = new ZahoriProperties(executionTarget);
+        zahoriProperties.setConfiguration(caseExecution.getConfiguration());
         projectProperties = new ProjectProperties();
 
         // Read url from configuration

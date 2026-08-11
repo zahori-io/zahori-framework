@@ -22,6 +22,7 @@ package io.zahori.framework.driver;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import io.zahori.framework.core.ExecutionTarget;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import java.util.HashMap;
@@ -47,7 +48,9 @@ public class CapabilitiesBuilder {
     public static DesiredCapabilities getCapabilities(Browsers browsers) {
         DesiredCapabilities capabilities = new DesiredCapabilities();
         try {
-            Map<String, String> extraCapabilities = new ZahoriProperties().getExtraCapabilities();
+            Map<String, String> extraCapabilities = new ZahoriProperties(
+                    browsers == null ? ExecutionTarget.of(null, null) : ExecutionTarget.of(browsers.getEnvironmentName(), browsers.getPlatform()))
+                    .getExtraCapabilities();
 
             // Crear un mapa para gestionar las propiedades dinámicamente
             Map<String, Object> capabilityMap = new HashMap<>();
