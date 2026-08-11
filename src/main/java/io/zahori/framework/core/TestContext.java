@@ -36,6 +36,7 @@ import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.driver.gridprovider.GridProvider;
 import io.zahori.framework.driver.gridprovider.GridProviderRegistry;
 import io.zahori.framework.driver.gridprovider.HeaderInjectionStrategy;
+import io.zahori.framework.driver.gridprovider.RequiredCapabilitiesValidator;
 import io.zahori.framework.evidences.Evidences;
 import io.zahori.framework.evidences.Evidences.ZahoriLogLevel;
 import io.zahori.framework.exception.ZahoriException;
@@ -207,6 +208,10 @@ public class TestContext {
         gridProvider = GridProviderRegistry.resolve().resolveProvider(remoteUrl, zahoriProperties.isGridProviderAutodetectEnabled());
         executionTarget = executionTarget.withGridProviderId(gridProvider.id());
 
+        // Fail fast (before creating the driver) if this provider/platform combination is
+        // missing configuration it genuinely needs, instead of surfacing a cryptic error later.
+        RequiredCapabilitiesValidator.validate(gridProvider, executionTarget.environment(), executionTarget.platform(), zahoriProperties);
+
         // Read url from configuration
         url = caseExecution.getConfiguration().getEnvironmentUrl();
 
@@ -329,6 +334,9 @@ public class TestContext {
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.version", browserVersion);
         evidences.insertTextInDocs("zahori.testInfo.execution.browser.resolution", resolution);
         evidences.insertTextInDocs("zahori.testInfo.execution.evidences.path", evidences.getPath());
+        evidences.insertTextInDocs("zahori.testInfo.execution.gridProvider", gridProvider == null ? "" : gridProvider.id());
+        evidences.insertTextInDocs("zahori.testInfo.execution.overlays",
+                zahoriProperties.getLoadedOverlayFiles().isEmpty() ? "(none)" : String.join(", ", zahoriProperties.getLoadedOverlayFiles()));
 
         logInfo("zahori.testInfo.title");
         logInfo("- Case: " + testCaseName);
@@ -340,6 +348,10 @@ public class TestContext {
         logInfo("zahori.testInfo.execution.browser.name", browserName);
         logInfo("zahori.testInfo.execution.browser.version", browserVersion);
         logInfo("zahori.testInfo.execution.browser.resolution", resolution);
+        logInfo("- Grid provider resolved: " + (gridProvider == null ? "n/a" : gridProvider.id())
+                + " (autodetect=" + zahoriProperties.isGridProviderAutodetectEnabled() + ")");
+        logInfo("- Property overlays applied: "
+                + (zahoriProperties.getLoadedOverlayFiles().isEmpty() ? "(none)" : String.join(", ", zahoriProperties.getLoadedOverlayFiles())));
         String txtEvidencesPathProperty = "zahori.testInfo.execution.evidences.path";
         String evidencesPath = getMessage(txtEvidencesPathProperty);
         if (!evidencesPath.isEmpty() && !evidencesPath.equals(txtEvidencesPathProperty)) {

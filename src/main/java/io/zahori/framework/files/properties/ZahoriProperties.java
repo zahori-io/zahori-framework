@@ -30,7 +30,9 @@ import io.zahori.framework.utils.BooleanUtils;
 import io.zahori.model.process.Configuration;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -55,6 +57,7 @@ public class ZahoriProperties {
 
     private final Properties prop;
     private Configuration configuration;
+    private final List<String> loadedOverlayFiles = new ArrayList<>();
 
     private static final String TXT_PROP_TESTCASE_TIMEOUT = "zahori.test.execution.timeout.testcase";
 
@@ -161,10 +164,22 @@ public class ZahoriProperties {
             prop.load(input);
             if (!mandatory) {
                 LOG.info("Loaded environment properties overrides from {}", fileName);
+                loadedOverlayFiles.add(fileName);
             }
         } catch (IOException e) {
             throw new RuntimeException("ERROR loading zahorí properties file '" + fileName + "': " + e.getMessage());
         }
+    }
+
+    /**
+     * @return the optional overlay files (zahori-&lt;env&gt;[-&lt;platform&gt;].properties) that
+     * were actually found and merged on top of the base zahori.properties, in load order (most
+     * specific last). Empty for a process that doesn't use any overlay. Surfaced in evidences by
+     * {@code TestContext.logTestInfo()} so it's clear, per execution, exactly what configuration
+     * was applied — not just trusted to work.
+     */
+    public List<String> getLoadedOverlayFiles() {
+        return List.copyOf(loadedOverlayFiles);
     }
 
     private static final Pattern ENVIRONMENT_VARIABLE_PATTERN = Pattern.compile("\\$\\{([A-Za-z0-9_]+)\\}");

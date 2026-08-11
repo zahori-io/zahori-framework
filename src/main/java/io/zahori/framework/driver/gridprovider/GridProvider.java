@@ -23,6 +23,7 @@ package io.zahori.framework.driver.gridprovider;
  * #L%
  */
 import io.zahori.framework.driver.browserfactory.Browsers;
+import java.util.List;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 
 /**
@@ -66,4 +67,22 @@ public interface GridProvider {
      * headers/blacklist/HAR capture) to reach the browser under test.
      */
     HeaderInjectionStrategy headerInjectionStrategy();
+
+    /**
+     * Property keys (as looked up via {@code ZahoriProperties.getProperty(String)}, including any
+     * platform prefix the provider cares about — e.g. {@code "android.bstack:options.headerParams"})
+     * that MUST resolve to a non-blank value for this provider to work correctly for {@code
+     * platform}. Checked once, fail-fast, before the driver is created — see {@code
+     * RequiredCapabilitiesValidator} — instead of letting a missing value surface later as a
+     * cryptic Selenium/Appium error or an unrelated-looking HTTP failure.
+     * <p>
+     * Default: none. Built-in providers declare no framework-level requirement of their own —
+     * requirements here are meant for providers whose correct operation genuinely depends on a
+     * specific property being set (e.g. a 3rd-party provider that always needs an API key
+     * capability), not for business-specific values that happen to be needed by one particular
+     * consuming process.
+     */
+    default List<String> requiredCapabilityKeys(String platform) {
+        return List.of();
+    }
 }
