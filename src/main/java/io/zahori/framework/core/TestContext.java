@@ -33,6 +33,9 @@ import static io.zahori.framework.core.BaseProcess.DEFAULT_BIT_DEPTH;
 import static io.zahori.framework.core.BaseProcess.DEFAULT_SCREEN_RESOLUTION;
 import io.zahori.framework.driver.browserfactory.BrowserMobProxy;
 import io.zahori.framework.driver.browserfactory.Browsers;
+import io.zahori.framework.driver.gridprovider.GridProvider;
+import io.zahori.framework.driver.gridprovider.GridProviderRegistry;
+import io.zahori.framework.driver.gridprovider.HeaderInjectionStrategy;
 import io.zahori.framework.evidences.Evidences;
 import io.zahori.framework.evidences.Evidences.ZahoriLogLevel;
 import io.zahori.framework.exception.ZahoriException;
@@ -112,6 +115,7 @@ public class TestContext {
 
     // Single source of truth for "where" this execution runs (environment/platform/grid provider)
     public ExecutionTarget executionTarget;
+    private GridProvider gridProvider;
 
     // Properties
     public ZahoriProperties zahoriProperties;
@@ -196,6 +200,12 @@ public class TestContext {
         zahoriProperties = new ZahoriProperties(executionTarget);
         zahoriProperties.setConfiguration(caseExecution.getConfiguration());
         projectProperties = new ProjectProperties();
+
+        // Resolve, once, which grid provider this execution's remoteUrl belongs to (Selenoid,
+        // BrowserStack, a 3rd-party one, or the generic fallback) — completes the ExecutionTarget
+        // identity and drives proxy/header strategy in getProxyIP().
+        gridProvider = GridProviderRegistry.resolve().resolveProvider(remoteUrl, zahoriProperties.isGridProviderAutodetectEnabled());
+        executionTarget = executionTarget.withGridProviderId(gridProvider.id());
 
         // Read url from configuration
         url = caseExecution.getConfiguration().getEnvironmentUrl();
@@ -793,6 +803,13 @@ public class TestContext {
             return null;
         }
 
+        String ip = getProxyIP();
+        if (ip == null) {
+            logInfo("Grid provider '{}' injects headers natively — skipping local BrowserMobProxy (unreachable from this grid).",
+                    gridProvider == null ? "unknown" : gridProvider.id());
+            return null;
+        }
+
         // BrowserMob proxy
         browserMobProxy = new BrowserMobProxy(zahoriProperties, this);
         browserMobProxy.start();
@@ -801,7 +818,6 @@ public class TestContext {
         // Selenium proxy
         Proxy seleniumProxy = ClientUtil.createSeleniumProxy(browserMobProxy.getProxy());
 
-        String ip = getProxyIP();
         int port = browserMobProxy.getPort();
         String hostAndPort = ip + ":" + port;
         seleniumProxy.setHttpProxy(hostAndPort);
@@ -835,6 +851,14 @@ public class TestContext {
         return osName.contains("nux") || osName.contains("nix");
     }
 
+    /**
+     * @return the address the browser under test should use to reach the local BrowserMobProxy,
+     * or {@code null} if the resolved grid provider injects headers itself (e.g. BrowserStack's
+     * {@code bstack:options.headerParams}) and no local proxy is reachable from it at all — see
+     * {@link #createBrowserMobProxy()}, which must not build a proxy in that case (bug 3.1: this
+     * used to always assume Selenoid-in-Docker and return "host.docker.internal", unreachable
+     * from a cloud grid).
+     */
     private String getProxyIP() {
         boolean remoteBrowser = StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote);
         if (!remoteBrowser) {
@@ -843,6 +867,10 @@ public class TestContext {
 
         if (isMobileWebApp()) {
             return "localhost";
+        }
+
+        if (gridProvider != null && gridProvider.headerInjectionStrategy() != HeaderInjectionStrategy.BROWSERMOB_PROXY) {
+            return null;
         }
 
         if (isLinuxOS()) {

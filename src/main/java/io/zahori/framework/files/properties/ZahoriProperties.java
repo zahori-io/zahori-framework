@@ -34,6 +34,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.apache.commons.lang3.EnumUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -165,6 +167,8 @@ public class ZahoriProperties {
         }
     }
 
+    private static final Pattern ENVIRONMENT_VARIABLE_PATTERN = Pattern.compile("\\$\\{([A-Za-z0-9_]+)\\}");
+
     public String getProperty(String propertyName) {
         String propertyValue = prop.getProperty(propertyName);
 
@@ -173,19 +177,51 @@ public class ZahoriProperties {
         }
         String propertyValueTrimmed = propertyValue.trim();
 
-        // Verify if the value contains the syntax that indicates the value should be read from an environment variable: ${VAR_NAME}
-        if (propertyValueTrimmed.startsWith("${") && propertyValueTrimmed.endsWith("}")) {
-            String environmentVariableName = propertyValueTrimmed.substring(2, propertyValueTrimmed.length() - 1);
-
-            String environmentVariableValue = System.getenv(environmentVariableName);
-
-            if (StringUtils.isBlank(environmentVariableValue)) {
-                return "";
-            }
-            return environmentVariableValue;
+        if (!StringUtils.contains(propertyValueTrimmed, "${")) {
+            return propertyValueTrimmed;
         }
 
-        return propertyValueTrimmed;
+        // Whole-value case, kept byte-for-byte as before: a value that is ONLY a ${VAR_NAME}
+        // reference resolves to "" (not the literal "${VAR_NAME}" text) when the variable is
+        // unset/blank.
+        if (isSingleEnvironmentVariable(propertyValueTrimmed)) {
+            String environmentVariableValue = System.getenv(propertyValueTrimmed.substring(2, propertyValueTrimmed.length() - 1));
+            return StringUtils.isBlank(environmentVariableValue) ? "" : environmentVariableValue;
+        }
+
+        // Compound value with one or more ${VAR_NAME} references embedded in it (e.g. a JSON
+        // capability like {"header":"${VAR_NAME}"}) — substitute each occurrence in place,
+        // leaving unset/blank variables as "".
+        return substituteEmbeddedEnvironmentVariables(propertyValueTrimmed);
+    }
+
+    private boolean isSingleEnvironmentVariable(String value) {
+        return value.startsWith("${") && value.endsWith("}") && value.indexOf("${", 2) == -1;
+    }
+
+    private String substituteEmbeddedEnvironmentVariables(String value) {
+        Matcher matcher = ENVIRONMENT_VARIABLE_PATTERN.matcher(value);
+        StringBuilder result = new StringBuilder();
+        while (matcher.find()) {
+            String environmentVariableValue = StringUtils.defaultString(System.getenv(matcher.group(1)));
+            matcher.appendReplacement(result, Matcher.quoteReplacement(environmentVariableValue));
+        }
+        matcher.appendTail(result);
+        return result.toString();
+    }
+
+    /**
+     * Kill-switch for GridProvider autodetection (default: enabled). Set to
+     * {@code zahori.test.execution.gridProvider.autodetect.enabled=false} to force the
+     * pre-GridProvider behavior (always {@code GenericGridProvider}) without redeploying code —
+     * e.g. as an emergency rollback in production.
+     */
+    public boolean isGridProviderAutodetectEnabled() {
+        String value = getProperty("zahori.test.execution.gridProvider.autodetect.enabled");
+        if (StringUtils.isBlank(value)) {
+            return true;
+        }
+        return BooleanUtils.getBoolean(value);
     }
 
     public String getIEDriverName() {

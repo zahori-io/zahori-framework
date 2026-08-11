@@ -25,6 +25,7 @@ package io.zahori.framework.driver;
 import io.zahori.framework.core.ExecutionTarget;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.files.properties.ZahoriProperties;
+import io.zahori.framework.utils.CapabilitiesMasker;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.PageLoadStrategy;
@@ -97,7 +98,7 @@ public abstract class AbstractDriver implements Driver {
         DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilities(browsers);
         capabilities.asMap().forEach((key, value) -> options.setCapability(key, value));
 
-        System.out.println(browsers.getName() + " browser options and capabilities: " + options.toString());
+        System.out.println(browsers.getName() + " browser options and capabilities: " + CapabilitiesMasker.mask(options.asMap()));
         return options;
     }
 

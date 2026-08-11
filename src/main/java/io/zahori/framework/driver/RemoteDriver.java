@@ -25,7 +25,12 @@ package io.zahori.framework.driver;
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.ios.IOSDriver;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import io.zahori.framework.core.ExecutionTarget;
 import io.zahori.framework.driver.browserfactory.Browsers;
+import io.zahori.framework.driver.gridprovider.GridProvider;
+import io.zahori.framework.driver.gridprovider.GridProviderRegistry;
+import io.zahori.framework.files.properties.ZahoriProperties;
+import io.zahori.framework.utils.CapabilitiesMasker;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
@@ -150,16 +155,23 @@ public class RemoteDriver extends AbstractDriver {
         AbstractDriverOptions<?> options = super.getOptions(browsers, proxy);
         options.setBrowserVersion(browsers.getVersion());
 
-        Map<String, Object> selenoidOptions = new HashMap<>();
-        selenoidOptions.put("name", browsers.getCaseExecutionId());
-        selenoidOptions.put("testName", browsers.getTestName());
-        selenoidOptions.put("enableVNC", true);
-        selenoidOptions.put("enableVideo", false);
-        selenoidOptions.put("screenResolution", browsers.getScreenResolution());
-
-        options.setCapability("selenoid:options", selenoidOptions);
+        resolveGridProvider(browsers).enrichCapabilities(options, browsers);
 
         return options;
+    }
+
+    /**
+     * Resolves which {@link GridProvider} this execution's {@code remoteUrl} belongs to
+     * (Selenoid, BrowserStack, a 3rd-party one contributed by the consuming process, or the
+     * generic fallback), so capability enrichment (bug: {@code selenoid:options} used to be
+     * added unconditionally for every remote grid) is delegated to it instead of hardcoded here.
+     */
+    private GridProvider resolveGridProvider(Browsers browsers) {
+        boolean autodetectEnabled = new ZahoriProperties(
+                browsers == null ? ExecutionTarget.of(null, null) : ExecutionTarget.of(browsers.getEnvironmentName(), browsers.getPlatform()))
+                .isGridProviderAutodetectEnabled();
+        String remoteUrl = browsers == null ? null : browsers.getRemoteUrl();
+        return GridProviderRegistry.resolve().resolveProvider(remoteUrl, autodetectEnabled);
     }
 
     private WebDriver getAppiumDriver(Browsers browsers) {
@@ -218,7 +230,7 @@ public class RemoteDriver extends AbstractDriver {
             browserStackOptions.put("platformVersion", capabilities.getCapability("appium:platformVersion"));
         }
 
-        System.out.println("- Appium capabilities: " + capabilities.toString());
+        System.out.println("- Appium capabilities: " + CapabilitiesMasker.mask(capabilities.asMap()));
 
         return capabilities;
     }
