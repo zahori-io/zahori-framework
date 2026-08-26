@@ -77,6 +77,8 @@ import java.util.concurrent.TimeUnit;
 import net.lightbody.bmp.client.ClientUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Proxy;
@@ -85,6 +87,8 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class TestContext {
+
+    private static final Logger LOG = LogManager.getLogger(TestContext.class);
 
     public static final String JSON_REPORT = "testSteps.json";
     public static final String DATE_FORMAT = "yyyyMMdd-HHmmss";
@@ -172,6 +176,37 @@ public class TestContext {
                 : caseExecution.getScreenResolution() + DEFAULT_BIT_DEPTH;
     }
 
+    /** Prefix of the optional per-platform remote grid URL override in zahori.properties. */
+    static final String REMOTE_URL_PROPERTY_PREFIX = "zahori.test.execution.remoteUrl.";
+
+    /**
+     * Resolves which remote grid URL this execution must use.
+     *
+     * <p>A process gets a single grid URL injected at Spring boot ({@code zahori.selenoid.url}),
+     * which forces every platform of that process onto the same grid. This override lets a run
+     * route per platform — Android and iOS to BrowserStack while Windows and OSX keep hitting the
+     * local Selenoid — by declaring {@code zahori.test.execution.remoteUrl.<platform>} in
+     * zahori.properties.
+     *
+     * <p>Backwards compatible by construction: with no property declared, the injected URL is
+     * returned unchanged, so processes that know nothing about this keep working without touching
+     * their application.properties. A blank value is treated as "not declared" rather than as
+     * "no grid", which would otherwise silently break the run.
+     *
+     * <p>The platform is lowercased because {@code getPlatform()} is inconsistent about it — it
+     * returns "ANDROID" and "IOS" but "windows" and "osx" — and the property key must not depend
+     * on that. {@code startRemoteTunnel()} lowercases it for the same reason.
+     *
+     * @param injectedRemoteUrl  the URL injected at boot, used when there is no override
+     * @param platform           this execution's platform, in any casing
+     * @param zahoriProperties   properties of the case, already resolved for its environment
+     * @return the URL to use, never blank unless the injected one already was
+     */
+    static String resolveRemoteUrl(String injectedRemoteUrl, String platform, ZahoriProperties zahoriProperties) {
+        String platformRemoteUrl = zahoriProperties.getProperty(REMOTE_URL_PROPERTY_PREFIX + StringUtils.lowerCase(platform));
+        return StringUtils.isNotBlank(platformRemoteUrl) ? platformRemoteUrl : injectedRemoteUrl;
+    }
+
     // TODO Temporal workaround for Appium driver creation:
     private String getPlatform() {
         if (StringUtils.containsIgnoreCase(caseExecution.getConfiguration().getName(), "android")) {
@@ -201,6 +236,15 @@ public class TestContext {
         zahoriProperties = new ZahoriProperties(executionTarget);
         zahoriProperties.setConfiguration(caseExecution.getConfiguration());
         projectProperties = new ProjectProperties();
+
+        String resolvedRemoteUrl = resolveRemoteUrl(remoteUrl, platform, zahoriProperties);
+        if (!StringUtils.equals(resolvedRemoteUrl, remoteUrl)) {
+            // Logged, and not silently applied: "why did this run go to BrowserStack?" has to be
+            // answerable from the log. It goes through the class logger and not through logInfo()
+            // because evidences do not exist yet at this point of constructor().
+            LOG.info("Remote grid URL overridden for platform '{}': {}", platform, resolvedRemoteUrl);
+            remoteUrl = resolvedRemoteUrl;
+        }
 
         // Resolve, once, which grid provider this execution's remoteUrl belongs to (Selenoid,
         // BrowserStack, a 3rd-party one, or the generic fallback) — completes the ExecutionTarget
