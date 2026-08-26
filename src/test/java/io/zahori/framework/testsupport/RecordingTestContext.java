@@ -75,6 +75,7 @@ public class RecordingTestContext extends TestContext {
     private final List<String> partialSteps = new ArrayList<>();
     private final List<String> infoMessages = new ArrayList<>();
     private final List<String> warnMessages = new ArrayList<>();
+    private final List<String> executionNotes = new ArrayList<>();
     private final Map<String, String[]> stepArgs = new LinkedHashMap<>();
     private final Map<String, String> projectProperties = new LinkedHashMap<>();
 
@@ -169,6 +170,13 @@ public class RecordingTestContext extends TestContext {
      */
     public List<String> warnMessages() {
         return Collections.unmodifiableList(warnMessages);
+    }
+
+    /**
+     * @return notes added for the TMS, in order
+     */
+    public List<String> executionNotes() {
+        return Collections.unmodifiableList(executionNotes);
     }
 
     /**
@@ -299,10 +307,13 @@ public class RecordingTestContext extends TestContext {
         return projectProperties.get(property);
     }
 
-    /** No TMS in a unit test. */
+    /**
+     * Recorded instead of sent to the TMS. They are the notes a human reads to know what to do with
+     * a booking a case left behind — cancel it, watch it — so a test has to be able to assert them.
+     */
     @Override
     public void setExecutionNotes(String notes) {
-        // intentionally empty
+        executionNotes.add(notes);
     }
 
     /** No real keyboard in a unit test. */
