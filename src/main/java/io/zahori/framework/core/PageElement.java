@@ -39,6 +39,7 @@ import org.openqa.selenium.interactions.Action;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.interactions.PointerInput;
 import org.openqa.selenium.interactions.Sequence;
+import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -715,6 +716,103 @@ public class PageElement {
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
             webElement = driver.findElement(locator.getBy());
             return webElement.isDisplayed();
+        } catch (final Exception e) {
+            return false;
+        } finally {
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(testContext.timeoutFindElement));
+        }
+    }
+
+    /**
+     * Waits until this element is no longer visible, or is gone from the DOM.
+     *
+     * <p>This is the counterpart of {@link #isVisible(int)} and it did not exist before: every
+     * consumer that needed to wait for a spinner, a loader or an overlay to disappear was hand
+     * rolling {@code while (element.isVisibleWithoutWait()) { Pause.pauseMillis(500); }}. That loop
+     * is easy to get subtly wrong — no cap, a cap that is never checked, or an exception that is
+     * read as "still there".
+     *
+     * @param maxSecondsWaiting how long to wait at most
+     * @return {@code true} if it became invisible (or was never there) within the time, {@code false} otherwise
+     */
+    public boolean isNotVisible(int maxSecondsWaiting) {
+        return waitUntil(maxSecondsWaiting, ExpectedConditions.invisibilityOfElementLocated(locator.getBy()));
+    }
+
+    /**
+     * Waits until this element is no longer visible, using the case timeout.
+     *
+     * @return {@code true} if it became invisible (or was never there) within the time
+     */
+    public boolean isNotVisible() {
+        return isNotVisible(testContext.timeoutFindElement);
+    }
+
+    /**
+     * Waits until this element is present and enabled.
+     *
+     * <p>Different from {@link #isclickable()}, which also requires visibility: a control can be
+     * enabled and still be scrolled out of view. Use this one when what you are waiting for is the
+     * application enabling the control — a submit button that a form validation unlocks, typically.
+     *
+     * @param maxSecondsWaiting how long to wait at most
+     * @return {@code true} if it became enabled within the time, {@code false} otherwise
+     */
+    public boolean isEnabled(int maxSecondsWaiting) {
+        return waitUntil(maxSecondsWaiting, webDriver -> webDriver.findElement(locator.getBy()).isEnabled());
+    }
+
+    /**
+     * Waits until an attribute of this element reaches an expected value.
+     *
+     * <p>Meant to replace polling {@code getAttributeValue(...)} in a loop, which besides being
+     * hand rolled writes one line into the evidences on every turn.
+     *
+     * @param attribute         attribute name
+     * @param expectedValue     value to wait for
+     * @param maxSecondsWaiting how long to wait at most
+     * @return {@code true} if the attribute reached that value within the time, {@code false} otherwise
+     */
+    public boolean hasAttribute(String attribute, String expectedValue, int maxSecondsWaiting) {
+        return waitUntil(maxSecondsWaiting, ExpectedConditions.attributeToBe(locator.getBy(), attribute, expectedValue));
+    }
+
+    /**
+     * Waits until this element's text contains the expected fragment.
+     *
+     * @param expectedText      fragment to wait for
+     * @param maxSecondsWaiting how long to wait at most
+     * @return {@code true} if the text appeared within the time, {@code false} otherwise
+     */
+    public boolean containsText(String expectedText, int maxSecondsWaiting) {
+        return waitUntil(maxSecondsWaiting,
+                ExpectedConditions.textToBePresentInElementLocated(locator.getBy(), expectedText));
+    }
+
+    /**
+     * Runs an explicit wait with the implicit wait temporarily disabled.
+     *
+     * <p>That dance is not decoration. Selenium's own documentation is explicit about it: <i>"It is
+     * strongly advised not to mix implicit and explicit waits, as this can lead to unpredictable
+     * wait times. For instance, setting an implicit wait of 10 seconds and an explicit wait of 15
+     * seconds could result in a timeout occurring after 20 seconds"</i>. This framework sets a
+     * global implicit wait of {@code testContext.timeoutFindElement}, so any explicit wait added on
+     * top has to zero it first and restore it afterwards — which is exactly what
+     * {@link #isVisibleWithoutWait()} already does for the same reason.
+     *
+     * @param maxSecondsWaiting how long to wait at most
+     * @param condition         the condition to wait for
+     * @return {@code true} if the condition held within the time, {@code false} on timeout or error
+     */
+    private boolean waitUntil(int maxSecondsWaiting, ExpectedCondition<Boolean> condition) {
+        try {
+            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(maxSecondsWaiting));
+            // until() never returns false: FluentWait treats false and null as "not yet" and keeps
+            // polling, so it either returns something truthy or throws TimeoutException. Checking
+            // its return value would be a branch that cannot be taken.
+            wait.until(condition);
+            return true;
         } catch (final Exception e) {
             return false;
         } finally {
