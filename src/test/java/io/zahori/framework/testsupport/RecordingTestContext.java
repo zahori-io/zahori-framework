@@ -30,6 +30,7 @@ import io.zahori.model.process.Case;
 import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.Configuration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -289,12 +290,15 @@ public class RecordingTestContext extends TestContext {
     }
 
     /**
-     * Returns the key itself, so assertions can be written against the i18n key and do not depend
-     * on the message bundles being loaded.
+     * Returns the key, followed by the arguments when there are any.
+     *
+     * <p>Assertions stay independent of the message bundles being loaded, but the arguments remain
+     * visible: dropping them hides every defect that lives in an interpolated value — an off-by-one
+     * index, the wrong amount — because the message reads the same with or without it.
      */
     @Override
     public String getMessage(String messageKey, String... messageArgs) {
-        return messageKey;
+        return messageArgs.length == 0 ? messageKey : messageKey + Arrays.toString(messageArgs);
     }
 
     @Override
