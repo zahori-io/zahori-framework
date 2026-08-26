@@ -104,6 +104,36 @@
                 <version>2.16.2</version>
             </plugin>
 
+            <!-- Publishes src/test/java as a secondary "test-jar" artifact, so consumer projects
+                 can reuse io.zahori.framework.testsupport (SeleniumDoubles, RecordingTestContext) to
+                 unit-test their page objects:
+
+                   <dependency>
+                     <groupId>io.zahori</groupId>
+                     <artifactId>zahori-framework</artifactId>
+                     <version>${zahori-framework.version}</version>
+                     <type>test-jar</type>
+                     <scope>test</scope>
+                   </dependency>
+
+                 Those doubles encode how PageElement and Page talk to the WebDriver, so they belong
+                 here: if the framework changes, the framework's own tests break first instead of a
+                 consumer discovering it weeks later. Nothing is added to the main jar and no new
+                 dependency reaches consumers at compile scope. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>test-jar</id>
+                        <goals>
+                            <goal>test-jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
@@ -940,6 +970,74 @@
     </dependencies>
 
     <profiles>
+        <!-- Mutation testing (PIT). Kept in a profile and bound to no phase: the normal build
+             neither resolves nor runs it, and it is invoked by hand when you want to check that a
+             test CAN fail. It replaces mutating the code by hand.
+
+             Whole framework (slow, measures overall health):
+               mvn -Pmutation test-compile org.pitest:pitest-maven:mutationCoverage
+
+             A single class (seconds, the usual case when closing a ticket):
+               mvn -Pmutation test-compile org.pitest:pitest-maven:mutationCoverage \
+                 -Dpit.targetClasses=io.zahori.framework.core.PageElement \
+                 -Dpit.targetTests=io.zahori.framework.core.PageElementWaitsTest
+
+             Report: target/pit-reports/index.html
+             A SURVIVED mutant is a change to the code that no test detects.
+
+             RUN IT ON JDK 17 (measured 2026-08-26). On a newer JDK, the ASM shipped with PIT
+             1.19.1 cannot read its class files ("Unsupported class file major version 69"). Here
+             that surfaces as a BUILD FAILURE, but in a consumer project it can be SILENT: "Ran 0
+             tests" together with "Test strength 100%" and BUILD SUCCESS. A run only counts when it
+             reports "Ran N tests" with N > 0.
+
+               JAVA_HOME=/path/to/jdk-17 mvn -Pmutation ...
+
+             Baseline (JDK 17, 2026-08-26): PageElement / PageElementWaitsTest -> 262 mutants,
+             14 killed, 246 with no coverage, test strength 88%, 34 tests run.
+
+             Note this profile is NOT inherited by consumer projects: they import this pom as a BOM
+             (dependencyManagement), and a BOM import does not carry <build> or <profiles> - only a
+             <parent> would. Each consumer declares its own. -->
+        <profile>
+            <id>mutation</id>
+            <properties>
+                <pit.targetClasses>io.zahori.framework.*</pit.targetClasses>
+                <pit.targetTests>io.zahori.framework.*Test</pit.targetTests>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-maven</artifactId>
+                        <version>1.19.1</version>
+                        <dependencies>
+                            <!-- Required: the suite is JUnit 5 and PIT does not support it natively -->
+                            <dependency>
+                                <groupId>org.pitest</groupId>
+                                <artifactId>pitest-junit5-plugin</artifactId>
+                                <version>1.2.2</version>
+                            </dependency>
+                        </dependencies>
+                        <configuration>
+                            <targetClasses>
+                                <param>${pit.targetClasses}</param>
+                            </targetClasses>
+                            <targetTests>
+                                <param>${pit.targetTests}</param>
+                            </targetTests>
+                            <outputFormats>
+                                <param>HTML</param>
+                                <param>XML</param>
+                            </outputFormats>
+                            <timestampedReports>false</timestampedReports>
+                            <failWhenNoMutations>false</failWhenNoMutations>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
         <profile>
             <id>release</id>
             <build>
