@@ -179,12 +179,15 @@ public class RecordingTestContext extends TestContext {
     }
 
     /**
-     * Arguments a step was logged with.
+     * Arguments a step, info or warning was logged with.
      *
      * <p>Kept per key and not "the last ones": a page object usually logs more steps after the one
      * under test, and the last-write-wins version silently returns the wrong arguments.
      *
-     * @param stepKey the step key
+     * <p>Warnings and info carry arguments too — a passenger number, a timeout, an amount — and they
+     * are what the client reads in the evidence, so they are recorded like a step's.
+     *
+     * @param stepKey the step, info or warning key
      * @return its arguments, or an empty array if it was never logged
      */
     public String[] argsOf(String stepKey) {
@@ -212,16 +215,19 @@ public class RecordingTestContext extends TestContext {
     @Override
     public void logInfo(String text, String... textArgs) {
         infoMessages.add(text);
+        stepArgs.put(text, textArgs);
     }
 
     @Override
     public void logWarn(String text, String... textArgs) {
         warnMessages.add(text);
+        stepArgs.put(text, textArgs);
     }
 
     @Override
     public void logDebug(String text, String... textArgs) {
         infoMessages.add(text);
+        stepArgs.put(text, textArgs);
     }
 
     @Override
