@@ -15,3 +15,7 @@ buildNumber.properties
 .metadata
 *.iml
 bin/
+
+# Git Bash on Windows artefact: `> nul` is not a device here, so it creates a FILE named `nul`.
+# And `nul` is a reserved Windows name, so committing it breaks every clone on Windows.
+nul
