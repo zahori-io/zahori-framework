@@ -3,7 +3,7 @@
 	
     <groupId>io.zahori</groupId>
     <artifactId>zahori-framework</artifactId>
-    <version>0.2.25.17_appium-SNAPSHOT</version>
+    <version>0.2.25.21_appium-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>zahori-framework</name>
 
@@ -620,7 +620,7 @@
             <dependency>
                 <groupId>com.browserstack</groupId>
                 <artifactId>browserstack-local-java</artifactId>
-                <version>1.1.7</version>
+                <version>1.1.9</version>
             </dependency>
         
         </dependencies>
@@ -970,35 +970,14 @@
     </dependencies>
 
     <profiles>
-        <!-- Mutation testing (PIT). Kept in a profile and bound to no phase: the normal build
-             neither resolves nor runs it, and it is invoked by hand when you want to check that a
-             test CAN fail. It replaces mutating the code by hand.
+        <!-- Mutation testing (PIT). Report: target/pit-reports/index.html
 
-             Whole framework (slow, measures overall health):
-               mvn -Pmutation test-compile org.pitest:pitest-maven:mutationCoverage
+               JAVA_HOME=/path/to/jdk-17 mvn -Pmutation test-compile \
+                 org.pitest:pitest-maven:mutationCoverage \
+                 [-Dpit.targetClasses=<class> -Dpit.targetTests=<test>]
 
-             A single class (seconds, the usual case when closing a ticket):
-               mvn -Pmutation test-compile org.pitest:pitest-maven:mutationCoverage \
-                 -Dpit.targetClasses=io.zahori.framework.core.PageElement \
-                 -Dpit.targetTests=io.zahori.framework.core.PageElementWaitsTest
-
-             Report: target/pit-reports/index.html
-             A SURVIVED mutant is a change to the code that no test detects.
-
-             RUN IT ON JDK 17 (measured 2026-08-26). On a newer JDK, the ASM shipped with PIT
-             1.19.1 cannot read its class files ("Unsupported class file major version 69"). Here
-             that surfaces as a BUILD FAILURE, but in a consumer project it can be SILENT: "Ran 0
-             tests" together with "Test strength 100%" and BUILD SUCCESS. A run only counts when it
-             reports "Ran N tests" with N > 0.
-
-               JAVA_HOME=/path/to/jdk-17 mvn -Pmutation ...
-
-             Baseline (JDK 17, 2026-08-26): PageElement / PageElementWaitsTest -> 262 mutants,
-             14 killed, 246 with no coverage, test strength 88%, 34 tests run.
-
-             Note this profile is NOT inherited by consumer projects: they import this pom as a BOM
-             (dependencyManagement), and a BOM import does not carry <build> or <profiles> - only a
-             <parent> would. Each consumer declares its own. -->
+             Fuera de JDK 17, PIT 1.19.1 puede dar "Ran 0 tests" con BUILD SUCCESS: solo vale
+             una corrida con N > 0. No lo heredan los consumidores: importan este pom como BOM. -->
         <profile>
             <id>mutation</id>
             <properties>
