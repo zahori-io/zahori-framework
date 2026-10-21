@@ -541,14 +541,105 @@ public class PageElement {
         return option.getAttribute(VALUE);
     }
 
+    /**
+     * Deja la casilla en el estado pedido, y comprueba que se queda en el.
+     *
+     * <p>Pulsar no es marcar. En una casilla compuesta -un control nativo debajo de su propia
+     * decoración, como las de Angular Material- el clic puede llegar al adorno y no al control:
+     * queda un elemento tocado pero sin marcar, y el formulario se envia sin la aceptación.
+     * Visto el 22/09/2026 en la pasarela de pago, donde la casilla de privacidad se quedaba
+     * {@code ng-touched} e invalida tras un clic que el log daba por bueno.
+     *
+     * <p>Es idempotente: si ya esta como se pide, no toca nada.
+     *
+     * @param checked estado en el que debe quedar la casilla
+     */
     public void check(boolean checked) {
-        webElement = findElement();
-        if (checked && !webElement.isSelected()) {
-            click();
+        if (isSelectedWithoutFailing() == checked) {
+            return;
         }
 
-        if (!checked && webElement.isSelected()) {
-            click();
+        click();
+        if (waitChecked(checked)) {
+            return;
+        }
+
+        testContext.logWarn("Checkbox did not change after clicking {}. Falling back to javascript click",
+                this.toString());
+        clickJavascript();
+        if (waitChecked(checked)) {
+            return;
+        }
+
+        if (clickNativeControl() && waitChecked(checked)) {
+            return;
+        }
+
+        throw new RuntimeException("Checkbox stayed " + (checked ? "unchecked" : "checked") + ": " + this);
+    }
+
+    /**
+     * Pulsa por javascript el control nativo que la casilla lleva dentro.
+     *
+     * <p>Un click de javascript sobre la decoración dispara el evento en ese nodo, que no es el
+     * control: el estado no cambia. Sobre el input si, y emite el change que escucha el componente.
+     *
+     * @return {@code true} si habia un control nativo que pulsar
+     */
+    private boolean clickNativeControl() {
+        try {
+            List<WebElement> nativeControls = findElement()
+                    .findElements(By.cssSelector("input[type='checkbox'], input[type='radio']"));
+            if (nativeControls.isEmpty()) {
+                return false;
+            }
+            ((JavascriptExecutor) driver).executeScript("arguments[0].click()", nativeControls.get(0));
+            testContext.logInfo("Click (javascript) on native control of " + this);
+            return true;
+        } catch (final Exception e) {
+            return false;
+        }
+    }
+
+    private boolean waitChecked(boolean checked) {
+        return Waits.until(() -> isSelectedWithoutFailing() == checked, testContext.getCheckboxSettleSeconds());
+    }
+
+    /**
+     * El estado de la casilla, sin que preguntarlo pueda romper la comprobación.
+     *
+     * <p>Una casilla moderna son dos nodos: el control nativo, que sabe si esta marcado pero esta
+     * oculto bajo su propia decoración, y el nodo que se ve y se pulsa, que no sabe nada. Se apunta
+     * al que se ve -si no, no hay nada que pulsar- y el estado se lee del control de dentro.
+     */
+    private boolean isSelectedWithoutFailing() {
+        try {
+            WebElement element = findElement();
+            List<WebElement> nativeControls = element.findElements(By.cssSelector("input[type='checkbox'], input[type='radio']"));
+            WebElement stateHolder = nativeControls.isEmpty() ? element : nativeControls.get(0);
+
+            String checked = stateHolder.getDomProperty("checked");
+            if (checked != null) {
+                return Boolean.parseBoolean(checked);
+            }
+            if (isSelectedWithoutThrowing(stateHolder)) {
+                return true;
+            }
+            return Boolean.parseBoolean(element.getAttribute("aria-checked"));
+        } catch (final Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Sobre el nodo decorado de una casilla compuesta, isSelected() no devuelve false: safaridriver
+     * responde "element not selectable" y tarda 2,2 s en hacerlo.
+     */
+    private boolean isSelectedWithoutThrowing(WebElement element) {
+        try {
+            return element.isSelected();
+        } catch (final WebDriverException notSelectable) {
+            return false;
         }
     }
 

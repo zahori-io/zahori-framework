@@ -38,10 +38,11 @@ public class RecordingTestContext extends TestContext {
         return this;
     }
 
-    /**
-     * @param webDriver the driver double the page objects will use
-     * @return this context, for chaining
-     */
+    public RecordingTestContext withCheckboxSettle(int seconds) {
+        this.setCheckboxSettleSeconds(seconds);
+        return this;
+    }
+
     public RecordingTestContext withDriver(WebDriver webDriver) {
         this.driver = webDriver;
         return this;

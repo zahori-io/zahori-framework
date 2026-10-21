@@ -133,6 +133,13 @@ public class TestContext {
     // TEST EXECUTION TIMEOUTS
     public Integer timeoutFindElement;
 
+    /** Property opcional que ajusta el plazo de asentamiento de una casilla. */
+    static final String CHECKBOX_SETTLE_PROPERTY = "zahori.test.execution.timeout.checkboxSettle";
+
+    /** Plazo por defecto: lo que tarda un componente en reflejar el clic sin que haya nada raro. */
+    static final int DEFAULT_CHECKBOX_SETTLE_SECONDS = 5;
+
+    private int checkboxSettleSeconds = DEFAULT_CHECKBOX_SETTLE_SECONDS;
     private transient BooleanSupplier pageIsSettled;
 
     // Browser
@@ -275,6 +282,7 @@ public class TestContext {
 
         // Timeout
         timeoutFindElement = (int) caseExecution.getConfiguration().getTimeout();
+        checkboxSettleSeconds = readCheckboxSettleSeconds();
 
         // Create TMS object to update test results and upload evidences to
         // TestLink, ALM...;
@@ -1319,6 +1327,27 @@ public class TestContext {
     }
 
     /**
+     * Plazo para que una casilla refleje el clic; agotarlo es que el clic no la ha cambiado.
+     *
+     * @return el plazo en segundos
+     */
+    public int getCheckboxSettleSeconds() {
+        return checkboxSettleSeconds;
+    }
+
+    /**
+     * Ajusta ese plazo. Un componente lento puede necesitar más; una prueba que ejercita el camino
+     * de fallo, mucho menos: esperarlo de verdad multiplica lo que tarda la bateria.
+     *
+     * @param seconds plazo en segundos, ignorado si es negativo
+     */
+    public void setCheckboxSettleSeconds(int seconds) {
+        if (seconds >= 0) {
+            checkboxSettleSeconds = seconds;
+        }
+    }
+
+    /**
      * Registra cuando la pagina esta quieta. El framework la consulta despues de cada interaccion,
      * porque en una SPA el indicador de carga sale al pulsar y actuar entonces va sobre la pantalla
      * anterior. Sin registrar nada no se consulta nada: el comportamiento no cambia.
@@ -1335,6 +1364,21 @@ public class TestContext {
             return;
         }
         Waits.until(pageIsSettled, timeoutFindElement);
+    }
+
+    private int readCheckboxSettleSeconds() {
+        String configured = zahoriProperties == null ? "" : zahoriProperties.getProperty(CHECKBOX_SETTLE_PROPERTY);
+        if (StringUtils.isBlank(configured)) {
+            return DEFAULT_CHECKBOX_SETTLE_SECONDS;
+        }
+        try {
+            int seconds = Integer.parseInt(configured.trim());
+            return seconds >= 0 ? seconds : DEFAULT_CHECKBOX_SETTLE_SECONDS;
+        } catch (NumberFormatException notANumber) {
+            logWarn("Property {} is not a number ({}): using the default of {} s",
+                    CHECKBOX_SETTLE_PROPERTY, configured, String.valueOf(DEFAULT_CHECKBOX_SETTLE_SECONDS));
+            return DEFAULT_CHECKBOX_SETTLE_SECONDS;
+        }
     }
 
     /** Tras conmutar de contexto, lo que el driver tenga fijado deja de ser lo que creemos. */
