@@ -142,6 +142,11 @@ public class TestContext {
     private int checkboxSettleSeconds = DEFAULT_CHECKBOX_SETTLE_SECONDS;
     private transient BooleanSupplier pageIsSettled;
 
+    /** Property opcional que guarda el DOM de todos los pasos, no solo de los que fallan. */
+    static final String DOM_SNAPSHOT_ALWAYS_PROPERTY = "zahori.test.evidences.domSnapshot.always";
+
+    private boolean domSnapshotAlways;
+
     // Browser
     private Browser browser;
 
@@ -283,6 +288,7 @@ public class TestContext {
         // Timeout
         timeoutFindElement = (int) caseExecution.getConfiguration().getTimeout();
         checkboxSettleSeconds = readCheckboxSettleSeconds();
+        domSnapshotAlways = readDomSnapshotAlways();
 
         // Create TMS object to update test results and upload evidences to
         // TestLink, ALM...;
@@ -703,6 +709,17 @@ public class TestContext {
         String screenshot = evidences.createScreenshot(testSteps.size() + 1, currentStep.size() + 1, driver);
         if (screenshot != null) {
             step.addAttachment(new File(screenshot));
+        }
+
+        // Por defecto solo en los pasos fallidos: guardarlo en todos son decenas de MB por
+        // ejecucion. Con la property puesta se guardan todos, que es como se sacan localizadores
+        // del DOM real en vez de a ojo.
+        if (Status.FAILED.equals(step.getStatus()) || domSnapshotAlways) {
+            String domSnapshot = evidences.createDomSnapshot(testSteps.size() + 1, currentStep.size() + 1,
+                    getPageSource(), isMobileNativeApp());
+            if (domSnapshot != null) {
+                step.addAttachment(new File(domSnapshot));
+            }
         }
     }
 
@@ -1364,6 +1381,21 @@ public class TestContext {
             return;
         }
         Waits.until(pageIsSettled, timeoutFindElement);
+    }
+
+    private boolean readDomSnapshotAlways() {
+        return zahoriProperties != null
+                && Boolean.parseBoolean(StringUtils.trimToEmpty(
+                        zahoriProperties.getProperty(DOM_SNAPSHOT_ALWAYS_PROPERTY)));
+    }
+
+    /** Guarda el DOM de todos los pasos. Vale para recoger localizadores contra la pagina real. */
+    public void setDomSnapshotAlways(boolean always) {
+        this.domSnapshotAlways = always;
+    }
+
+    public boolean isDomSnapshotAlways() {
+        return domSnapshotAlways;
     }
 
     private int readCheckboxSettleSeconds() {

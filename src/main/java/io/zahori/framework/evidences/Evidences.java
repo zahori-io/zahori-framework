@@ -37,6 +37,9 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -340,7 +343,10 @@ public class Evidences {
                 File screenShotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
                 savePngFileAsJpg(screenShotFile, screenshotJpgFilePath);
             } catch (Exception e) {
-                e.printStackTrace();
+                // Sin volcar la pila: no poder sacar la captura es una nota al margen del fallo que
+                // se estaba documentando, y setenta líneas de traza tapan el error de verdad. Pasa
+                // cuando el navegador esta tan ahogado que ni contesta -"Timed out receiving
+                // message from renderer"-, justo cuando mas se necesita leer el log.
                 String error = "Error creating screenshot: " + e.getMessage();
                 console(ZahoriLogLevel.ERROR, error);
                 insertTextInLogFile(ZahoriLogLevel.ERROR, error);
@@ -348,6 +354,47 @@ public class Evidences {
             }
         }
         return screenshotJpgFilePath;
+    }
+
+    /** Quitarlos deja el volcado en una fraccion de su tamano sin perder un solo selector. */
+    private static final String SCRIPT_TAGS = "(?s)<script\\b[^>]*>.*?</script>";
+
+    /**
+     * Guarda el arbol de la pantalla junto a la captura. La captura dice como se veía; esto dice
+     * con que localizadores se llega, que es lo que hace falta para arreglar un locator sin volver
+     * a ejecutar. En web es el DOM; en una app nativa, el arbol de XCUITest o UiAutomator.
+     *
+     * @param numPaso     numero de paso, para nombrar el fichero como su captura
+     * @param numSubPaso  numero de subpaso
+     * @param pageSource  arbol de la pantalla
+     * @param nativeTree  true si viene de una app nativa: se guarda como xml y no se filtra
+     * @return la ruta del fichero, o null si no habia nada que guardar
+     */
+    public String createDomSnapshot(int numPaso, int numSubPaso, String pageSource, boolean nativeTree) {
+        if (path == null || StringUtils.isBlank(pageSource)) {
+            return null;
+        }
+
+        String snapshotFilePath = path + "Step_" + numPaso + "_" + numSubPaso + snapshotExtension(nativeTree);
+        try {
+            Files.write(Paths.get(snapshotFilePath), snapshotContent(pageSource, nativeTree).getBytes(StandardCharsets.UTF_8));
+            return snapshotFilePath;
+        } catch (Exception e) {
+            String error = "Error creating dom snapshot: " + e.getMessage();
+            console(ZahoriLogLevel.ERROR, error);
+            insertTextInLogFile(ZahoriLogLevel.ERROR, error);
+            return null;
+        }
+    }
+
+    /** El arbol nativo es xml; el de un navegador, html. */
+    static String snapshotExtension(boolean nativeTree) {
+        return nativeTree ? ".xml" : ".html";
+    }
+
+    /** En el arbol nativo no hay scripts que quitar y tocarlo solo podria romperlo. */
+    static String snapshotContent(String pageSource, boolean nativeTree) {
+        return nativeTree ? pageSource : pageSource.replaceAll(SCRIPT_TAGS, "");
     }
 
     private void savePngFileAsJpg(File pngFile, String jpgFilePath) throws IOException {
