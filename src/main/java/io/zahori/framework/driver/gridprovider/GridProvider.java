@@ -57,10 +57,28 @@ public interface GridProvider {
      * hardcoded {@code selenoid:options} block that used to run unconditionally in
      * {@code RemoteDriver.getOptions()} regardless of the actual grid. Provider-specific
      * capabilities declared by the user in {@code zahori.properties}
-     * ({@code bstack:options.*}, {@code selenoid:options.*}...) are unaffected — those already
-     * flow through the existing key-prefix mechanism in {@code CapabilitiesBuilder}.
+     * ({@code bstack:options.*}, {@code selenoid:options.*}...) flow through the existing
+     * key-prefix mechanism in {@code CapabilitiesBuilder}, which drops the ones belonging to a
+     * different grid — see {@link #vendorCapabilityPrefix()}.
      */
     void enrichCapabilities(AbstractDriverOptions<?> options, Browsers browsers);
+
+    /**
+     * Capability namespace this grid owns, e.g. {@code "bstack:options"} for BrowserStack.
+     * {@code CapabilitiesBuilder} uses it to drop capabilities declared in
+     * {@code zahori.properties} under a namespace owned by a DIFFERENT known provider: a
+     * {@code selenoid:options} block reaches Selenoid but not BrowserStack, and vice versa. The
+     * property keys need no grid prefix of their own, which is why the same
+     * {@code zahori.properties} used to send Selenoid's VNC settings to BrowserStack.
+     * <p>
+     * A namespace no provider claims is left alone — an unknown grid keeps receiving whatever the
+     * user declared for it.
+     * <p>
+     * Default: empty, meaning this provider claims no namespace and filters nothing.
+     */
+    default String vendorCapabilityPrefix() {
+        return "";
+    }
 
     /**
      * How this provider expects headers (and, more generally, the local BrowserMobProxy used for

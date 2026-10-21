@@ -315,6 +315,11 @@ public class RemoteDriver extends AbstractDriver {
      * generic fallback), so capability enrichment (bug: {@code selenoid:options} used to be
      * added unconditionally for every remote grid) is delegated to it instead of hardcoded here.
      */
+    @Override
+    protected GridProvider gridProvider(Browsers browsers) {
+        return resolveGridProvider(browsers);
+    }
+
     private GridProvider resolveGridProvider(Browsers browsers) {
         boolean autodetectEnabled = new ZahoriProperties(
                 browsers == null ? ExecutionTarget.of(null, null) : ExecutionTarget.of(browsers.getEnvironmentName(), browsers.getPlatform()))
@@ -329,7 +334,9 @@ public class RemoteDriver extends AbstractDriver {
         // Set capabilities defined in zahori.properties starting with keys:
         //      zahori.test.capabilities.add.android.
         //      zahori.test.capabilities.add.ios.
-        DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilities(browsers);
+        // Con el proveedor, igual que la rama web: sin el, un bloque selenoid:options declarado en
+        // zahori.properties viajaba también a BrowserStack en Android e iOS.
+        DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilities(browsers, gridProvider(browsers));
 
         // TODO: remove below code. This is a temporal solution for mobile testing until mobile functionalities are fully implememted in server and framework
         Object rawBrowserStackOptions = capabilities.getCapability("bstack:options");

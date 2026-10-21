@@ -24,6 +24,7 @@ package io.zahori.framework.driver;
  */
 import io.zahori.framework.core.ExecutionTarget;
 import io.zahori.framework.driver.browserfactory.Browsers;
+import io.zahori.framework.driver.gridprovider.GridProvider;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import io.zahori.framework.utils.CapabilitiesMasker;
 import java.util.Map;
@@ -71,7 +72,18 @@ public abstract class AbstractDriver implements Driver {
     }
 
     /**
-     * Configura las opciones para el WebDriver. Este metodo crea y configura
+     * Grid this execution runs against, used to drop capabilities belonging to a different grid.
+     * A local driver has none, so it filters nothing.
+     *
+     * @param browsers La configuracion del navegador.
+     * @return {@code null} unless a subclass resolves a provider
+     */
+    protected GridProvider gridProvider(Browsers browsers) {
+        return null;
+    }
+
+    /**
+     * Configura las opciones para el WebDriver. Este método crea y configura
      * opciones comunes para todos los tipos de drivers.
      *
      * @param browsers La configuracion del navegador.
@@ -95,7 +107,7 @@ public abstract class AbstractDriver implements Driver {
         setZahoriPropertiesBrowserOptions(options, browsers);
 
         // Set capabilities defined in zahori.properties starting with key: zahori.test.capabilities.add.
-        DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilities(browsers);
+        DesiredCapabilities capabilities = CapabilitiesBuilder.getCapabilities(browsers, gridProvider(browsers));
         capabilities.asMap().forEach((key, value) -> options.setCapability(key, value));
 
         System.out.println(browsers.getName() + " browser options and capabilities: " + CapabilitiesMasker.mask(options.asMap()));

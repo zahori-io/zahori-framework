@@ -24,6 +24,9 @@ package io.zahori.framework.driver.gridprovider;
  */
 import io.zahori.framework.spring.SpringContextHolder;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +81,20 @@ public final class GridProviderRegistry {
 
         LOG.info("No GridProvider matched '{}' — falling back to '{}' (pre-GridProvider behavior)", remoteUrl, FALLBACK.id());
         return FALLBACK;
+    }
+
+    /**
+     * Capability namespaces claimed by some known provider. A namespace outside this set belongs
+     * to nobody and is never filtered, so a grid this framework doesn't know about keeps receiving
+     * whatever the user declared for it.
+     *
+     * @return the non-blank {@link GridProvider#vendorCapabilityPrefix()} of every known provider
+     */
+    public Set<String> vendorPrefixes() {
+        return Stream.concat(providers.stream(), BUILT_IN_PROVIDERS.stream())
+                .map(GridProvider::vendorCapabilityPrefix)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     private boolean matchesSafely(GridProvider provider, String remoteUrl) {

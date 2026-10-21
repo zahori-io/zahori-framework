@@ -51,13 +51,19 @@ public class SpringContextHolder implements ApplicationContextAware {
 
     /**
      * @return all beans of {@code type} currently registered in the Spring context, or an empty
-     * list if no Spring context has been initialized in this JVM.
+     * list if no Spring context has been initialized in this JVM, or if the one that was is no
+     * longer usable — a closed context is a context that is not available, and the contract of
+     * this class is that callers fall back to their defaults, never that they fail.
      */
     public static <T> List<T> getBeansOfType(Class<T> type) {
         ApplicationContext current = context;
         if (current == null) {
             return List.of();
         }
-        return List.copyOf(current.getBeansOfType(type).values());
+        try {
+            return List.copyOf(current.getBeansOfType(type).values());
+        } catch (IllegalStateException contextNoLongerUsable) {
+            return List.of();
+        }
     }
 }

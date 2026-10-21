@@ -46,6 +46,11 @@ public class BrowserStackGridProvider implements GridProvider {
     }
 
     @Override
+    public String vendorCapabilityPrefix() {
+        return "bstack:options";
+    }
+
+    @Override
     public boolean matches(String remoteUrl) {
         return StringUtils.containsIgnoreCase(remoteUrl, "browserstack");
     }

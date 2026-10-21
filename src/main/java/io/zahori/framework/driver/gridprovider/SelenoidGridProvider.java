@@ -46,6 +46,11 @@ public class SelenoidGridProvider implements GridProvider {
     }
 
     @Override
+    public String vendorCapabilityPrefix() {
+        return "selenoid:options";
+    }
+
+    @Override
     public boolean matches(String remoteUrl) {
         if (StringUtils.isBlank(remoteUrl)) {
             return false;

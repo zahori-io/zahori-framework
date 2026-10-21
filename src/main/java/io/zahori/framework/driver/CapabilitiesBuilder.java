@@ -24,9 +24,13 @@ package io.zahori.framework.driver;
  */
 import io.zahori.framework.core.ExecutionTarget;
 import io.zahori.framework.driver.browserfactory.Browsers;
+import io.zahori.framework.driver.gridprovider.GridProvider;
+import io.zahori.framework.driver.gridprovider.GridProviderRegistry;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
@@ -46,7 +50,21 @@ public class CapabilitiesBuilder {
     }
 
     public static DesiredCapabilities getCapabilities(Browsers browsers) {
+        return getCapabilities(browsers, null);
+    }
+
+    /**
+     * Reads the {@code zahori.test.capabilities.add.*} capabilities, dropping those declared under
+     * a capability namespace owned by a grid provider other than {@code gridProvider} — a
+     * {@code selenoid:options} block no longer travels to BrowserStack just because both grids
+     * share the same {@code zahori.properties}.
+     *
+     * @param gridProvider the provider this execution resolved to, or {@code null} for a local
+     *                     execution or any caller that wants no filtering at all
+     */
+    public static DesiredCapabilities getCapabilities(Browsers browsers, GridProvider gridProvider) {
         DesiredCapabilities capabilities = new DesiredCapabilities();
+        Set<String> foreignPrefixes = foreignVendorPrefixes(gridProvider);
         try {
             Map<String, String> extraCapabilities = new ZahoriProperties(
                     browsers == null ? ExecutionTarget.of(null, null) : ExecutionTarget.of(browsers.getEnvironmentName(), browsers.getPlatform()))
@@ -91,6 +109,10 @@ public class CapabilitiesBuilder {
                     }
                 }
 
+                if (belongsToAnotherGrid(key, foreignPrefixes)) {
+                    continue;
+                }
+
                 // Separar la clave por los puntos (.) para determinar la jerarquía
                 String[] keyParts = key.split("\\.");
 
@@ -107,6 +129,26 @@ public class CapabilitiesBuilder {
         } catch (Exception e) {
             throw new RuntimeException("Error reading capabilities from zahori.properties: " + e.getMessage());
         }
+    }
+
+    /**
+     * Namespaces claimed by a known provider that is NOT the one resolved for this execution.
+     * Empty when there is no provider, or when the provider claims no namespace of its own: in
+     * both cases nothing is filtered and every declared capability travels as before.
+     */
+    private static Set<String> foreignVendorPrefixes(GridProvider gridProvider) {
+        if (gridProvider == null || StringUtils.isBlank(gridProvider.vendorCapabilityPrefix())) {
+            return Set.of();
+        }
+        Set<String> foreign = new HashSet<>(GridProviderRegistry.resolve().vendorPrefixes());
+        foreign.remove(gridProvider.vendorCapabilityPrefix());
+        return foreign;
+    }
+
+    private static boolean belongsToAnotherGrid(String key, Set<String> foreignPrefixes) {
+        // La clave llega sin prefijo de plataforma y con el namespace por delante:
+        // "selenoid:options.enableVNC" -> namespace "selenoid:options".
+        return foreignPrefixes.stream().anyMatch(prefix -> StringUtils.startsWithIgnoreCase(key, prefix + "."));
     }
 
     private static String getCapabilityValue(Browsers browsers, String capabilityValue) {
