@@ -24,7 +24,6 @@ package io.zahori.framework.driver;
  */
 import io.appium.java_client.android.AndroidDriver;
 import io.appium.java_client.ios.IOSDriver;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import io.zahori.framework.core.ExecutionTarget;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.driver.gridprovider.GridProvider;
@@ -33,45 +32,166 @@ import io.zahori.framework.files.properties.ZahoriProperties;
 import io.zahori.framework.utils.CapabilitiesMasker;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.DoubleSupplier;
+import java.util.function.Function;
+import java.util.function.LongSupplier;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.Dimension;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.remote.HttpCommandExecutor;
 import org.openqa.selenium.remote.LocalFileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.remote.http.ClientConfig;
+import org.openqa.selenium.remote.http.HttpClient;
 
 public class RemoteDriver extends AbstractDriver {
 
+    static final String DRIVER_CREATION_TIMEOUT_PROPERTY = "zahori.test.execution.driverCreationTimeoutSeconds";
+    static final String SESSION_REQUEST_TIMEOUT_PROPERTY = "zahori.test.execution.sessionRequestTimeoutSeconds";
+
+    // La cola del grid (Selenoid -limit, paralelos de BrowserStack) puede durar minutos
+    static final int DEFAULT_DRIVER_CREATION_TIMEOUT_SECONDS = 3600;
+    // Mas que los 15 min de cola de BrowserStack: el cliente no abandona una peticion que el grid atiende
+    static final int DEFAULT_SESSION_REQUEST_TIMEOUT_SECONDS = 1200;
+
+    static final Duration QUICK_FAILURE = Duration.ofSeconds(5);
+    static final Duration FIRST_BACKOFF = Duration.ofSeconds(5);
+    static final Duration MAX_BACKOFF = Duration.ofSeconds(60);
+
+    /** Crea la sesion con los clientes HTTP que se le dan. */
+    @FunctionalInterface
+    interface SessionFactory {
+        WebDriver create(URL grid, Capabilities capabilities, HttpClient.Factory clients);
+    }
+
+    @FunctionalInterface
+    interface Sleeper {
+        void sleep(Duration duration) throws InterruptedException;
+    }
+
+    // Selenium directo: WebDriverManager no deja dar plazo propio al cliente en remoto
+    static final SessionFactory WEB = (grid, capabilities, clients) -> new RemoteWebDriver(
+            new HttpCommandExecutor(Map.of(), ClientConfig.defaultConfig().baseUrl(grid), clients), capabilities);
+    static final SessionFactory ANDROID = (grid, capabilities, clients) -> new AndroidDriver(grid, clients, capabilities);
+    static final SessionFactory IOS = (grid, capabilities, clients) -> new IOSDriver(grid, clients, capabilities);
+
+    private final LongSupplier clock;
+    private final Sleeper sleeper;
+    private final DoubleSupplier jitter;
+    private final HttpClient.Factory httpClients;
+
+    static final Sleeper THREAD_SLEEP = duration -> Thread.sleep(duration.toMillis());
+    static final DoubleSupplier JITTER = () -> ThreadLocalRandom.current().nextDouble(0.8, 1.2);
+
+    public RemoteDriver() {
+        this(System::currentTimeMillis, THREAD_SLEEP, JITTER, HttpCommandExecutor.getDefaultClientFactory());
+    }
+
+    RemoteDriver(LongSupplier clock, Sleeper sleeper, DoubleSupplier jitter, HttpClient.Factory httpClients) {
+        this.clock = clock;
+        this.sleeper = sleeper;
+        this.jitter = jitter;
+        this.httpClients = httpClients;
+    }
+
     @Override
     protected WebDriver createWebDriver(Browsers browsers, Proxy proxy) {
-        try {
-            // TODO Temporal workaround for Appium driver creation
-            if ("ANDROID".equalsIgnoreCase(browsers.getPlatform())
-                    || "IOS".equalsIgnoreCase(browsers.getPlatform())) {
-                return getAppiumDriver(browsers);
-            } else {
+        ZahoriProperties properties = new ZahoriProperties(ExecutionTarget.of(browsers.getEnvironmentName(), browsers.getPlatform()));
+        Duration total = Duration.ofSeconds(positiveSeconds(properties.getProperty(DRIVER_CREATION_TIMEOUT_PROPERTY),
+                DEFAULT_DRIVER_CREATION_TIMEOUT_SECONDS));
+        Duration sessionRequest = Duration.ofSeconds(positiveSeconds(properties.getProperty(SESSION_REQUEST_TIMEOUT_PROPERTY),
+                DEFAULT_SESSION_REQUEST_TIMEOUT_SECONDS));
+        String remoteUrl = browsers.getRemoteUrl();
+        URL grid = getUrl(remoteUrl);
+        // TODO Temporal workaround for Appium driver creation
+        if ("ANDROID".equalsIgnoreCase(browsers.getPlatform()) || "IOS".equalsIgnoreCase(browsers.getPlatform())) {
+            SessionFactory appium = "ANDROID".equalsIgnoreCase(browsers.getPlatform()) ? ANDROID : IOS;
+            return createSession(appium, grid, getAppiumCapabilities(browsers), total, sessionRequest,
+                    e -> getExceptionMessage(e, remoteUrl));
+        }
+        AbstractDriverOptions<?> options = getOptions(browsers, proxy);
+        // Sin las capabilities enviadas no hay forma de saber cual rechaza el grid
+        return createSession(WEB, grid, options, total, sessionRequest,
+                e -> getExceptionMessage(e, remoteUrl) + " Capabilities sent: " + CapabilitiesMasker.mask(options.asMap()));
+    }
 
-                AbstractDriverOptions<?> options = getOptions(browsers, proxy);
-                final int timeoutSecondsForDriverCreation = 3600; // 3600 = 60 minutos
-                return WebDriverManager.getInstance(browsers.getName().toUpperCase())
-                        .browserVersion(browsers.getVersion())
-                        .remoteAddress(browsers.getRemoteUrl())
-                        .capabilities(options)
-                        .timeout(timeoutSecondsForDriverCreation)
-                        .disableTracing()
-                        .create();
+    /**
+     * El plazo total decide si se lanza otro intento; cada peticion espera su tope entero aunque lo
+     * rebase, porque abandonarla deja en el grid una sesion huerfana. La cola llena se reintenta;
+     * un rechazo que no cambia por reintentar se propaga en cuanto se reconoce.
+     */
+    WebDriver createSession(SessionFactory factory, URL grid, Capabilities capabilities, Duration total,
+            Duration sessionRequest, Function<Exception, String> describe) {
+        long deadline = clock.getAsLong() + total.toMillis();
+        int quickFailures = 0;
+        RuntimeException failure;
+        do {
+            long attemptStart = clock.getAsLong();
+            SessionRequestHttpClientFactory clients = new SessionRequestHttpClientFactory(httpClients, sessionRequest);
+            try {
+                return factory.create(grid, capabilities, clients);
+            } catch (RuntimeException e) {
+                clients.closeAll();
+                failure = new RuntimeException(describe.apply(e), e);
+                if (isDeterministicRejection(failure.getMessage())) {
+                    throw failure;
+                }
+                long now = clock.getAsLong();
+                // Un rechazo inmediato (cola llena) no se repite sin pausa contra el grid
+                if (now - attemptStart >= QUICK_FAILURE.toMillis()) {
+                    quickFailures = 0;
+                } else if (now < deadline) {
+                    pause(backoff(++quickFailures, deadline - now, jitter.getAsDouble()), failure);
+                }
             }
-        } catch (Exception e) {
-            throw new RuntimeException(getExceptionMessage(e, browsers));
+        } while (clock.getAsLong() < deadline);
+        throw failure;
+    }
+
+    private void pause(Duration duration, RuntimeException failure) {
+        try {
+            sleeper.sleep(duration);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw failure;
         }
     }
 
-    private String getExceptionMessage(Exception e, Browsers browsers) {
+    /** 5 s, 10 s, 20 s... hasta 60 s, con +-20 % para que los hilos no vuelvan a la vez; nunca mas que lo que queda. */
+    static Duration backoff(int failures, long remainingMillis, double jitterFactor) {
+        long exponential = FIRST_BACKOFF.toMillis() << Math.min(failures - 1, 10);
+        long capped = Math.min(exponential, MAX_BACKOFF.toMillis());
+        return Duration.ofMillis(Math.min((long) (capped * jitterFactor), remainingMillis));
+    }
+
+    /**
+     * Distingue el rechazo del que no se sale reintentando -capability invalida, credenciales,
+     * host inalcanzable- del transitorio -cola llena, corte de red-, que si se reintenta.
+     */
+    static boolean isDeterministicRejection(String message) {
+        String text = StringUtils.defaultString(message);
+        // Cola o paralelos llenos de BrowserStack: se libera al acabar otras sesiones
+        if (StringUtils.containsAny(text, "QUEUE_SIZE_EXCEEDED", "QUEUE_TIME_LIMIT_EXCEEDED", "ALL_PARALLELS_IN_USE",
+                "All parallel tests are currently in use")) {
+            return false;
+        }
+        return StringUtils.containsAny(text,
+                "rejected the session", "Authorization required", "Invalid platformName",
+                "Could not find device", "[BROWSERSTACK", "[browserstack.local]",
+                "Unknown host", "Connection refused", "not valid");
+    }
+
+    static String getExceptionMessage(Exception e, String remoteUrl) {
         String exceptionMessage = getCleanMessage(e.getMessage());
 
         Throwable cause = e.getCause();
@@ -84,15 +204,15 @@ public class RemoteDriver extends AbstractDriver {
             if (StringUtils.containsIgnoreCase(causeMessage, "UnknownHostException")) {
                 return "Unknown host:" + StringUtils.substringAfter(causeMessage, "UnknownHostException:");
             }
-            if (StringUtils.containsIgnoreCase(causeMessage, "Timeout")) {
-                return causeMessage + "(remote server: " + browsers.getRemoteUrl() + ")";
+            if (isTimeout(cause)) {
+                return timeoutMessage(cause, remoteUrl);
             }
             if (StringUtils.containsIgnoreCase(causeMessage, "Conexión rehusada")
                     || StringUtils.containsIgnoreCase(causeMessage, "Connection refused")) {
-                return "Connection refused from remote server " + browsers.getRemoteUrl() + ". Check that the remote server is up and there is connectivity with it.";
+                return "Connection refused from remote server " + remoteUrl + ". Check that the remote server is up and there is connectivity with it.";
             }
             // BrowserStack errors:
-            if (StringUtils.containsIgnoreCase(browsers.getRemoteUrl(), "browserstack")) {
+            if (StringUtils.containsIgnoreCase(remoteUrl, "browserstack")) {
                 if (StringUtils.containsIgnoreCase(causeMessage, "Authorization required")) {
                     return "Authorization required: userName and accessKey capabilities are not present";
                 }
@@ -111,16 +231,45 @@ public class RemoteDriver extends AbstractDriver {
                 if (StringUtils.containsIgnoreCase(causeMessage, "[BROWSERSTACK")) {
                     return causeMessage;
                 }
+                // El grid contesta 200 con el motivo dentro: sin esto se diluye entre las causas.
+                if (StringUtils.containsIgnoreCase(causeMessage, "browserstack.")) {
+                    return "BrowserStack rejected the session: " + causeMessage
+                            + " (remote server: " + remoteUrl + ")";
+                }
             }
 
             exceptionMessage = exceptionMessage + ". " + causeMessage;
-            System.out.println(">>> Cause: " + exceptionMessage);
             cause = cause.getCause();
         }
         return exceptionMessage;
     }
 
-    private String getCleanMessage(String message) {
+    // Por tipo, no por texto: un rechazo que nombra browserstack.idleTimeout no es una espera agotada
+    static boolean isTimeout(Throwable cause) {
+        return cause instanceof java.util.concurrent.TimeoutException || cause instanceof org.openqa.selenium.TimeoutException
+                || cause instanceof java.net.SocketTimeoutException || cause instanceof java.net.http.HttpTimeoutException;
+    }
+
+    // Con la causa raiz: sin ella un rechazo del grid parece una espera
+    static String timeoutMessage(Throwable timeout, String remoteUrl) {
+        String message = getCleanMessage(timeout.getMessage()) + " (remote server: " + remoteUrl + ")";
+        Throwable root = ExceptionUtils.getRootCause(timeout);
+        return root == timeout ? message : message + ". Cause: " + getCleanMessage(root.toString());
+    }
+
+    static int positiveSeconds(String configuredValue, int defaultSeconds) {
+        if (StringUtils.isBlank(configuredValue)) {
+            return defaultSeconds;
+        }
+        try {
+            int seconds = Integer.parseInt(configuredValue.trim());
+            return seconds > 0 ? seconds : defaultSeconds;
+        } catch (NumberFormatException e) {
+            return defaultSeconds;
+        }
+    }
+
+    private static String getCleanMessage(String message) {
         return StringUtils.substringBefore(StringUtils.substringBefore(message, "Host info"), "Build info");
     }
 
@@ -138,7 +287,7 @@ public class RemoteDriver extends AbstractDriver {
         if (webDriver instanceof AndroidDriver || webDriver instanceof IOSDriver) {
 
         } else {
-            // Cualquier otra configuracion especifica de RemoteDriver
+            // Cualquier otra configuración especifica de RemoteDriver
 
             // Enable file uploads in Selenoid: https://www.selenium.dev/documentation/webdriver/drivers/remote_webdriver/#uploads
             ((RemoteWebDriver) webDriver).setFileDetector(new LocalFileDetector());
@@ -174,19 +323,9 @@ public class RemoteDriver extends AbstractDriver {
         return GridProviderRegistry.resolve().resolveProvider(remoteUrl, autodetectEnabled);
     }
 
-    private WebDriver getAppiumDriver(Browsers browsers) {
-        DesiredCapabilities capabilities = getAppiumCapabilities(browsers);
-
-        if ("ANDROID".equalsIgnoreCase(browsers.getPlatform())) {
-            return new AndroidDriver(getUrl(browsers.getRemoteUrl()), capabilities);
-        }
-        if ("IOS".equalsIgnoreCase(browsers.getPlatform())) {
-            return new IOSDriver(getUrl(browsers.getRemoteUrl()), capabilities);
-        }
-        throw new RuntimeException("No supported AppiumDriver: run an execution with a Configuration containing 'Android' or 'iOS' in the name");
-    }
-
-    private DesiredCapabilities getAppiumCapabilities(Browsers browsers) {
+    // Package-private (not private): exercised directly by RemoteDriverTest without booting a
+    // real Appium/BrowserStack session, since it never touches the network.
+    DesiredCapabilities getAppiumCapabilities(Browsers browsers) {
         // Set capabilities defined in zahori.properties starting with keys:
         //      zahori.test.capabilities.add.android.
         //      zahori.test.capabilities.add.ios.
@@ -220,11 +359,6 @@ public class RemoteDriver extends AbstractDriver {
             }
 
         } else { // WEB APP
-            // Remove specific capabilities for Native apps if present
-            if (capabilities.getCapability("appium:app") != null) {
-                capabilities.setCapability("appium:app", (String) null);
-            }
-
             // For Web apps in BrowserStack, the capabilities deviceName and platformVersion must be set at bstack:options level
             browserStackOptions.put("deviceName", capabilities.getCapability("appium:deviceName"));
             browserStackOptions.put("platformVersion", capabilities.getCapability("appium:platformVersion"));
