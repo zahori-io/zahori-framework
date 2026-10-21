@@ -93,13 +93,16 @@ public class ZahoriProperties {
      * classpath, overlays environment- and platform-specific files on top of it, following the
      * same "most specific wins" convention Spring Boot uses for profiles:
      * <ol>
-     * <li>zahori-&lt;generic environment id&gt;.properties (e.g. environment "STG - Web" -&gt;
-     * zahori-stg.properties)</li>
+     * <li>zahori-&lt;segment&gt;.properties for each dash-separated segment of the normalized
+     * environment id, in order (e.g. environment "STG - Web" -&gt; segments "stg", "web" -&gt;
+     * zahori-stg.properties, zahori-web.properties; "iOS STG 5.27.0" -&gt; "ios", "stg", "5",
+     * "27", "0" -&gt; zahori-ios.properties, zahori-stg.properties... — the environment token is
+     * found wherever it falls, not just first)</li>
      * <li>zahori-&lt;full environment id&gt;.properties (e.g. zahori-stg-web.properties)</li>
      * <li>zahori-&lt;full environment id&gt;-&lt;platform&gt;.properties (e.g.
      * zahori-stg-web-android.properties) — only when a platform is known</li>
      * </ol>
-     * All three files are optional; when none exist (e.g. processes that don't opt into
+     * All files are optional; when none exist (e.g. processes that don't opt into
      * per-environment properties), behavior is identical to {@link #ZahoriProperties()} — full
      * backward compatibility with existing processes that ship a single zahori.properties. Only
      * the keys that actually change for that environment/platform need to be declared in the
@@ -125,15 +128,25 @@ public class ZahoriProperties {
         this.configuration = configuration;
     }
 
+    /**
+     * Configuration names don't always put the environment token first (e.g. a mobile
+     * configuration named "iOS STG 5.27.0" normalizes to "ios-stg-5-27-0", where the environment
+     * token is second, not first). Trying only the first dash-separated segment as the generic id
+     * silently skipped the environment overlay for every configuration named
+     * "&lt;platform&gt; &lt;environment&gt; ...". Every segment is now tried instead, in the order
+     * it appears, before the full id and the platform-specific overlay — "most specific wins"
+     * still holds because those two are always loaded last.
+     */
     private void loadEnvironmentOverrides(ExecutionTarget target) {
         String environmentId = target.environment();
         if (StringUtils.isBlank(environmentId)) {
             return;
         }
 
-        String genericId = StringUtils.substringBefore(environmentId, "-");
-        if (!StringUtils.equals(genericId, environmentId)) {
-            loadPropertiesFile(ENVIRONMENT_PROPERTIES_PREFIX + genericId + ENVIRONMENT_PROPERTIES_SUFFIX, false);
+        for (String segment : StringUtils.split(environmentId, "-")) {
+            if (!StringUtils.equals(segment, environmentId)) {
+                loadPropertiesFile(ENVIRONMENT_PROPERTIES_PREFIX + segment + ENVIRONMENT_PROPERTIES_SUFFIX, false);
+            }
         }
         loadPropertiesFile(ENVIRONMENT_PROPERTIES_PREFIX + environmentId + ENVIRONMENT_PROPERTIES_SUFFIX, false);
 
