@@ -129,6 +129,7 @@ public class PageElement {
         try {
             webElement.click();
             testContext.logInfo("Click on " + this);
+            testContext.waitPageSettled();
         } catch (Exception e) {
             throw new RuntimeException("Unable to click on " + this + getErrorMessage(e));
         }
@@ -160,6 +161,7 @@ public class PageElement {
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
             webElement.click();
             testContext.logInfo("Click on " + this);
+            testContext.waitPageSettled();
             return true;
         } catch (final Exception e) {
             return false;
@@ -208,6 +210,7 @@ public class PageElement {
 
             webElement.click();
             testContext.logInfo("Click on " + this);
+            testContext.waitPageSettled();
         } catch (final Exception e) {
             if (retry) {
                 // safaridriver no contesta al click nativo hasta dar la página por estable, y con
@@ -229,6 +232,7 @@ public class PageElement {
             executor.executeScript("arguments[0].scrollIntoView({block: \"center\", behavior: \"auto\"});", webElement);
             executor.executeScript("arguments[0].click()", webElement);
             testContext.logInfo("Click (javascript) on " + this);
+            testContext.waitPageSettled();
         } catch (final Exception e) {
             throw new RuntimeException("Unable to click on " + this + getErrorMessage(e));
         }

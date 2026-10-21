@@ -49,6 +49,7 @@ import io.zahori.framework.robot.UtilsRobot;
 import io.zahori.framework.tms.TmsService;
 import io.zahori.framework.utils.Notification;
 import io.zahori.framework.utils.Pause;
+import io.zahori.framework.utils.Waits;
 import io.zahori.framework.utils.WebdriverUtils;
 import io.zahori.model.Status;
 import io.zahori.model.Step;
@@ -74,6 +75,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import net.lightbody.bmp.client.ClientUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -130,6 +132,8 @@ public class TestContext {
 
     // TEST EXECUTION TIMEOUTS
     public Integer timeoutFindElement;
+
+    private transient BooleanSupplier pageIsSettled;
 
     // Browser
     private Browser browser;
@@ -1312,6 +1316,25 @@ public class TestContext {
         }
         driver.manage().timeouts().implicitlyWait(timeout);
         appliedImplicitWait = timeout;
+    }
+
+    /**
+     * Registra cuando la pagina esta quieta. El framework la consulta despues de cada interaccion,
+     * porque en una SPA el indicador de carga sale al pulsar y actuar entonces va sobre la pantalla
+     * anterior. Sin registrar nada no se consulta nada: el comportamiento no cambia.
+     *
+     * @param pageIsSettled devuelve true cuando se puede seguir
+     */
+    public void setPageSettledCheck(BooleanSupplier pageIsSettled) {
+        this.pageIsSettled = pageIsSettled;
+    }
+
+    /** Espera a que la pagina quede quieta. Sin check registrado vuelve sin hacer nada. */
+    public void waitPageSettled() {
+        if (pageIsSettled == null) {
+            return;
+        }
+        Waits.until(pageIsSettled, timeoutFindElement);
     }
 
     /** Tras conmutar de contexto, lo que el driver tenga fijado deja de ser lo que creemos. */
