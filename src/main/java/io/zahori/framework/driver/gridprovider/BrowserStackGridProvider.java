@@ -65,4 +65,9 @@ public class BrowserStackGridProvider implements GridProvider {
     public HeaderInjectionStrategy headerInjectionStrategy() {
         return HeaderInjectionStrategy.NATIVE_CAPABILITY;
     }
+
+    @Override
+    public boolean supportsLocalTunnel() {
+        return true;
+    }
 }

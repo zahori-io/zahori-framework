@@ -45,6 +45,7 @@ public class Browsers {
     private String downloadPath;
 
     private String testName;
+    private String tunnelLocalIdentifier;
     private Long scriptTimeout;
 
     private String caseExecutionId;
@@ -118,6 +119,16 @@ public class Browsers {
 
     public Long getScriptTimeout() {
         return scriptTimeout == null ? getPageLoadTimeout() : scriptTimeout;
+    }
+
+    /** Identificador del tunel local vivo, con el que BrowserStack empareja la sesion. */
+    public Browsers withTunnelLocalIdentifier(String tunnelLocalIdentifier) {
+        this.tunnelLocalIdentifier = tunnelLocalIdentifier;
+        return this;
+    }
+
+    public String getTunnelLocalIdentifier() {
+        return tunnelLocalIdentifier;
     }
 
     public Browsers withTestName(String testName) {

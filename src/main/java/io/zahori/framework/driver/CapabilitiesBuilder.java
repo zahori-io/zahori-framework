@@ -78,7 +78,7 @@ public class CapabilitiesBuilder {
             // Iterar sobre todas las claves del archivo properties
             for (Map.Entry<String, String> entry : extraCapabilities.entrySet()) {
                 String key = entry.getKey();
-                String value = getCapabilityValue(browsers, entry.getValue());
+                String value = localIdentifierOf(browsers, key, getCapabilityValue(browsers, entry.getValue()));
 
                 if (StringUtils.startsWithIgnoreCase(key, "android.")) {
                     if ("android".equalsIgnoreCase(platform)) {
@@ -143,6 +143,20 @@ public class CapabilitiesBuilder {
         Set<String> foreign = new HashSet<>(GridProviderRegistry.resolve().vendorPrefixes());
         foreign.remove(gridProvider.vendorCapabilityPrefix());
         return foreign;
+    }
+
+    /**
+     * El identificador del tunel vivo manda sobre lo que diga la plantilla.
+     *
+     * <p>El tunel es del proceso y las plantillas suelen llevar el id del caso: si la sesión pide
+     * uno distinto al del tunel que esta levantado, BrowserStack no los empareja.
+     */
+    static String localIdentifierOf(Browsers browsers, String key, String value) {
+        if (!StringUtils.endsWithIgnoreCase(key, "localIdentifier")
+                || (browsers == null) || StringUtils.isBlank(browsers.getTunnelLocalIdentifier())) {
+            return value;
+        }
+        return browsers.getTunnelLocalIdentifier();
     }
 
     private static boolean belongsToAnotherGrid(String key, Set<String> foreignPrefixes) {

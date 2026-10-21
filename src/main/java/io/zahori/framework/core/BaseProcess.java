@@ -168,6 +168,8 @@ public abstract class BaseProcess {
                 testContext.getBrowser().close();
             }
 
+            // Si el tunel murio durante el intento, el reintento lo vuelve a levantar
+            testContext.startRemoteTunnel();
             testContext.createDriver();
             process(testContext, caseExecution);
         } else {
@@ -195,7 +197,7 @@ public abstract class BaseProcess {
 
                 if (testContext.getBrowser() != null) {
                     testContext.logBrowserStackStatus(); // Log test result on BrowserStack
-                    testContext.stopRemoteTunnel(); // Stop BrowserStack local tunnel
+                    // El tunel es del proceso: lo para el hook de apagado
                     testContext.getBrowser().close();
                 }
             }

@@ -22,7 +22,6 @@ package io.zahori.framework.core;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import com.browserstack.local.Local;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -172,9 +171,18 @@ public class TestContext {
     public CaseExecution caseExecution;
     public ProcessRegistration processRegistration;
 
-    private Local browserStackLocal;
-    private int browserStackLocalRetry = 0;
-    private final int browserStackLocalMaxRetries = 5;
+    private static final String TUNNEL_PROPERTY_PREFIX = "zahori.test.execution.browserStackLocal.";
+    private static final String CAPABILITY_PROPERTY_PREFIX = "zahori.test.capabilities.add.";
+    private static final String BSTACK_OPTIONS = ".bstack:options.";
+    static final String BROWSERSTACK_LOCAL_BINARY_PATH_PROPERTY ="zahori.test.execution.browserStackLocalBinaryPath";
+
+    // Tuneles del proceso, no del caso; holder para crearlos solo si un caso los pide
+    private static final class ProcessTunnels {
+        static final BrowserStackLocalTunnelRegistry INSTANCE = BrowserStackLocalTunnelRegistry.forThisProcess();
+    }
+
+    // Tunel con cuyo identificador se empareja la sesion de este caso
+    private BrowserStackLocalTunnel tunnel;
 
     private BrowserMobProxy browserMobProxy;
 
@@ -314,78 +322,97 @@ public class TestContext {
         }
     }
 
-    /* Starts a local connection with BrowserStack if the following capabilities are set in zahori.properties:
-        zahori.test.capabilities.add.android.bstack\:options.local=true
-        zahori.test.capabilities.add.android.bstack\:options.localIdentifier={executionId}-{caseExecutionId}
-        or
-        zahori.test.capabilities.add.ios.bstack\:options.local=true
-        zahori.test.capabilities.add.ios.bstack\:options.localIdentifier={executionId}-{caseExecutionId}
-     */
-    public void startRemoteTunnel() {
-        browserStackLocalRetry++;
+    /** Tunel solo si el grid lo soporta y la ejecucion lo pide con bstack:options.local. */
+    static boolean shouldStartLocalTunnel(GridProvider gridProvider, String localConnectionCapability) {
+        return gridProvider != null
+                && gridProvider.supportsLocalTunnel()
+                && Boolean.parseBoolean(localConnectionCapability);
+    }
 
-        String browserStackLocalConnection = zahoriProperties.getProperty("zahori.test.capabilities.add." + platform.toLowerCase() + ".bstack:options.local");
-        if (StringUtils.isBlank(browserStackLocalConnection) || !Boolean.parseBoolean(browserStackLocalConnection)) {
+    public void startRemoteTunnel() {
+        String processPlatform = processPlatform();
+        String browserStackLocalConnection = tunnelSetting(zahoriProperties, "local", processPlatform);
+        if (!shouldStartLocalTunnel(gridProvider, browserStackLocalConnection)) {
             return;
         }
 
-        String accessKey = zahoriProperties.getProperty("zahori.test.capabilities.add." + platform.toLowerCase() + ".bstack:options.accessKey");
-        if (StringUtils.isBlank(accessKey)) {
-            logStepFailed("BrowserStack local connection is enable in zahori.properties but the access key is not defined");
+        String accessKey = tunnelSetting(zahoriProperties, "accessKey", processPlatform);
+        startRemoteTunnel(ProcessTunnels.INSTANCE, accessKey, zahoriProperties.getProperty(BROWSERSTACK_LOCAL_BINARY_PATH_PROPERTY));
+    }
+
+    /** Plataforma de la JVM (windows, osx o linux por defecto): el tunel es del proceso, no del caso. */
+    static String processPlatform() {
+        return processPlatform(System.getProperty("os.name"));
+    }
+
+    static String processPlatform(String osName) {
+        if (StringUtils.containsIgnoreCase(osName, "windows")) {
+            return "windows";
         }
+        if (StringUtils.containsIgnoreCase(osName, "mac") || StringUtils.containsIgnoreCase(osName, "darwin")) {
+            return "osx";
+        }
+        return "linux";
+    }
 
-        String localIdentifier = caseExecution.getExecutionId() + "-" + caseExecution.getCaseExecutionId();
+    /** Ajuste del tunel: el propio del proceso o, si falta, el bloque de la plataforma del proceso; nunca el del caso. */
+    static String tunnelSetting(ZahoriProperties properties, String name, String processPlatform) {
+        String own = properties.getProperty(TUNNEL_PROPERTY_PREFIX + name);
+        if (StringUtils.isNotBlank(own)) {
+            return own;
+        }
+        return properties.getProperty(CAPABILITY_PROPERTY_PREFIX + processPlatform + BSTACK_OPTIONS + name);
+    }
 
-        boolean isRunning;
-        long start = System.currentTimeMillis();
+    // El localIdentifier lo pone el tunel: es del proceso, no de este caso ni de su ejecucion
+    void startRemoteTunnel(BrowserStackLocalTunnelRegistry tunnels, String accessKey, String binaryPath) {
+        tunnel = null;
+        if (StringUtils.isBlank(accessKey)) {
+            logStepFailed("BrowserStack local connection is enabled in zahori.properties but the access key is not defined");
+            return;
+        }
+        Map<String, String> args = BrowserStackLocalTunnelRegistry.argsFor(accessKey, binaryPath);
+        BrowserStackLocalTunnel requested = tunnels.tunnelFor(args);
         try {
-            HashMap<String, String> browserStackLocalArgs = new HashMap<>();
-
-            browserStackLocalArgs.put("key", accessKey);
-            // Route all traffic via this local machine:
-            browserStackLocalArgs.put("forcelocal", "true");
-            // Disable local testing for Live and Screenshots, and enable only Automate:
-            browserStackLocalArgs.put("onlyAutomate", "true");
-            // For doing simultaneous multiple local testing connections, set this uniquely for different processes:
-            browserStackLocalArgs.put("localIdentifier", localIdentifier);
-
-            // Enable verbose logging:
-            //// bsLocalArgs.put("v", "true");
-            // Log file:
-            //// browserStackLocalArgs.put("logFile", "./browserstack-agent.log");
-            // Binary Path (downloads):
-            //// browserStackLocalArgs.put("binarypath", "./BrowserStackLocal");
-            browserStackLocal = new Local();
-            browserStackLocal.start(browserStackLocalArgs);
-
-            isRunning = browserStackLocal.isRunning();
-            if (!isRunning) {
-                throw new Exception("Connection is not running");
-            }
-            logInfo("BrowserStack local connection started with id " + localIdentifier + " (" + String.valueOf(System.currentTimeMillis() - start) + " ms)");
-
-        } catch (Exception e) {
-            String errorMessage = "BrowserStack local connection failed (id " + localIdentifier + ") [retry: " + browserStackLocalRetry + "]: " + e.getMessage();
-            if (browserStackLocalRetry >= browserStackLocalMaxRetries) {
-                failTest(errorMessage);
-            } else {
-                logWarn(errorMessage);
-                Pause.pause(1);
-                stopRemoteTunnel();
-                startRemoteTunnel();
-            }
+            requested.acquire(args, tunnelLog());
+            tunnel = requested;
+        } catch (BrowserStackLocalTunnel.TunnelUnavailableException e) {
+            logStepFailed(e.getMessage());
         }
     }
 
-    public void stopRemoteTunnel() {
-        try {
-            if (browserStackLocal != null) {
-                browserStackLocal.stop();
-                logInfo("BrowserStack local connection stopped");
+    BrowserStackLocalTunnel.TunnelLog tunnelLog() {
+        return new BrowserStackLocalTunnel.TunnelLog() {
+            @Override
+            public void info(String message) {
+                logInfo(message);
             }
-        } catch (Exception e) {
-            logError("BrowserStack local connection failed to stop: {}", e.getMessage());
-        }
+
+            @Override
+            public void warn(String message) {
+                logWarn(message);
+            }
+
+            @Override
+            public void error(String message) {
+                logError(message);
+            }
+        };
+    }
+
+    /** @deprecated no hace nada: el tunel es del proceso, lo usan otras ejecuciones y se para al apagar la JVM. */
+    @Deprecated(since = "0.2.25.21_appium", forRemoval = true)
+    public void stopRemoteTunnel() {
+        LOG.warn("stopRemoteTunnel() ignored: the BrowserStack Local tunnel is shared by the process");
+    }
+
+    public boolean isTunnelRunning() {
+        return tunnel != null && tunnel.isRunning();
+    }
+
+    /** @return identificador del tunel de este caso, o vacio si no usa tunel */
+    public String getTunnelLocalIdentifier() {
+        return tunnel == null ? "" : tunnel.identifier();
     }
 
     private void logTestInfo(Evidences evidences) {

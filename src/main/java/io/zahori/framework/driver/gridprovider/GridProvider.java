@@ -103,4 +103,16 @@ public interface GridProvider {
     default List<String> requiredCapabilityKeys(String platform) {
         return List.of();
     }
+
+    /**
+     * Whether this provider runs the browser outside this machine and so reaches local-only hosts
+     * through a tunnel started here (BrowserStack Local and equivalents). Tunnels belong to the
+     * GRID axis while the capability requesting one is declared per PLATFORM: asking only the
+     * capability started a cloud tunnel on a local grid, 26.6 s wasted per execution.
+     * <p>
+     * Default {@code false}, so existing third-party implementations keep working unchanged.
+     */
+    default boolean supportsLocalTunnel() {
+        return false;
+    }
 }

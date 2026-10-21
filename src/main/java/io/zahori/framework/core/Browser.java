@@ -172,6 +172,7 @@ public class Browser {
                     // en cero y con el cualquier executeScript, que es como se hace todo clic sobre
                     // un elemento tapado.
                     .withScriptTimeout(testContext.timeoutFindElement.longValue())
+                    .withTunnelLocalIdentifier(testContext.getTunnelLocalIdentifier())
                     // TODO: remove withEnvironmentUrl. This is a temporal solution for mobile testing.
                     // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
                     .withEnvironmentUrl(testContext.caseExecution.getConfiguration().getEnvironmentUrl())
