@@ -47,6 +47,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Properties;
 import java.util.Random;
 import org.apache.commons.io.FileUtils;
@@ -58,6 +61,10 @@ import org.apache.logging.log4j.Logger;
 public abstract class BaseProcess {
 
     private static final Logger LOG = LogManager.getLogger(BaseProcess.class);
+
+    /** Lo que no llego al server no se borra en local: es la unica copia que queda. */
+    private static final Set<String> evidencePathsWithFailedUpload = ConcurrentHashMap.newKeySet();
+
     public static final String BASE_URL = "/";
     public static final String RUN_URL = "run";
     public static final String ZAHORI_SERVER_SERVICE_NAME = "server";
@@ -226,6 +233,10 @@ public abstract class BaseProcess {
         }
 
         for (CaseExecution caseExecution : caseExecutions) {
+            if (evidencePathsWithFailedUpload.remove(caseExecution.getEvidencesPath())) {
+                LOG.warn("Evidences kept in '{}': some file did not reach the server", caseExecution.getEvidencesPath());
+                continue;
+            }
             try {
                 FileUtils.deleteDirectory(new File(caseExecution.getEvidencesPath()));
             } catch (Exception ex) {
@@ -288,19 +299,15 @@ public abstract class BaseProcess {
 
         // Convert step attachments absolut paths to relative paths
         List<Step> steps = test.getSteps();
-        for (Step step : steps) {
-            updateStepAttachmentUrl(step, evidencePath);
-
-            // Substeps
-            for (Step substep : step.getSubSteps()) {
-                updateStepAttachmentUrl(substep, evidencePath);
-            }
-        }
+        updateStepsAttachmentUrls(steps, evidencePath);
         caseExecution.setSteps(getStepsString(steps));
 
         String uploadUrl = serverUrl + "/evidence/?path=" + encodeUrl(evidencePath);
-        uploadEvidences(testContext, caseExecution, test, uploadUrl);
-        uploadAttachments(testContext.getAttachments(), uploadUrl);
+        boolean allUploaded = uploadEvidences(testContext, caseExecution, test, uploadUrl);
+        allUploaded &= uploadAttachments(testContext.getAttachments(), uploadUrl);
+        if (!allUploaded) {
+            evidencePathsWithFailedUpload.add(caseExecution.getEvidencesPath());
+        }
         setCaseExecutionAttachments(caseExecution, testContext.getAttachments(), evidencePath);
 
         return caseExecution;
@@ -337,66 +344,82 @@ public abstract class BaseProcess {
                 + StringUtils.upperCase(testContext.browserName) + pathSeparator + testContext.resolution + pathSeparator + testContext.testId + pathSeparator;
     }
 
-    private void updateStepAttachmentUrl(Step step, String artifactRelativePath) {
-        if (!step.getAttachments().isEmpty()) {
-            String attachmentUrl = step.getAttachments().get(0);
-            Path path = Paths.get(attachmentUrl);
-            Path fileName = path.getFileName();
-            step.getAttachments().clear();
-            step.addAttachment(artifactRelativePath + fileName);
+    /**
+     * Pasos y subpasos: un adjunto en un subpaso se sube igual que uno de primer nivel, y
+     * olvidarlo dejaria evidencia generada y sin subir.
+     */
+    void updateStepsAttachmentUrls(List<Step> steps, String artifactRelativePath) {
+        for (Step step : steps) {
+            updateStepAttachmentUrl(step, artifactRelativePath);
+            for (Step substep : step.getSubSteps()) {
+                updateStepAttachmentUrl(substep, artifactRelativePath);
+            }
         }
     }
 
-    private void uploadEvidences(TestContext testContext, CaseExecution caseExecution, Test test, String url) {
-        // logs
-        uploadEvidenceFile(testContext.zahoriProperties.getResultsDir(), caseExecution.getLog(), url);
-
-        // docs
-        uploadEvidenceFile(testContext.zahoriProperties.getResultsDir(), caseExecution.getDoc(), url);
-
-        // video
-        uploadEvidenceFile(testContext.zahoriProperties.getResultsDir(), caseExecution.getVideo(), url);
-
-        // har
-        uploadEvidenceFile(testContext.zahoriProperties.getResultsDir(), caseExecution.getHar(), url);
-
-        // step screenshots
-        uploadStepsAttachments(testContext, test, url);
+    // Package-private y no private: es la conversion que perdia adjuntos, y se verifica directamente.
+    void updateStepAttachmentUrl(Step step, String artifactRelativePath) {
+        if (step.getAttachments().isEmpty()) {
+            return;
+        }
+        // Todos y no sólo el primero: un paso fallido adjunta captura y volcado del DOM, y
+        // quedarse con get(0) dejaba el .html en disco, sin subir, hasta que se borraba el
+        // directorio de evidencias.
+        List<String> relativePaths = step.getAttachments().stream()
+                .map(attachment -> artifactRelativePath + Paths.get(attachment).getFileName())
+                .collect(Collectors.toList());
+        step.getAttachments().clear();
+        relativePaths.forEach(step::addAttachment);
     }
 
-    private void uploadEvidenceFile(String resultsDir, String filePath, String url) {
+    private boolean uploadEvidences(TestContext testContext, CaseExecution caseExecution, Test test, String url) {
+        String resultsDir = testContext.zahoriProperties.getResultsDir();
+        boolean allUploaded = uploadEvidenceFile(resultsDir, caseExecution.getLog(), url);
+        allUploaded &= uploadEvidenceFile(resultsDir, caseExecution.getDoc(), url);
+        allUploaded &= uploadEvidenceFile(resultsDir, caseExecution.getVideo(), url);
+        allUploaded &= uploadEvidenceFile(resultsDir, caseExecution.getHar(), url);
+        allUploaded &= uploadStepsAttachments(testContext, test, url);
+        return allUploaded;
+    }
+
+    private boolean uploadEvidenceFile(String resultsDir, String filePath, String url) {
         if (StringUtils.isBlank(filePath)) {
-            return;
+            return true;
         }
 
         Path evidenceFile = Paths.get(normalizePath(resultsDir + filePath));
-        if (Files.exists(evidenceFile)) {
-            uploadEvidence(url, evidenceFile.toString());
+        if (!Files.exists(evidenceFile)) {
+            return true;
         }
+        return uploadEvidence(url, evidenceFile.toString());
     }
 
-    private void uploadAttachments(List<String> filePaths, String url) {
+    private boolean uploadAttachments(List<String> filePaths, String url) {
+        boolean allUploaded = true;
         for (String filePath : filePaths) {
-            uploadEvidenceFile("", filePath, url);
+            allUploaded &= uploadEvidenceFile("", filePath, url);
         }
+        return allUploaded;
     }
 
-    private void uploadStepsAttachments(TestContext testContext, Test test, String url) {
+    private boolean uploadStepsAttachments(TestContext testContext, Test test, String url) {
+        boolean allUploaded = true;
         for (Step step : test.getSteps()) {
-            uploadStepAttachments(testContext, step, url);
+            allUploaded &= uploadStepAttachments(testContext, step, url);
             // Substeps
             for (Step substep : step.getSubSteps()) {
-                uploadStepAttachments(testContext, substep, url);
+                allUploaded &= uploadStepAttachments(testContext, substep, url);
             }
         }
+        return allUploaded;
     }
 
-    private void uploadStepAttachments(TestContext testContext, Step step, String url) {
-        if (!step.getAttachments().isEmpty()) {
-            for (String attachment : step.getAttachments()) {
-                uploadEvidenceFile(testContext.zahoriProperties.getResultsDir(), attachment, url);
-            }
+    private boolean uploadStepAttachments(TestContext testContext, Step step, String url) {
+        boolean allUploaded = true;
+        for (String attachment : step.getAttachments()) {
+            allUploaded &= uploadEvidenceFile(testContext.zahoriProperties.getResultsDir(), attachment, url);
         }
+        return allUploaded;
     }
 
     private Test parseStringToTest(String result) {
@@ -417,7 +440,7 @@ public abstract class BaseProcess {
         }
     }
 
-    private void uploadEvidence(String url, String filePath) {
+    private boolean uploadEvidence(String url, String filePath) {
         String charset = "UTF-8";
         String boundary = Long.toHexString(System.currentTimeMillis()); // Just generate some unique random value.
         String crlf = "\r\n"; // Line separator required by multipart/form-data.
@@ -430,6 +453,7 @@ public abstract class BaseProcess {
             connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
         } catch (Exception e) {
             LOG.error("Error uploading evidence file '{}': {}", filePath, e.getMessage());
+            return false;
         }
 
         try (OutputStream output = connection.getOutputStream(); PrintWriter writer = new PrintWriter(new OutputStreamWriter(output, charset), true);) {
@@ -448,8 +472,10 @@ public abstract class BaseProcess {
 
             int responseCode = ((HttpURLConnection) connection).getResponseCode();
             LOG.info("Upload evidence file '{}' -> {}", file.getName(), Integer.valueOf(responseCode)); // Should be 200
+            return responseCode >= HttpURLConnection.HTTP_OK && responseCode < HttpURLConnection.HTTP_MULT_CHOICE;
         } catch (Exception e) {
             LOG.error("Error uploading evidence file '{}': {}", filePath, e.getMessage());
+            return false;
         }
     }
 
