@@ -27,12 +27,15 @@ import io.appium.java_client.AppiumDriver;
 import io.zahori.framework.robot.UtilsRobot;
 import io.zahori.framework.utils.Chronometer;
 import io.zahori.framework.utils.Pause;
+import io.zahori.framework.utils.Waits;
 import io.zahori.framework.utils.WebdriverUtils;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Action;
@@ -52,6 +55,10 @@ public class PageElement {
     public static final String VALUE = "value";
     public static final String GET_TEXT = "Get text \"";
     public static final String FROM = "\" from ";
+
+    /** A partir de aqui, un "no se ve" ha costado bastante como para contar por que. */
+    private static final long DIAGNOSTIC_THRESHOLD_MILLIS = 1000L;
+
     public String name;
     public Locator locator;
     public Page page;
@@ -78,6 +85,38 @@ public class PageElement {
         this.driver = driver;
     }
 
+    /**
+     * El localizador con el que preguntar al driver AHORA.
+     *
+     * <p>"id" significa dos cosas distintas según donde mire el driver. En un movil en contexto
+     * nativo es el <b>resource-id</b> de la vista -documentado por el driver UiAutomator2: la
+     * estrategia {@code id} mapea a {@code By.res}- y ahi es justo lo que se quiere. En un webview
+     * el comando acaba en chromedriver, que sólo admite las cinco estrategias del W3C: css
+     * selector, link text, partial link text, tag name y xpath. "id" no esta entre ellas y la
+     * respuesta es {@code invalid argument: invalid locator}.
+     *
+     * <p>Peor aun, esa respuesta no es una {@code NotFoundException}, asi que tumbaba la espera
+     * entera en el primer sondeo en vez de reintentar. Medido el 22/09/2026 en Android contra STG.
+     *
+     * <p>Se traduce por selector de atributo y no por {@code #id}: un id que empiece por digito o
+     * lleve dos puntos -Angular Material los genera así- necesitaria escape en la forma corta.
+     */
+    private By effectiveBy() {
+        if ((locator.getLocatorType() != Locator.LocatorTypes.id) || testContext.isNativeContext()
+                || !(driver instanceof AppiumDriver)) {
+            return locator.getBy();
+        }
+        return By.cssSelector("[id=\"" + locator.getLocatorText().replace("\"", "\\\"") + "\"]");
+    }
+
+    /**
+     * Espera con el intervalo de sondeo del framework. Selenium sondea cada 500 ms si no se le
+     * indica otra cosa, y con comandos de ~46 ms eso es medio segundo dormido por comprobación.
+     */
+    private WebDriverWait waitOf(long seconds) {
+        return new WebDriverWait(driver, Duration.ofSeconds(seconds), Duration.ofMillis(Waits.POLLING_MILLIS));
+    }
+
     public void click() {
         click(false, false);
     }
@@ -102,7 +141,7 @@ public class PageElement {
         try {
             scroll();
 
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds())));
+            WebDriverWait wait = waitOf(testContext.timeoutFindElement - chrono.getElapsedSeconds());
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
             return true;
         } catch (final Exception e) {
@@ -114,7 +153,7 @@ public class PageElement {
         Chronometer chrono = new Chronometer();
         webElement = findElement();
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds())));
+            WebDriverWait wait = waitOf(testContext.timeoutFindElement - chrono.getElapsedSeconds());
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
             webElement.click();
             testContext.logInfo("Click on " + this);
@@ -150,7 +189,10 @@ public class PageElement {
         Chronometer chrono = new Chronometer();
         webElement = findElement();
         try {
-            if (scroll) {
+            // En contexto nativo no: el scroll se hace con javascript y ahi no hay motor que lo
+            // ejecute. UiAutomator2 contesta "Method is not implemented" -111 ms y un aviso por
+            // click- a una pregunta que no había que hacerle.
+            if (scroll && !testContext.isNativeContext()) {
                 try {
                     scroll();
                 } catch (final Exception ex) {
@@ -158,7 +200,7 @@ public class PageElement {
                 }
             }
 
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds())));
+            WebDriverWait wait = waitOf(testContext.timeoutFindElement - chrono.getElapsedSeconds());
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
 
             webElement.click();
@@ -215,7 +257,7 @@ public class PageElement {
         Chronometer chrono = new Chronometer();
         webElement = findElement();
         try {
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(Long.valueOf(testContext.timeoutFindElement - chrono.getElapsedSeconds())));
+            WebDriverWait wait = waitOf(testContext.timeoutFindElement - chrono.getElapsedSeconds());
             wait.until(ExpectedConditions.elementToBeClickable(webElement));
             while (!webElement.isEnabled() && (chrono.getElapsedSeconds() < testContext.timeoutFindElement)) {
                 Pause.pause();
@@ -651,7 +693,7 @@ public class PageElement {
             webElement = findElementPresent();
             testContext.logInfo("Validated is present in DOM: " + this);
         } catch (final Exception e) {
-            throw new RuntimeException("Element is not present in DOM: " + this);
+            throw new RuntimeException("Element is not present in DOM: " + this, e);
         }
     }
 
@@ -665,18 +707,19 @@ public class PageElement {
     }
 
     public boolean isPresent(int maxSecondsWaiting) {
-        try {
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(maxSecondsWaiting));
-            return driver.findElement(locator.getBy()) != null;
-        } catch (final Exception e) {
-            return false;
-        } finally {
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(testContext.timeoutFindElement));
-        }
+        // Sondeo explicito y no espera implicita: esta sondea y aquella bloquea. Con la implicita
+        // puesta, una busqueda contra un elemento que aun no esta no devuelve el control hasta
+        // agotarla, así que la espera de fuera no llega a dar un segundo intento.
+        return Waits.until(this::isPresentWithoutWait, maxSecondsWaiting);
     }
 
     public boolean isPresentWithoutWait() {
-        return isPresent(0);
+        try {
+            testContext.applyImplicitWait(Duration.ZERO);
+            return driver.findElement(effectiveBy()) != null;
+        } catch (final Exception e) {
+            return false;
+        }
     }
 
     public void validateIsVisible() {
@@ -691,35 +734,37 @@ public class PageElement {
     }
 
     public boolean isVisible() {
+        final Chronometer chrono = new Chronometer();
         try {
             findElementVisible();
             return true;
         } catch (final Exception e) {
+            // Un "no se ve" que ha costado segundos trae dentro por que -cuantos sondeos, que
+            // contesto el driver- y aquí se perdia al reducirlo a un booleano. Solo se cuenta
+            // cuando la espera consumió tiempo: como predicado se usa en todas partes y responde
+            // en milisegundos, así que registrarlo siempre sería ruido.
+            if (chrono.getElapsedTime() > DIAGNOSTIC_THRESHOLD_MILLIS) {
+                testContext.logInfo("Not visible after waiting: " + getErrorMessage(e));
+            }
             return false;
         }
     }
 
     public boolean isVisible(int maxSecondsWaiting) {
-        try {
-            Chronometer chrono = new Chronometer();
-            while (!isVisibleWithoutWait() && chrono.getElapsedSeconds() < maxSecondsWaiting) {
-                Pause.pauseMillis(500);
-            }
-            return isVisibleWithoutWait();
-        } catch (final Exception e) {
-            return false;
-        }
+        // Sondeo del framework y no medio segundo dormido por comprobación: con comandos de ~46 ms,
+        // la pausa era el 90 % del tiempo de espera.
+        return Waits.until(this::isVisibleWithoutWait, maxSecondsWaiting);
     }
 
     public boolean isVisibleWithoutWait() {
         try {
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
-            webElement = driver.findElement(locator.getBy());
+            // "Sin espera" tiene que serlo de verdad: al conmutar a un webview el driver deja de
+            // conservar los timeouts, y sin esto cada comprobación pasaba a costar el plazo entero.
+            testContext.applyImplicitWait(Duration.ZERO);
+            webElement = driver.findElement(effectiveBy());
             return webElement.isDisplayed();
         } catch (final Exception e) {
             return false;
-        } finally {
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(testContext.timeoutFindElement));
         }
     }
 
@@ -736,7 +781,7 @@ public class PageElement {
      * @return {@code true} if it became invisible (or was never there) within the time, {@code false} otherwise
      */
     public boolean isNotVisible(int maxSecondsWaiting) {
-        return waitUntil(maxSecondsWaiting, ExpectedConditions.invisibilityOfElementLocated(locator.getBy()));
+        return waitUntil(maxSecondsWaiting, ExpectedConditions.invisibilityOfElementLocated(effectiveBy()));
     }
 
     /**
@@ -759,7 +804,7 @@ public class PageElement {
      * @return {@code true} if it became enabled within the time, {@code false} otherwise
      */
     public boolean isEnabled(int maxSecondsWaiting) {
-        return waitUntil(maxSecondsWaiting, webDriver -> webDriver.findElement(locator.getBy()).isEnabled());
+        return waitUntil(maxSecondsWaiting, webDriver -> webDriver.findElement(effectiveBy()).isEnabled());
     }
 
     /**
@@ -774,7 +819,7 @@ public class PageElement {
      * @return {@code true} if the attribute reached that value within the time, {@code false} otherwise
      */
     public boolean hasAttribute(String attribute, String expectedValue, int maxSecondsWaiting) {
-        return waitUntil(maxSecondsWaiting, ExpectedConditions.attributeToBe(locator.getBy(), attribute, expectedValue));
+        return waitUntil(maxSecondsWaiting, ExpectedConditions.attributeToBe(effectiveBy(), attribute, expectedValue));
     }
 
     /**
@@ -786,7 +831,7 @@ public class PageElement {
      */
     public boolean containsText(String expectedText, int maxSecondsWaiting) {
         return waitUntil(maxSecondsWaiting,
-                ExpectedConditions.textToBePresentInElementLocated(locator.getBy(), expectedText));
+                ExpectedConditions.textToBePresentInElementLocated(effectiveBy(), expectedText));
     }
 
     /**
@@ -806,8 +851,7 @@ public class PageElement {
      */
     private boolean waitUntil(int maxSecondsWaiting, ExpectedCondition<Boolean> condition) {
         try {
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(0L));
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(maxSecondsWaiting));
+            WebDriverWait wait = waitOf(maxSecondsWaiting);
             // until() never returns false: FluentWait treats false and null as "not yet" and keeps
             // polling, so it either returns something truthy or throws TimeoutException. Checking
             // its return value would be a branch that cannot be taken.
@@ -815,8 +859,6 @@ public class PageElement {
             return true;
         } catch (final Exception e) {
             return false;
-        } finally {
-            driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(testContext.timeoutFindElement));
         }
     }
 
@@ -842,18 +884,32 @@ public class PageElement {
 
     }
 
+    /**
+     * Initialises the web element and reports whether it was found. Use it when the element may
+     * legitimately be absent: {@link #initWebElement()} propagates instead of leaving it null.
+     *
+     * @return {@code true} if the element was found and stored, {@code false} otherwise
+     */
+    public boolean tryInitWebElement() {
+        try {
+            initWebElement();
+        } catch (final RuntimeException e) {
+            this.webElement = null;
+        }
+        return this.webElement != null;
+    }
+
     protected WebElement findElement() {
         try {
             if ((webElement != null) && webElement.isDisplayed()) {
                 return webElement;
             }
 
-            // if (this.waitElementVisible()) {
-            if (this.isVisible()) {
-                return findElementVisible();
-            } else {
-                throw new RuntimeException("Element is not visible: " + this);
-            }
+            // Una sola espera: se preguntaba con isVisible() -que agota el plazo, descarta el
+            // elemento que acaba de encontrar y se come la causa- para después volver a buscarlo.
+            // El doble trabajo se pagaba en el camino bueno; en el malo quedaba un "no es visible"
+            // sin decir por que.
+            return findElementVisible();
         } catch (final StaleElementReferenceException staleException) {
             webElement = null;
             return findElement();
@@ -869,7 +925,7 @@ public class PageElement {
         boolean found = false;
         try {
             while (!found && (crono.getElapsedSeconds() < testContext.timeoutFindElement)) {
-                final WebElement element = driver.findElement(locator.getBy());
+                final WebElement element = driver.findElement(effectiveBy());
                 found = (element != null) && element.isDisplayed();
             }
         } catch (final Exception e) {
@@ -882,20 +938,84 @@ public class PageElement {
     private WebElement findElementPresent() {
 
         try {
-            final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(testContext.timeoutFindElement.longValue()));
-            return (WebElement) wait.until(ExpectedConditions.presenceOfElementLocated(locator.getBy()));
+            final WebDriverWait wait = waitOf(testContext.timeoutFindElement.longValue());
+            return (WebElement) wait.until(ExpectedConditions.presenceOfElementLocated(effectiveBy()));
         } catch (final Exception e) {
-            throw new RuntimeException("Element is not present in DOM: " + this);
+            throw new RuntimeException("Element is not present in DOM: " + this, e);
         }
     }
 
     private WebElement findElementVisible() {
+        final AtomicReference<WebDriverException> lastDriverError = new AtomicReference<>();
+        final AtomicInteger polls = new AtomicInteger();
+        final Chronometer chrono = new Chronometer();
         try {
-            final WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(testContext.timeoutFindElement.longValue()));
-            return (WebElement) wait.until(ExpectedConditions.visibilityOfElementLocated(locator.getBy()));
+            return waitOf(testContext.timeoutFindElement.longValue()).until(visibleElement(lastDriverError, polls));
         } catch (final Exception e) {
-            throw new RuntimeException("Element is not visible: " + this);
+            throw new RuntimeException("Element is not visible: " + this + driverErrorDetail(lastDriverError.get())
+                    + pollingDetail(polls.get(), chrono.getElapsedTime()), e);
         }
+    }
+
+    /**
+     * Cuantas veces se llego a preguntar y en cuanto tiempo.
+     *
+     * <p>Un plazo agotado no dice lo mismo si se sondeo trescientas veces que si se sondeo una:
+     * lo primero es que el elemento no llego, lo segundo es que la espera no llego a esperar.
+     * Distinguirlo a posteriori obliga a cruzar el log de comandos del grid, cuando el dato lo
+     * tiene aquí el propio bucle. Anadido el 22/09/2026, tras una espera de la home que sólo
+     * mando una petición en 24 s.
+     */
+    private String pollingDetail(int polls, long elapsedMillis) {
+        return String.format(". Sondeos: %d en %.1f s", polls, elapsedMillis / 1000.0);
+    }
+
+    /**
+     * Lo que el driver contesto la última vez, cuando contesto con un error.
+     *
+     * <p>Reintentar sin contarlo convierte un fallo permanente en un plazo agotado en silencio:
+     * mismo sintoma para "no se ve todavia" que para "el driver no puede ni mirarlo", que son dos
+     * averias distintas. El 22/09/2026 este elemento consumió 60 s sin una sola línea de log.
+     */
+    private String driverErrorDetail(WebDriverException lastDriverError) {
+        if (lastDriverError == null) {
+            return StringUtils.EMPTY;
+        }
+        return ". El driver respondio con error en el ultimo intento: "
+                + StringUtils.substringBefore(lastDriverError.getMessage(), "\n");
+    }
+
+    /**
+     * Visible, reintentando mientras el DOM se mueve.
+     *
+     * <p>Un modal en animacion hace que el driver conteste con error a {@code findElement} o a
+     * {@code isDisplayed}, y {@code WebDriverWait} solo ignora {@code NotFoundException}: cualquier
+     * otra abortaba la espera entera en el primer sondeo. Medido el 21/09/2026 en Android, el input
+     * del buscador de aeropuertos se daba por no visible a los <b>154 ms</b> de un plazo de
+     * <b>60 s</b>, con su dialogo todavia en {@code mdc-dialog--opening}.
+     *
+     * <p>Un selector mal escrito si tiene que fallar en el acto: esperar no lo va a arreglar.
+     */
+    private ExpectedCondition<WebElement> visibleElement(AtomicReference<WebDriverException> lastDriverError,
+            AtomicInteger polls) {
+        return driverToQuery -> {
+            polls.incrementAndGet();
+            try {
+                WebElement candidate = driverToQuery.findElement(effectiveBy());
+                return (candidate != null) && candidate.isDisplayed() ? candidate : null;
+            } catch (final InvalidSelectorException invalidLocator) {
+                throw invalidLocator;
+            } catch (final RuntimeException fallaTransitoria) {
+                // RuntimeException y no sólo WebDriverException: cuando el navegador va ahogado, la
+                // llamada puede morir en el cliente HTTP con una excepcion que no es de Selenium, y
+                // esa se escapaba del bucle y terminaba la espera en el primer intento. Medido el
+                // 22/09/2026 con la red degradada: "Sondeos: 1 en 13,9 s" de un plazo de 60 s.
+                lastDriverError.set(fallaTransitoria instanceof WebDriverException
+                        ? (WebDriverException) fallaTransitoria
+                        : new WebDriverException(fallaTransitoria));
+                return null;
+            }
+        };
     }
 
     private void writeNoLog(String text, boolean retry) {
