@@ -118,7 +118,10 @@ public class PageElement {
     }
 
     public void click() {
-        click(false, false);
+        // Con scroll desde el primer intento: un elemento fuera del viewport no es clicable, y
+        // esperar a que lo sea agotaba el plazo antes de que el reintento -el único que
+        // desplazaba- lo resolviera. Medido en Safari: 61 s el primer click de cada pantalla.
+        click(true, false);
     }
 
     public void clickNonVisible() {
@@ -207,7 +210,12 @@ public class PageElement {
             testContext.logInfo("Click on " + this);
         } catch (final Exception e) {
             if (retry) {
-                throw new RuntimeException("Unable to click on " + this + getErrorMessage(e));
+                // safaridriver no contesta al click nativo hasta dar la página por estable, y con
+                // peticiones colgadas permanentes nunca lo hace: 60 s por click. El javascript no
+                // comprueba interactabilidad, así que el repliegue queda escrito en el log.
+                testContext.logWarn("Native click failed on {}: {}. Falling back to javascript click",
+                        this.toString(), getErrorMessage(e));
+                clickJavascript();
             } else {
                 click(true, true);
             }
