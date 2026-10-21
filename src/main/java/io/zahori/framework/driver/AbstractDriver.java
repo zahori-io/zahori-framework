@@ -58,7 +58,7 @@ public abstract class AbstractDriver implements Driver {
     protected abstract WebDriver createWebDriver(Browsers browsers, Proxy proxy);
 
     /**
-     * Crea y configura un WebDriver basado en la configuracion de navegadores
+     * Crea y configura un WebDriver basado en la configuración de navegadores
      * proporcionada.
      *
      * @param browsers La configuracion del navegador.
@@ -160,7 +160,7 @@ public abstract class AbstractDriver implements Driver {
     }
 
     /**
-     * Metodo para configurar el WebDriver despues de su creacion. Puede ser
+     * Metodo para configurar el WebDriver después de su creacion. Puede ser
      * sobrescrito por clases derivadas para añadir configuraciones especificas.
      *
      * @param webDriver El WebDriver a configurar.

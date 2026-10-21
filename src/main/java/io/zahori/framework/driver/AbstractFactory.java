@@ -35,7 +35,7 @@ import org.openqa.selenium.Proxy;
 public interface AbstractFactory<T> {
 
     /**
-     * Metodo para crear una instancia del tipo T. Este metodo debe ser
+     * Metodo para crear una instancia del tipo T. Este método debe ser
      * implementado por las clases concretas para proporcionar la logica de
      * creacion especifica.
      *

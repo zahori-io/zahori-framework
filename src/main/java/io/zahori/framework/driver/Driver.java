@@ -36,7 +36,7 @@ public interface Driver {
 
     /**
      * Obtiene una instancia de WebDriver configurada y lista para ser
-     * utilizada. Este metodo debe ser implementado para proporcionar la
+     * utilizada. Este método debe ser implementado para proporcionar la
      * instancia especifica de WebDriver basada en los navegadores y
      * configuraciones proporcionadas.
      *
@@ -48,8 +48,8 @@ public interface Driver {
     WebDriver getDriver(Browsers browsers, Proxy proxy);
 
     /**
-     * Obtiene las opciones de configuracion especificas para el driver. Este
-     * metodo permite la configuracion personalizada de las opciones del driver,
+     * Obtiene las opciones de configuración especificas para el driver. Este
+     * método permite la configuración personalizada de las opciones del driver,
      * como tiempos de espera, capacidades y mas.
      *
      * @param browsers Objeto Browsers que contiene la configuracion especifica
