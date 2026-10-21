@@ -12,15 +12,14 @@ package io.zahori.framework.utils;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public
- * License along with this program.  If not, see
- * <http://www.gnu.org/licenses/agpl-3.0.html>.
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 
@@ -42,7 +41,13 @@ import org.openqa.selenium.support.ui.FluentWait;
  */
 public final class Waits {
 
-    private static final long POLLING_MILLIS = 200L;
+    /**
+     * Intervalo de sondeo del framework, en milisegundos. Publico porque {@code PageElement}
+     * construye sus propias esperas y tiene que usar este mismo valor: Selenium sondea cada 500 ms
+     * si no se le indica otra cosa, y con comandos de ~46 ms eso es medio segundo dormido por
+     * comprobación.
+     */
+    public static final long POLLING_MILLIS = 200L;
 
     private Waits() {
     }
