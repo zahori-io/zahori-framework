@@ -107,6 +107,8 @@ public class TestContext {
     public String testCaseName;
     public WebDriver driver;
     public WebDriver hostDriver;
+    private boolean nativeContext;
+    private Duration appliedImplicitWait;
     public String platform;
     public String browserName;
     public String browserVersion;
@@ -1287,6 +1289,47 @@ public class TestContext {
             IOSDriver iosDriver = (IOSDriver) driver;
             iosDriver.context("NATIVE_APP");
         }
+        nativeContext = isAndroidDriver() || isIOSDriver();
+        forgetImplicitWait();
+    }
+
+    /**
+     * Fija la espera implicita del driver, y sólo si no esta ya en ese valor.
+     *
+     * <p>El framework la quiere en cero -sincroniza con esperas explicitas, que sondean- pero no
+     * basta con ponerla al crear el driver: al conmutar a un webview, los comandos van a otra
+     * sesión que no conserva los timeouts, y una busqueda "sin espera" pasa a costar el plazo
+     * entero. Medido el 22/09/2026 en Android: tres busquedas de 60 s seguidas en el contexto web.
+     *
+     * <p>Se recuerda el último valor aplicado para no gastar un comando por comprobación: con la
+     * implicita siempre en cero, esto manda una sola petición después de cada cambio de contexto.
+     *
+     * @param timeout espera implicita que debe quedar activa
+     */
+    public void applyImplicitWait(Duration timeout) {
+        if (timeout.equals(appliedImplicitWait)) {
+            return;
+        }
+        driver.manage().timeouts().implicitlyWait(timeout);
+        appliedImplicitWait = timeout;
+    }
+
+    /** Tras conmutar de contexto, lo que el driver tenga fijado deja de ser lo que creemos. */
+    private void forgetImplicitWait() {
+        appliedImplicitWait = null;
+    }
+
+    /**
+     * Si el driver esta en el contexto nativo de un movil, donde no hay DOM ni motor de javascript.
+     *
+     * <p>Lo recuerda quien lo cambia en vez de preguntarlo al driver: {@code getCurrentContext()}
+     * es una ida y vuelta de decenas de milisegundos, y esto se consulta antes de cada
+     * interacción. Para un driver de escritorio es siempre falso.
+     *
+     * @return {@code true} si la ultima conmutacion dejo al driver en contexto nativo
+     */
+    public boolean isNativeContext() {
+        return nativeContext;
     }
 
     public void switchToWebContext() {
@@ -1326,6 +1369,8 @@ public class TestContext {
             IOSDriver iosDriver = (IOSDriver) driver;
             switchToWebContextIOS(iosDriver, contextName);
         }
+        nativeContext = false;
+        forgetImplicitWait();
         //getPageSource();
     }
 

@@ -161,7 +161,17 @@ public class Browser {
                     .withTestName(testContext.testCaseName).withRemoteUrl(testContext.remoteUrl).withCaseExecution(testContext.caseExecutionId)
                     .withExecution(testContext.caseExecution.getExecutionId())
                     .withPageLoadTimeout(testContext.timeoutFindElement.longValue()) // TODO
-                    .withImplicitlyWait(testContext.timeoutFindElement.longValue())
+                    // Sin espera implicita: la sincronizacion es de las esperas explicitas, que
+                    // sondean. Las dos a la vez dan tiempos impredecibles -lo advierte la propia
+                    // documentacion de Selenium- porque la implicita bloquea la busqueda y la
+                    // explicita no llega a dar un segundo intento. Medido el 22/09/2026 en una
+                    // sesión de Android: 331 peticiones para ponerla y quitarla, 19 s -el 16 % del
+                    // tiempo de comandos-, y una sola busqueda que se comio 21 s de una sentada.
+                    .withImplicitlyWait(0L)
+                    // El plazo del script va aparte: compartirlo con la espera implicita lo dejaba
+                    // en cero y con el cualquier executeScript, que es como se hace todo clic sobre
+                    // un elemento tapado.
+                    .withScriptTimeout(testContext.timeoutFindElement.longValue())
                     // TODO: remove withEnvironmentUrl. This is a temporal solution for mobile testing.
                     // This url is used to indicate the id of the app artifact uploaded in the cloud farm (browserstack, ...)
                     .withEnvironmentUrl(testContext.caseExecution.getConfiguration().getEnvironmentUrl())

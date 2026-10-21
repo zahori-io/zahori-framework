@@ -45,6 +45,7 @@ public class Browsers {
     private String downloadPath;
 
     private String testName;
+    private Long scriptTimeout;
 
     private String caseExecutionId;
 
@@ -104,6 +105,19 @@ public class Browsers {
     public Browsers withDownloadPath(String downloadPath) {
         this.downloadPath = downloadPath;
         return this;
+    }
+
+    /**
+     * Plazo para un script de javascript. Va aparte de la espera implicita: esa se quiere en cero
+     * y compartir el valor dejaba los scripts con cero milisegundos, que es fallar siempre.
+     */
+    public Browsers withScriptTimeout(Long scriptTimeout) {
+        this.scriptTimeout = scriptTimeout;
+        return this;
+    }
+
+    public Long getScriptTimeout() {
+        return scriptTimeout == null ? getPageLoadTimeout() : scriptTimeout;
     }
 
     public Browsers withTestName(String testName) {
