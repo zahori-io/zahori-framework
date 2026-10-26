@@ -177,6 +177,32 @@ final class BrowserStackLocalTunnel {
         return current != null && current.isAlive();
     }
 
+    /** Binario que da servicio ahora; null si no hay. */
+    LocalTunnelProcess current() {
+        return running.get();
+    }
+
+    /**
+     * Para el binario que fallo a un caso para que el siguiente acquire levante otro. Si ya lo
+     * sustituyo otro caso no toca nada: con varios fallando a la vez, solo uno lo releva.
+     */
+    boolean recycle(LocalTunnelProcess failed, String reason, TunnelLog log) {
+        // Con el lock: nadie levanta el nuevo con el mismo identificador mientras para el viejo
+        if (failed == null || !lockedWithinWaitTimeout()) {
+            return false;
+        }
+        boolean recycled = running.compareAndSet(failed, null);
+        try {
+            if (recycled) {
+                stopQuietly(failed, log);
+                log.warn("BrowserStack local connection with id " + identifier + " recycled: " + reason);
+            }
+        } finally {
+            lock.unlock();
+        }
+        return recycled;
+    }
+
     private String reused(TunnelLog log) {
         log.info("BrowserStack local connection reused with id " + identifier);
         return identifier;
@@ -222,6 +248,15 @@ final class BrowserStackLocalTunnel {
 
     private boolean isCoolingDown(Failure failure) {
         return failure != null && nanoClock.getAsLong() - failure.atNanos < settings.failureCooldown().toNanos();
+    }
+
+    private boolean lockedWithinWaitTimeout() {
+        try {
+            return lock.tryLock(settings.waitTimeout().toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     private void lockWithinWaitTimeout() throws TunnelUnavailableException {

@@ -48,4 +48,22 @@ class TestContextLocalTunnelTest {
     void doesNotStartIt_whenNoProviderWasResolved() {
         Assertions.assertThat(TestContext.shouldStartLocalTunnel(null, "true")).isFalse();
     }
+
+    @Test
+    void theProcessLogSaysWhichGridLeftTheCaseWithoutTunnel() {
+        Assertions.assertThat(TestContext.tunnelNotStartedReason(this.selenoid, "true"))
+                .isEqualTo("BrowserStack local connection not started: grid provider selenoid (no local tunnel), local setting 'true'");
+    }
+
+    @Test
+    void theProcessLogSaysTheSettingDidNotAskForIt() {
+        Assertions.assertThat(TestContext.tunnelNotStartedReason(this.browserStack, "false"))
+                .isEqualTo("BrowserStack local connection not started: grid provider browserstack, local setting 'false'");
+    }
+
+    @Test
+    void theProcessLogSaysNoGridWasResolved() {
+        Assertions.assertThat(TestContext.tunnelNotStartedReason(null, null))
+                .isEqualTo("BrowserStack local connection not started: grid provider none resolved, local setting 'null'");
+    }
 }

@@ -75,6 +75,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 import net.lightbody.bmp.client.ClientUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -185,6 +186,11 @@ public class TestContext {
 
     // Tunel con cuyo identificador se empareja la sesion de este caso
     private BrowserStackLocalTunnel tunnel;
+    // El mismo tunel visto por este caso: sabe relevarlo si BrowserStack no lo ve
+    private LocalTunnelLease tunnelLease;
+
+    static final String MISSING_TUNNEL = "BrowserStack local connection is required by zahori.properties but this case has no tunnel:"
+            + " the session would ask for a tunnel that is not running";
 
     private BrowserMobProxy browserMobProxy;
 
@@ -276,7 +282,7 @@ public class TestContext {
 
         // Resolve, once, which grid provider this execution's remoteUrl belongs to (Selenoid,
         // BrowserStack, a 3rd-party one, or the generic fallback) — completes the ExecutionTarget
-        // identity and drives proxy/header strategy in getProxyIP().
+        // identity and drives the header strategy and the local tunnel.
         gridProvider = GridProviderRegistry.resolve().resolveProvider(remoteUrl, zahoriProperties.isGridProviderAutodetectEnabled());
         executionTarget = executionTarget.withGridProviderId(gridProvider.id());
 
@@ -319,9 +325,40 @@ public class TestContext {
         if (StringUtils.isEmpty(browserName)) {
             browser = null;
         } else {
-            browser = new Browser(this);
+            browser = createBrowser(this::newBrowser, localTunnelRequired(zahoriProperties, gridProvider, processPlatform()));
             logInfo("Driver initialized!");
         }
+    }
+
+    Browser newBrowser() {
+        return new Browser(this);
+    }
+
+    /** La configuracion pide BrowserStack Local en este grid. */
+    static boolean localTunnelRequired(ZahoriProperties properties, GridProvider gridProvider, String processPlatform) {
+        return properties != null && shouldStartLocalTunnel(gridProvider, tunnelSetting(properties, "local", processPlatform));
+    }
+
+    // Sin tunel la sesion pediria a BrowserStack el identificador de la plantilla, que no levanta nadie
+    Browser createBrowser(Supplier<Browser> browserFactory, boolean tunnelRequired) {
+        if (tunnelLease == null) {
+            if (tunnelRequired) {
+                logStepFailed(MISSING_TUNNEL);
+            }
+            return browserFactory.get();
+        }
+        try {
+            return tunnelLease.create(browserFactory);
+        } catch (BrowserStackLocalTunnel.TunnelUnavailableException e) {
+            forgetTunnel();
+            logStepFailed(e.getMessage());
+            return null;
+        }
+    }
+
+    private void forgetTunnel() {
+        tunnel = null;
+        tunnelLease = null;
     }
 
     /** Tunel solo si el grid lo soporta y la ejecucion lo pide con bstack:options.local. */
@@ -335,11 +372,20 @@ public class TestContext {
         String processPlatform = processPlatform();
         String browserStackLocalConnection = tunnelSetting(zahoriProperties, "local", processPlatform);
         if (!shouldStartLocalTunnel(gridProvider, browserStackLocalConnection)) {
+            LOG.info(tunnelNotStartedReason(gridProvider, browserStackLocalConnection));
             return;
         }
 
         String accessKey = tunnelSetting(zahoriProperties, "accessKey", processPlatform);
         startRemoteTunnel(ProcessTunnels.INSTANCE, accessKey, zahoriProperties.getProperty(BROWSERSTACK_LOCAL_BINARY_PATH_PROPERTY));
+    }
+
+    // En el log del proceso: sin el, un caso sin tunel no dice si fue el grid o el ajuste
+    static String tunnelNotStartedReason(GridProvider gridProvider, String localConnectionSetting) {
+        String grid = gridProvider == null ? "none resolved"
+                : gridProvider.id() + (gridProvider.supportsLocalTunnel() ? "" : " (no local tunnel)");
+        return "BrowserStack local connection not started: grid provider " + grid + ", local setting '"
+                + localConnectionSetting + "'";
     }
 
     /** Plataforma de la JVM (windows, osx o linux por defecto): el tunel es del proceso, no del caso. */
@@ -368,7 +414,7 @@ public class TestContext {
 
     // El localIdentifier lo pone el tunel: es del proceso, no de este caso ni de su ejecucion
     void startRemoteTunnel(BrowserStackLocalTunnelRegistry tunnels, String accessKey, String binaryPath) {
-        tunnel = null;
+        forgetTunnel();
         if (StringUtils.isBlank(accessKey)) {
             logStepFailed("BrowserStack local connection is enabled in zahori.properties but the access key is not defined");
             return;
@@ -376,7 +422,7 @@ public class TestContext {
         Map<String, String> args = BrowserStackLocalTunnelRegistry.argsFor(accessKey, binaryPath);
         BrowserStackLocalTunnel requested = tunnels.tunnelFor(args);
         try {
-            requested.acquire(args, tunnelLog());
+            tunnelLease = LocalTunnelLease.acquire(requested, args, tunnelLog());
             tunnel = requested;
         } catch (BrowserStackLocalTunnel.TunnelUnavailableException e) {
             logStepFailed(e.getMessage());

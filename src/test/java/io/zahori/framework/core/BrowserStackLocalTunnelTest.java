@@ -671,6 +671,110 @@ class BrowserStackLocalTunnelTest {
     }
 
     @Nested
+    class RecyclingTheTunnel {
+
+        @Test
+        void withoutTunnelThereIsNoProcessToRecycle() {
+            tunnel = tunnel(settings());
+
+            assertThat(tunnel.current()).isNull();
+            assertThat(tunnel.recycle(null, "reason", log)).isFalse();
+            assertThat(binaries.stops.get()).isZero();
+        }
+
+        @Test
+        void theCaseThatSawTheTunnelFailStopsItAndTheNextAcquireStartsANewOne() throws Exception {
+            tunnel = tunnel(settings());
+            tunnel.acquire(args("key"), log);
+            LocalTunnelProcess failed = tunnel.current();
+
+            assertThat(tunnel.recycle(failed, "BrowserStack reports it as not connected", log)).isTrue();
+
+            assertThat(tunnel.current()).isNull();
+            assertThat(tunnel.isRunning()).isFalse();
+            assertThat(binaries.stops.get()).isEqualTo(1);
+            assertThat(log.warnings).containsExactly(
+                    "BrowserStack local connection with id " + ID + " recycled: BrowserStack reports it as not connected");
+            assertThat(tunnel.acquire(args("key"), log)).isEqualTo(ID);
+            assertThat(tunnel.current()).isNotSameAs(failed).isNotNull();
+            assertThat(binaries.connected.get()).isEqualTo(2);
+            assertThat(binaries.alive.get()).describedAs("solo queda vivo el nuevo").isEqualTo(1);
+        }
+
+        @Test
+        void aCaseThatSawAnOlderTunnelFailDoesNotStopTheOneAlreadyReplacingIt() throws Exception {
+            tunnel = tunnel(settings());
+            tunnel.acquire(args("key"), log);
+            LocalTunnelProcess failed = tunnel.current();
+            tunnel.recycle(failed, "first case", log);
+            tunnel.acquire(args("key"), log);
+            LocalTunnelProcess replacement = tunnel.current();
+
+            assertThat(tunnel.recycle(failed, "second case", log)).isFalse();
+
+            assertThat(tunnel.current()).isSameAs(replacement);
+            assertThat(tunnel.isRunning()).isTrue();
+            assertThat(binaries.stops.get()).isEqualTo(1);
+            assertThat(log.warnings).noneMatch(message -> message.endsWith("second case"));
+        }
+
+        @Test
+        void casesFailingAtOnceWithTheSameTunnelRecycleItOnlyOnce() throws Exception {
+            tunnel = tunnel(settings());
+            tunnel.acquire(args("key"), log);
+            LocalTunnelProcess failed = tunnel.current();
+            CountDownLatch ready = new CountDownLatch(PARALLEL_CASES);
+            List<Callable<Boolean>> tasks = new ArrayList<>();
+            for (int i = 0; i < PARALLEL_CASES; i++) {
+                tasks.add(() -> {
+                    ready.countDown();
+                    ready.await();
+                    return tunnel.recycle(failed, "not connected", log);
+                });
+            }
+
+            List<Boolean> recycled = runAll(tasks);
+
+            assertThat(recycled).containsOnlyOnce(true);
+            assertThat(binaries.stops.get()).isEqualTo(1);
+        }
+
+        @Test
+        void whileAnotherCaseIsStartingItTheRecycleGivesUpAfterTheWaitTimeout() throws Exception {
+            tunnel = tunnel(settings().waitTimeout(Duration.ofMillis(200)));
+            binaries.script(Behaviour.BLOCKS);
+            ExecutorService starter = Executors.newSingleThreadExecutor();
+            try {
+                starter.submit(() -> tunnel.acquire(args("key"), log));
+                binaries.awaitStarted(1);
+                LocalTunnelProcess failed = mock(LocalTunnelProcess.class);
+
+                long start = System.nanoTime();
+                assertThat(tunnel.recycle(failed, "not connected", log)).isFalse();
+
+                assertThat(Duration.ofNanos(System.nanoTime() - start)).isGreaterThanOrEqualTo(Duration.ofMillis(200));
+                verifyNoInteractions(failed);
+            } finally {
+                binaries.releaseAll();
+                starter.shutdownNow();
+            }
+        }
+
+        @Test
+        void anInterruptedRecycleKeepsTheInterruptionAndTouchesNothing() {
+            tunnel = tunnel(settings());
+            LocalTunnelProcess failed = mock(LocalTunnelProcess.class);
+
+            Thread.currentThread().interrupt();
+            boolean recycled = tunnel.recycle(failed, "not connected", log);
+
+            assertThat(Thread.interrupted()).isTrue();
+            assertThat(recycled).isFalse();
+            verifyNoInteractions(failed);
+        }
+    }
+
+    @Nested
     class Configuration {
 
         @Test
