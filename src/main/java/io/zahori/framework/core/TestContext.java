@@ -108,7 +108,9 @@ public class TestContext {
     public String testCaseName;
     public WebDriver driver;
     public WebDriver hostDriver;
-    private boolean nativeContext;
+    // Ajuste manual y su driver; null = segun el tipo de driver
+    private Boolean nativeContext;
+    private WebDriver nativeContextDriver;
     private Duration appliedImplicitWait;
     public String platform;
     public String browserName;
@@ -1346,6 +1348,7 @@ public class TestContext {
             iosDriver.context("NATIVE_APP");
         }
         nativeContext = isAndroidDriver() || isIOSDriver();
+        nativeContextDriver = driver;
         forgetImplicitWait();
     }
 
@@ -1452,10 +1455,15 @@ public class TestContext {
      * es una ida y vuelta de decenas de milisegundos, y esto se consulta antes de cada
      * interacción. Para un driver de escritorio es siempre falso.
      *
-     * @return {@code true} si la ultima conmutacion dejo al driver en contexto nativo
+     * @return {@code true} si la ultima conmutacion de este driver lo dejo en contexto nativo o,
+     *         sin conmutacion, si es una app movil nativa
      */
     public boolean isNativeContext() {
-        return nativeContext;
+        // Una app nativa arranca en NATIVE_APP sin pasar por switchToNativeContext
+        if (nativeContext != null && nativeContextDriver == driver) {
+            return nativeContext;
+        }
+        return isMobileNativeApp();
     }
 
     public void switchToWebContext() {
@@ -1496,6 +1504,7 @@ public class TestContext {
             switchToWebContextIOS(iosDriver, contextName);
         }
         nativeContext = false;
+        nativeContextDriver = driver;
         forgetImplicitWait();
         //getPageSource();
     }

@@ -33,7 +33,7 @@ class PageElementIdStrategyTest {
         List<By> queries = new ArrayList<>();
         RecordingTestContext testContext = RecordingTestContext.forCase("PageElementIdStrategyTest")
             .withTimeout(1)
-            .withDriver(recordingDriver(queries, SeleniumDoubles.androidDriver()));
+            .withDriver(recordingDriver(queries, SeleniumDoubles.androidWebDriver()));
         this.inputOn(testContext).findElement();
         ((ListAssert)Assertions.assertThat(queries).describedAs("chromedriver rechaza la estrategia id con 'invalid locator'", new Object[0]))
             .containsExactly(new By[]{By.cssSelector("[id=\"flight-searcher-departure\"]")});
@@ -76,7 +76,7 @@ class PageElementIdStrategyTest {
         List<By> queries = new ArrayList<>();
         RecordingTestContext testContext = RecordingTestContext.forCase("PageElementIdStrategyTest")
             .withTimeout(1)
-            .withDriver(recordingDriver(queries, SeleniumDoubles.androidDriver()));
+            .withDriver(recordingDriver(queries, SeleniumDoubles.androidWebDriver()));
         new PageElement(new Page(testContext), "raro", Locator.id("a\"b")).findElement();
         Assertions.assertThat(queries).containsExactly(new By[]{By.cssSelector("[id=\"a\\\"b\"]")});
     }
