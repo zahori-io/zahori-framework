@@ -61,8 +61,6 @@ public class RemoteDriver extends AbstractDriver {
 
     // La cola del grid (Selenoid -limit, paralelos de BrowserStack) puede durar minutos
     static final int DEFAULT_DRIVER_CREATION_TIMEOUT_SECONDS = 3600;
-    // Mas que los 15 min de cola de BrowserStack: el cliente no abandona una peticion que el grid atiende
-    static final int DEFAULT_SESSION_REQUEST_TIMEOUT_SECONDS = 1200;
 
     static final Duration QUICK_FAILURE = Duration.ofSeconds(5);
     static final Duration FIRST_BACKOFF = Duration.ofSeconds(5);
@@ -109,8 +107,7 @@ public class RemoteDriver extends AbstractDriver {
         ZahoriProperties properties = new ZahoriProperties(ExecutionTarget.of(browsers.getEnvironmentName(), browsers.getPlatform()));
         Duration total = Duration.ofSeconds(positiveSeconds(properties.getProperty(DRIVER_CREATION_TIMEOUT_PROPERTY),
                 DEFAULT_DRIVER_CREATION_TIMEOUT_SECONDS));
-        Duration sessionRequest = Duration.ofSeconds(positiveSeconds(properties.getProperty(SESSION_REQUEST_TIMEOUT_PROPERTY),
-                DEFAULT_SESSION_REQUEST_TIMEOUT_SECONDS));
+        Duration sessionRequest = sessionRequestTimeout(properties.getProperty(SESSION_REQUEST_TIMEOUT_PROPERTY), total);
         String remoteUrl = browsers.getRemoteUrl();
         URL grid = getUrl(remoteUrl);
         // TODO Temporal workaround for Appium driver creation
@@ -255,6 +252,14 @@ public class RemoteDriver extends AbstractDriver {
         String message = getCleanMessage(timeout.getMessage()) + " (remote server: " + remoteUrl + ")";
         Throwable root = ExceptionUtils.getRootCause(timeout);
         return root == timeout ? message : message + ". Cause: " + getCleanMessage(root.toString());
+    }
+
+    /**
+     * Sin ajuste, la peticion de sesion puede esperar todo el plazo: en la cola de Selenoid o de
+     * BrowserStack el cliente no la abandona, como hacia la version que esperaba la hora entera.
+     */
+    static Duration sessionRequestTimeout(String configuredValue, Duration total) {
+        return Duration.ofSeconds(positiveSeconds(configuredValue, (int) total.getSeconds()));
     }
 
     static int positiveSeconds(String configuredValue, int defaultSeconds) {

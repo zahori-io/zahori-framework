@@ -55,10 +55,29 @@ class RemoteDriverTimeoutTest {
                 .isEqualTo("Timeout of 30 seconds creating WebDriver object (remote server: http://grid)");
     }
 
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"   ", "no-es-un-numero", "0", "-30"})
+    void byDefaultTheSessionRequestMayWaitTheWholeTimeInTheGridQueue(String configured) {
+        // Con 1200 s caian en la cola de Selenoid los casos de la ejecucion 12145; antes se esperaba la hora entera
+        Assertions.assertThat(RemoteDriver.sessionRequestTimeout(configured, Duration.ofSeconds(3600))).isEqualTo(Duration.ofSeconds(3600));
+    }
+
     @Test
-    void theSessionRequestOutlastsTheBrowserStackQueue() {
+    void aConfiguredSessionRequestTimeoutIsRespected() {
+        Assertions.assertThat(RemoteDriver.sessionRequestTimeout("1200", Duration.ofSeconds(3600))).isEqualTo(Duration.ofSeconds(1200));
+    }
+
+    @Test
+    void theDefaultSessionRequestFollowsAConfiguredTotal() {
+        Assertions.assertThat(RemoteDriver.sessionRequestTimeout(null, Duration.ofSeconds(900))).isEqualTo(Duration.ofSeconds(900));
+    }
+
+    @Test
+    void theSessionRequestStillOutlastsTheBrowserStackQueue() {
         // BrowserStack descarta lo encolado a los 15 min: el cliente no puede rendirse antes
-        Assertions.assertThat(RemoteDriver.DEFAULT_SESSION_REQUEST_TIMEOUT_SECONDS).isGreaterThan(15 * 60);
+        Assertions.assertThat(RemoteDriver.sessionRequestTimeout(null,
+                Duration.ofSeconds(RemoteDriver.DEFAULT_DRIVER_CREATION_TIMEOUT_SECONDS))).isGreaterThan(Duration.ofMinutes(15));
     }
 
     @Test
