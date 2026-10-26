@@ -239,6 +239,29 @@ class TestContextTunnelTest {
     }
 
     @Test
+    void aRemoteBrowserNeverGetsTheBrowserMobProxy() {
+        ZahoriProperties properties = mock(ZahoriProperties.class);
+        when(properties.isAddHeadersEnabled()).thenReturn(true);
+        context.zahoriProperties = properties;
+        context.remote = Browsers.REMOTE_YES;
+
+        assertThat(context.createBrowserMobProxy()).isNull();
+
+        assertThat(context.infos).containsExactly(
+                "Remote browser on grid provider '{}': BrowserMobProxy only runs with a local browser, skipping it.");
+    }
+
+    @Test
+    void withNothingToDoThereIsNoBrowserMobProxy() {
+        context.zahoriProperties = mock(ZahoriProperties.class);
+        context.remote = Browsers.REMOTE_NO;
+
+        assertThat(context.createBrowserMobProxy()).isNull();
+
+        assertThat(context.infos).isEmpty();
+    }
+
+    @Test
     void theTunnelLogGoesToTheCaseEvidences() {
         BrowserStackLocalTunnel.TunnelLog log = context.tunnelLog();
 

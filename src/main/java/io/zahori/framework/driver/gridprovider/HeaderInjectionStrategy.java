@@ -30,10 +30,9 @@ package io.zahori.framework.driver.gridprovider;
 public enum HeaderInjectionStrategy {
 
     /**
-     * The browser under test can reach a BrowserMobProxy running on this machine (Selenoid: same
-     * Docker network/host as this process). {@code TestContext.getProxyIP()} resolves the actual
-     * reachable address (localhost / local IP / host.docker.internal depending on OS and mobile
-     * web app flag) — this strategy value only says "that resolution is meaningful here".
+     * Headers go through a BrowserMobProxy running on this machine. The framework only starts it
+     * for a local browser ({@code TestContext.browserMobProxyHost}): from a remote Selenoid
+     * browser the flow did not advance through it.
      */
     BROWSERMOB_PROXY,
 

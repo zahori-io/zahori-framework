@@ -34,7 +34,6 @@ import io.zahori.framework.driver.browserfactory.BrowserMobProxy;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.driver.gridprovider.GridProvider;
 import io.zahori.framework.driver.gridprovider.GridProviderRegistry;
-import io.zahori.framework.driver.gridprovider.HeaderInjectionStrategy;
 import io.zahori.framework.driver.gridprovider.RequiredCapabilitiesValidator;
 import io.zahori.framework.evidences.Evidences;
 import io.zahori.framework.evidences.Evidences.ZahoriLogLevel;
@@ -56,8 +55,6 @@ import io.zahori.model.process.CaseExecution;
 import io.zahori.model.process.ProcessRegistration;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.ParseException;
@@ -66,7 +63,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -965,9 +961,9 @@ public class TestContext {
             return null;
         }
 
-        String ip = getProxyIP();
+        String ip = browserMobProxyHost(remote);
         if (ip == null) {
-            logInfo("Grid provider '{}' injects headers natively — skipping local BrowserMobProxy (unreachable from this grid).",
+            logInfo("Remote browser on grid provider '{}': BrowserMobProxy only runs with a local browser, skipping it.",
                     gridProvider == null ? "unknown" : gridProvider.id());
             return null;
         }
@@ -1008,74 +1004,12 @@ public class TestContext {
         }
     }
 
-    private boolean isLinuxOS() {
-        String osName = System.getProperty("os.name").toLowerCase();
-        return osName.contains("nux") || osName.contains("nix");
-    }
-
     /**
-     * @return the address the browser under test should use to reach the local BrowserMobProxy,
-     * or {@code null} if the resolved grid provider injects headers itself (e.g. BrowserStack's
-     * {@code bstack:options.headerParams}) and no local proxy is reachable from it at all — see
-     * {@link #createBrowserMobProxy()}, which must not build a proxy in that case (bug 3.1: this
-     * used to always assume Selenoid-in-Docker and return "host.docker.internal", unreachable
-     * from a cloud grid).
+     * @return host con el que el navegador llega al BrowserMobProxy de este proceso, o null si el
+     *         navegador es remoto: desde Selenoid o BrowserStack el flujo no avanzaba por el proxy
      */
-    private String getProxyIP() {
-        boolean remoteBrowser = StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote);
-        if (!remoteBrowser) {
-            return "localhost";
-        }
-
-        if (isMobileWebApp()) {
-            return "localhost";
-        }
-
-        if (gridProvider != null && gridProvider.headerInjectionStrategy() != HeaderInjectionStrategy.BROWSERMOB_PROXY) {
-            return null;
-        }
-
-        if (isLinuxOS()) {
-            return getLocalIP();
-        }
-
-        // Para que en Mac y Windows los contenedores de Selenoid tengan conexión con el proxy que no está en el deben usar "host.docker.internal"
-        return "host.docker.internal";
-    }
-
-    private String getLocalIP() {
-        String ip = "";
-        try {
-            // A. Alternativa rápida (menos precisa), puede devolver 127.0.0.1 en muchos entornos, especialmente en contenedores o configuraciones sin DNS apropiado.
-            //ip = Inet4Address.getLocalHost().getHostAddress();
-
-            // B. Alternativa más precisa:
-            // Iterar sobre todas las interfaces de red
-            Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-            while (interfaces.hasMoreElements()) {
-                NetworkInterface iface = interfaces.nextElement();
-
-                // Ignorar interfaces no activas o loopback
-                if (!iface.isUp() || iface.isLoopback() || iface.isVirtual()) {
-                    continue;
-                }
-
-                Enumeration<InetAddress> addresses = iface.getInetAddresses();
-                while (addresses.hasMoreElements()) {
-                    InetAddress addr = addresses.nextElement();
-
-                    // Solo IPv4 (si se necesita IPv6, quitar este filtro)
-                    if (addr.getHostAddress().contains(".")) {
-                        ip = addr.getHostAddress();
-                        // System.out.println("IP local: " + ip);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            logInfo("Error getting local IP: {}", e.getMessage());
-        } finally {
-            return ip;
-        }
+    static String browserMobProxyHost(String remote) {
+        return StringUtils.equalsIgnoreCase(Browsers.REMOTE_YES, remote) ? null : "localhost";
     }
 
     public int getMaxRetries() {
