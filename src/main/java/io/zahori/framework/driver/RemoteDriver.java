@@ -204,10 +204,15 @@ public class RemoteDriver extends AbstractDriver {
             if (StringUtils.containsIgnoreCase(causeMessage, "UnknownHostException")) {
                 return "Unknown host:" + StringUtils.substringAfter(causeMessage, "UnknownHostException:");
             }
+            // Por tipo: el cliente HTTP lanza estas excepciones sin texto cuando el grid no esta
+            if (cause instanceof java.net.UnknownHostException) {
+                return "Unknown host: " + StringUtils.defaultIfBlank(StringUtils.trim(causeMessage), hostOf(remoteUrl));
+            }
             if (isTimeout(cause)) {
                 return timeoutMessage(cause, remoteUrl);
             }
-            if (StringUtils.containsIgnoreCase(causeMessage, "Conexión rehusada")
+            if (cause instanceof java.net.ConnectException
+                    || StringUtils.containsIgnoreCase(causeMessage, "Conexión rehusada")
                     || StringUtils.containsIgnoreCase(causeMessage, "Connection refused")) {
                 return "Connection refused from remote server " + remoteUrl + ". Check that the remote server is up and there is connectivity with it.";
             }
@@ -242,6 +247,14 @@ public class RemoteDriver extends AbstractDriver {
             cause = cause.getCause();
         }
         return exceptionMessage;
+    }
+
+    private static String hostOf(String remoteUrl) {
+        try {
+            return StringUtils.defaultIfBlank(java.net.URI.create(remoteUrl).getHost(), remoteUrl);
+        } catch (IllegalArgumentException e) {
+            return remoteUrl;
+        }
     }
 
     // Por tipo, no por texto: un rechazo que nombra browserstack.idleTimeout no es una espera agotada

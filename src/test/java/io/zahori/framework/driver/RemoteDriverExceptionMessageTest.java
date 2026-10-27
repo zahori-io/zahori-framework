@@ -64,6 +64,43 @@ class RemoteDriverExceptionMessageTest {
         assertThat(RemoteDriver.isDeterministicRejection(message)).isFalse();
     }
 
+    // Selenoid parado: el cliente HTTP lanza ConnectException sin texto y antes salia "Causes: . java.net.ConnectException. null"
+    @Test
+    void aRefusedConnectionWithoutMessageIsRecognisedByItsType() {
+        Exception failure = new RuntimeException("top", new java.io.UncheckedIOException(new java.net.ConnectException()));
+
+        String message = RemoteDriver.getExceptionMessage(failure, GRID);
+
+        assertThat(message).isEqualTo("Connection refused from remote server " + GRID
+                + ". Check that the remote server is up and there is connectivity with it.");
+        assertThat(RemoteDriver.isDeterministicRejection(message)).isTrue();
+    }
+
+    @Test
+    void anUnknownHostWithoutMessageNamesTheHostOfTheUrl() {
+        Exception failure = new RuntimeException("top", new java.net.UnknownHostException());
+
+        String message = RemoteDriver.getExceptionMessage(failure, GRID);
+
+        assertThat(message).isEqualTo("Unknown host: grid.test");
+        assertThat(RemoteDriver.isDeterministicRejection(message)).isTrue();
+    }
+
+    @ParameterizedTest
+    @org.junit.jupiter.params.provider.ValueSource(strings = {"no es una url", "grid-sin-esquema"})
+    void anUnknownHostWithoutMessageFallsBackToTheUrlWhenItHasNoHost(String remoteUrl) {
+        Exception failure = new RuntimeException("top", new java.net.UnknownHostException());
+
+        assertThat(RemoteDriver.getExceptionMessage(failure, remoteUrl)).isEqualTo("Unknown host: " + remoteUrl);
+    }
+
+    @Test
+    void anUnknownHostWithItsNameKeepsIt() {
+        Exception failure = new RuntimeException("top", new java.net.UnknownHostException("otro.test"));
+
+        assertThat(RemoteDriver.getExceptionMessage(failure, GRID)).isEqualTo("Unknown host: otro.test");
+    }
+
     @Test
     void aRejectionThatNamesATimeoutCapabilityFailsAtOnce() {
         String message = RemoteDriver.getExceptionMessage(failingWith("Invalid value for browserstack.idleTimeout"), BROWSERSTACK);
