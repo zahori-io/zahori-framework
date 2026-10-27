@@ -62,6 +62,9 @@ public class RemoteDriver extends AbstractDriver {
     // La cola del grid (Selenoid -limit, paralelos de BrowserStack) puede durar minutos
     static final int DEFAULT_DRIVER_CREATION_TIMEOUT_SECONDS = 3600;
 
+    // Espera en cola de una peticion: no depende del plazo de creacion, que un proceso puede fijar en minutos
+    static final int DEFAULT_SESSION_REQUEST_TIMEOUT_SECONDS = 3600;
+
     static final Duration QUICK_FAILURE = Duration.ofSeconds(5);
     static final Duration FIRST_BACKOFF = Duration.ofSeconds(5);
     static final Duration MAX_BACKOFF = Duration.ofSeconds(60);
@@ -255,11 +258,13 @@ public class RemoteDriver extends AbstractDriver {
     }
 
     /**
-     * Sin ajuste, la peticion de sesion puede esperar todo el plazo: en la cola de Selenoid o de
-     * BrowserStack el cliente no la abandona, como hacia la version que esperaba la hora entera.
+     * Sin ajuste, la peticion de sesion espera la hora entera aunque el plazo de creacion sea menor:
+     * en la cola de Selenoid o de BrowserStack el cliente no la abandona, y el plazo corto solo decide
+     * si se lanza otro intento tras un fallo.
      */
     static Duration sessionRequestTimeout(String configuredValue, Duration total) {
-        return Duration.ofSeconds(positiveSeconds(configuredValue, (int) total.getSeconds()));
+        int byDefault = (int) Math.max(total.getSeconds(), DEFAULT_SESSION_REQUEST_TIMEOUT_SECONDS);
+        return Duration.ofSeconds(positiveSeconds(configuredValue, byDefault));
     }
 
     static int positiveSeconds(String configuredValue, int defaultSeconds) {

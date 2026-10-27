@@ -69,8 +69,15 @@ class RemoteDriverTimeoutTest {
     }
 
     @Test
-    void theDefaultSessionRequestFollowsAConfiguredTotal() {
-        Assertions.assertThat(RemoteDriver.sessionRequestTimeout(null, Duration.ofSeconds(900))).isEqualTo(Duration.ofSeconds(900));
+    void aShortDriverCreationTimeoutDoesNotCutTheWaitInTheGridQueue() {
+        // aeweb fija 300 s de creacion: con ese tope los casos que esperaban plaza en Selenoid caian con TimeoutException
+        Assertions.assertThat(RemoteDriver.sessionRequestTimeout(null, Duration.ofSeconds(300)))
+                .isEqualTo(Duration.ofSeconds(RemoteDriver.DEFAULT_SESSION_REQUEST_TIMEOUT_SECONDS));
+    }
+
+    @Test
+    void aLongerConfiguredTotalIsNotShortenedByTheDefault() {
+        Assertions.assertThat(RemoteDriver.sessionRequestTimeout(null, Duration.ofSeconds(7200))).isEqualTo(Duration.ofSeconds(7200));
     }
 
     @Test
