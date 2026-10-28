@@ -52,11 +52,55 @@ class TestContextTunnelPlatformTest {
     }
 
     @Test
-    void tunnelSetting_ignoresTheCaseBlock_whenTheProcessDeclaresNothing() {
+    void tunnelSetting_withoutACasePlatform_returnsNullWhenTheProcessDeclaresNothing() {
         ZahoriProperties properties = mock(ZahoriProperties.class);
         when(properties.getProperty(ANDROID)).thenReturn("android");
 
         Assertions.assertThat(TestContext.tunnelSetting(properties, "accessKey", "linux")).isNull();
+    }
+
+    // Un servidor Linux con zahori.properties antiguos: sin ajuste del proceso ni bloque "linux", el tunel no se arrancaba
+    // nunca y BrowserStack rechazaba cada sesion con "[browserstack.local] is set to true but ... is not connected"
+    @Test
+    void tunnelSetting_fallsBackToTheCaseBlock_whenTheProcessDeclaresNothing() {
+        ZahoriProperties properties = mock(ZahoriProperties.class);
+        when(properties.getProperty(ANDROID)).thenReturn("android");
+
+        Assertions.assertThat(TestContext.tunnelSetting(properties, "accessKey", "linux", "android")).isEqualTo("android");
+    }
+
+    @Test
+    void tunnelSetting_theProcessPlatformBlockBeatsTheCaseBlock() {
+        ZahoriProperties properties = mock(ZahoriProperties.class);
+        when(properties.getProperty(WINDOWS)).thenReturn("windows");
+        when(properties.getProperty(ANDROID)).thenReturn("android");
+
+        Assertions.assertThat(TestContext.tunnelSetting(properties, "accessKey", "windows", "android")).isEqualTo("windows");
+    }
+
+    @Test
+    void tunnelSetting_theOwnSettingBeatsTheCaseBlock() {
+        ZahoriProperties properties = mock(ZahoriProperties.class);
+        when(properties.getProperty(OWN)).thenReturn("own");
+        when(properties.getProperty(ANDROID)).thenReturn("android");
+
+        Assertions.assertThat(TestContext.tunnelSetting(properties, "accessKey", "linux", "android")).isEqualTo("own");
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    void tunnelSetting_aBlankCasePlatformIsIgnored(String casePlatform) {
+        ZahoriProperties properties = mock(ZahoriProperties.class);
+
+        Assertions.assertThat(TestContext.tunnelSetting(properties, "accessKey", "linux", casePlatform)).isNull();
+    }
+
+    @Test
+    void tunnelSetting_theCaseBlockIsLookedUpInLowerCase() {
+        ZahoriProperties properties = mock(ZahoriProperties.class);
+        when(properties.getProperty(ANDROID)).thenReturn("android");
+
+        Assertions.assertThat(TestContext.tunnelSetting(properties, "accessKey", "linux", "ANDROID")).isEqualTo("android");
     }
 
     @Test

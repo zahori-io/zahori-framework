@@ -321,7 +321,7 @@ public class TestContext {
         if (StringUtils.isEmpty(browserName)) {
             browser = null;
         } else {
-            browser = createBrowser(this::newBrowser, localTunnelRequired(zahoriProperties, gridProvider, processPlatform()));
+            browser = createBrowser(this::newBrowser, localTunnelRequired(zahoriProperties, gridProvider, processPlatform(), platform));
             logInfo("Driver initialized!");
         }
     }
@@ -332,7 +332,13 @@ public class TestContext {
 
     /** La configuracion pide BrowserStack Local en este grid. */
     static boolean localTunnelRequired(ZahoriProperties properties, GridProvider gridProvider, String processPlatform) {
-        return properties != null && shouldStartLocalTunnel(gridProvider, tunnelSetting(properties, "local", processPlatform));
+        return localTunnelRequired(properties, gridProvider, processPlatform, null);
+    }
+
+    static boolean localTunnelRequired(ZahoriProperties properties, GridProvider gridProvider, String processPlatform,
+            String casePlatform) {
+        return properties != null
+                && shouldStartLocalTunnel(gridProvider, tunnelSetting(properties, "local", processPlatform, casePlatform));
     }
 
     // Sin tunel la sesion pediria a BrowserStack el identificador de la plantilla, que no levanta nadie
@@ -366,13 +372,13 @@ public class TestContext {
 
     public void startRemoteTunnel() {
         String processPlatform = processPlatform();
-        String browserStackLocalConnection = tunnelSetting(zahoriProperties, "local", processPlatform);
+        String browserStackLocalConnection = tunnelSetting(zahoriProperties, "local", processPlatform, platform);
         if (!shouldStartLocalTunnel(gridProvider, browserStackLocalConnection)) {
             LOG.info(tunnelNotStartedReason(gridProvider, browserStackLocalConnection));
             return;
         }
 
-        String accessKey = tunnelSetting(zahoriProperties, "accessKey", processPlatform);
+        String accessKey = tunnelSetting(zahoriProperties, "accessKey", processPlatform, platform);
         startRemoteTunnel(ProcessTunnels.INSTANCE, accessKey, zahoriProperties.getProperty(BROWSERSTACK_LOCAL_BINARY_PATH_PROPERTY));
     }
 
@@ -399,13 +405,26 @@ public class TestContext {
         return "linux";
     }
 
-    /** Ajuste del tunel: el propio del proceso o, si falta, el bloque de la plataforma del proceso; nunca el del caso. */
+    /** Ajuste del tunel sin plataforma del caso: el propio del proceso o, si falta, el bloque de la plataforma del proceso. */
     static String tunnelSetting(ZahoriProperties properties, String name, String processPlatform) {
+        return tunnelSetting(properties, name, processPlatform, null);
+    }
+
+    /**
+     * Ajuste del tunel: el propio del proceso, si falta el bloque de la plataforma del proceso y, como ultimo recurso, el de
+     * la plataforma del caso. Ese ultimo paso es lo que hacian las versiones anteriores: sin el, un servidor Linux con
+     * zahori.properties sin ajuste del proceso ni bloque "linux" nunca arrancaba el tunel.
+     */
+    static String tunnelSetting(ZahoriProperties properties, String name, String processPlatform, String casePlatform) {
         String own = properties.getProperty(TUNNEL_PROPERTY_PREFIX + name);
         if (StringUtils.isNotBlank(own)) {
             return own;
         }
-        return properties.getProperty(CAPABILITY_PROPERTY_PREFIX + processPlatform + BSTACK_OPTIONS + name);
+        String ofProcessPlatform = properties.getProperty(CAPABILITY_PROPERTY_PREFIX + processPlatform + BSTACK_OPTIONS + name);
+        if (StringUtils.isNotBlank(ofProcessPlatform) || StringUtils.isBlank(casePlatform)) {
+            return ofProcessPlatform;
+        }
+        return properties.getProperty(CAPABILITY_PROPERTY_PREFIX + casePlatform.toLowerCase() + BSTACK_OPTIONS + name);
     }
 
     // El localIdentifier lo pone el tunel: es del proceso, no de este caso ni de su ejecucion
