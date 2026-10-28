@@ -27,6 +27,7 @@ import io.appium.java_client.ios.IOSDriver;
 import io.zahori.framework.core.ExecutionTarget;
 import io.zahori.framework.driver.browserfactory.Browsers;
 import io.zahori.framework.driver.gridprovider.GridProvider;
+import io.zahori.framework.utils.BooleanUtils;
 import io.zahori.framework.driver.gridprovider.GridProviderRegistry;
 import io.zahori.framework.files.properties.ZahoriProperties;
 import io.zahori.framework.utils.CapabilitiesMasker;
@@ -58,6 +59,8 @@ public class RemoteDriver extends AbstractDriver {
 
     static final String DRIVER_CREATION_TIMEOUT_PROPERTY = "zahori.test.execution.driverCreationTimeoutSeconds";
     static final String SESSION_REQUEST_TIMEOUT_PROPERTY = "zahori.test.execution.sessionRequestTimeoutSeconds";
+    static final String CAPACITY_GATE_PROPERTY = "zahori.test.execution.browserStackCapacityGate.enabled";
+    static final String CAPACITY_WAIT_PROPERTY = "zahori.test.execution.browserStackCapacityGate.maxWaitSeconds";
 
     // La cola del grid (Selenoid -limit, paralelos de BrowserStack) puede durar minutos
     static final int DEFAULT_DRIVER_CREATION_TIMEOUT_SECONDS = 3600;
@@ -113,16 +116,62 @@ public class RemoteDriver extends AbstractDriver {
         Duration sessionRequest = sessionRequestTimeout(properties.getProperty(SESSION_REQUEST_TIMEOUT_PROPERTY), total);
         String remoteUrl = browsers.getRemoteUrl();
         URL grid = getUrl(remoteUrl);
+        boolean browserStack = "browserstack".equals(gridProvider(browsers).id());
+        boolean gateEnabled = gateEnabled(properties.getProperty(CAPACITY_GATE_PROPERTY));
+        Duration capacityWait = Duration.ofSeconds(positiveSeconds(properties.getProperty(CAPACITY_WAIT_PROPERTY),
+                (int) sessionRequest.getSeconds()));
         // TODO Temporal workaround for Appium driver creation
         if ("ANDROID".equalsIgnoreCase(browsers.getPlatform()) || "IOS".equalsIgnoreCase(browsers.getPlatform())) {
             SessionFactory appium = "ANDROID".equalsIgnoreCase(browsers.getPlatform()) ? ANDROID : IOS;
-            return createSession(appium, grid, getAppiumCapabilities(browsers), total, sessionRequest,
-                    e -> getExceptionMessage(e, remoteUrl));
+            Capabilities appiumCapabilities = getAppiumCapabilities(browsers);
+            return createSession(appium, grid, appiumCapabilities, total, sessionRequest,
+                    e -> getExceptionMessage(e, remoteUrl),
+                    browserStackAdmission(browserStack, appiumCapabilities.asMap(), gateEnabled, capacityWait,
+                            BrowserStackCapacityGate.shared()));
         }
         AbstractDriverOptions<?> options = getOptions(browsers, proxy);
         // Sin las capabilities enviadas no hay forma de saber cual rechaza el grid
         return createSession(WEB, grid, options, total, sessionRequest,
-                e -> getExceptionMessage(e, remoteUrl) + " Capabilities sent: " + CapabilitiesMasker.mask(options.asMap()));
+                e -> getExceptionMessage(e, remoteUrl) + " Capabilities sent: " + CapabilitiesMasker.mask(options.asMap()),
+                browserStackAdmission(browserStack, options.asMap(), gateEnabled, capacityWait, BrowserStackCapacityGate.shared()));
+    }
+
+    /** Pide plaza antes de cada peticion de sesion; con la espera acabada sigue adelante o lanza si la pararon. */
+    @FunctionalInterface
+    interface Admission {
+        void await() throws InterruptedException;
+    }
+
+    static final Admission NO_ADMISSION = () -> {
+    };
+
+    /**
+     * La puerta solo aplica a BrowserStack y solo si hay cuenta para preguntar por su plan: userName y accessKey de
+     * bstack:options. Una app nativa (appium:app) gasta el plan de App Automate; una web, el de Automate.
+     */
+    static Admission browserStackAdmission(boolean browserStack, Map<String, ?> capabilities, boolean enabled, Duration maxWait,
+            BrowserStackCapacityGate gate) {
+        if (!browserStack || !enabled || !(capabilities.get("bstack:options") instanceof Map<?, ?> options)) {
+            return NO_ADMISSION;
+        }
+        String user = textOf(options.get("userName"));
+        String key = textOf(options.get("accessKey"));
+        if (StringUtils.isAnyBlank(user, key)) {
+            return NO_ADMISSION;
+        }
+        BrowserStackCapacityGate.Product product = capabilities.get("appium:app") != null
+                ? BrowserStackCapacityGate.Product.APP_AUTOMATE
+                : BrowserStackCapacityGate.Product.AUTOMATE;
+        return () -> gate.admit(product, user, key, maxWait);
+    }
+
+    private static String textOf(Object value) {
+        return value instanceof String text ? text : null;
+    }
+
+    /** Activada si no se dice otra cosa: sin ella el numero de casos a la vez lo decide un valor fijo del proceso. */
+    static boolean gateEnabled(String configured) {
+        return StringUtils.isBlank(configured) || BooleanUtils.getBoolean(configured);
     }
 
     /**
@@ -132,10 +181,24 @@ public class RemoteDriver extends AbstractDriver {
      */
     WebDriver createSession(SessionFactory factory, URL grid, Capabilities capabilities, Duration total,
             Duration sessionRequest, Function<Exception, String> describe) {
+        return createSession(factory, grid, capabilities, total, sessionRequest, describe, NO_ADMISSION);
+    }
+
+    /** Lo que se espera por una plaza no cuenta para el plazo: ese plazo decide cuanto se insiste, no cuanto se espera. */
+    WebDriver createSession(SessionFactory factory, URL grid, Capabilities capabilities, Duration total,
+            Duration sessionRequest, Function<Exception, String> describe, Admission admission) {
         long deadline = clock.getAsLong() + total.toMillis();
         int quickFailures = 0;
         RuntimeException failure;
         do {
+            long waitStart = clock.getAsLong();
+            try {
+                admission.await();
+            } catch (InterruptedException interrupted) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted while waiting for a free slot in the grid", interrupted);
+            }
+            deadline += clock.getAsLong() - waitStart;
             long attemptStart = clock.getAsLong();
             SessionRequestHttpClientFactory clients = new SessionRequestHttpClientFactory(httpClients, sessionRequest);
             try {
