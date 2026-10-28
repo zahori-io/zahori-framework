@@ -37,16 +37,23 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Function;
 import java.util.function.LongSupplier;
+import java.util.function.Supplier;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.Dimension;
+import org.openqa.selenium.NoSuchSessionException;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebDriverException;
+import org.openqa.selenium.remote.UnreachableBrowserException;
 import org.openqa.selenium.remote.AbstractDriverOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.remote.HttpCommandExecutor;
@@ -67,6 +74,11 @@ public class RemoteDriver extends AbstractDriver {
 
     // Espera en cola de una peticion: no depende del plazo de creacion, que un proceso puede fijar en minutos
     static final int DEFAULT_SESSION_REQUEST_TIMEOUT_SECONDS = 3600;
+
+    // Sesiones nuevas que se piden si el grid mata la anterior al configurarla
+    static final int SETUP_ATTEMPTS = 3;
+
+    private static final Logger LOG = LogManager.getLogger(RemoteDriver.class);
 
     static final Duration QUICK_FAILURE = Duration.ofSeconds(5);
     static final Duration FIRST_BACKOFF = Duration.ofSeconds(5);
@@ -106,6 +118,53 @@ public class RemoteDriver extends AbstractDriver {
         this.sleeper = sleeper;
         this.jitter = jitter;
         this.httpClients = httpClients;
+    }
+
+    /**
+     * Una sesion que el grid mata mientras se configura (p. ej. Safari de BrowserStack: "5555 Down") aun no ha hecho nada
+     * del caso: se descarta y se pide otra, en vez de fallar el caso entero.
+     */
+    @Override
+    public WebDriver getDriver(Browsers browsers, Proxy proxy) {
+        return startSession(() -> createWebDriver(browsers, proxy), driver -> configureWebDriver(driver, browsers));
+    }
+
+    WebDriver startSession(Supplier<WebDriver> creator, Consumer<WebDriver> configurer) {
+        WebDriverException failure = null;
+        for (int attempt = 1; attempt <= SETUP_ATTEMPTS; attempt++) {
+            WebDriver driver = creator.get();
+            try {
+                configurer.accept(driver);
+                return driver;
+            } catch (WebDriverException e) {
+                quitQuietly(driver);
+                if (!isDeadSession(e)) {
+                    throw e;
+                }
+                failure = e;
+                LOG.warn("The grid ended the session while configuring it (attempt {} of {}): {}", attempt, SETUP_ATTEMPTS,
+                        getCleanMessage(e.getMessage()));
+            }
+        }
+        throw failure;
+    }
+
+    /** Sesion perdida en el grid: se reconoce por el tipo de la excepcion o por lo que dice el grid. */
+    static boolean isDeadSession(Throwable error) {
+        if (error instanceof UnreachableBrowserException || error instanceof NoSuchSessionException) {
+            return true;
+        }
+        String text = StringUtils.defaultString(ExceptionUtils.getRootCauseMessage(error)) + " "
+                + StringUtils.defaultString(error.getMessage());
+        return StringUtils.containsAny(text, "Session not started or terminated", "SO_TIMEOUT", "Error communicating with the remote browser");
+    }
+
+    private static void quitQuietly(WebDriver driver) {
+        try {
+            driver.quit();
+        } catch (RuntimeException ignored) {
+            // La sesion ya esta muerta: no hay nada que cerrar
+        }
     }
 
     @Override
