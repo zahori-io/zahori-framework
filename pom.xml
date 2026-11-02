@@ -368,7 +368,7 @@
             <dependency>
                 <groupId>io.zahori</groupId>
                 <artifactId>zahori-model</artifactId>
-                <version>0.1.8</version>
+                <version>0.1.9</version>
             </dependency>
 
             <!-- Merge .mp4 video files [AndroidScreenRecorder.java] -->
